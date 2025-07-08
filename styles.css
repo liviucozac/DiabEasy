@@ -884,7 +884,6 @@ body {
 .medication-tab {
   width: 100%;
   margin: 0 auto;
-  border: 1px solid red;
 }
 
 .medication-title {
@@ -894,9 +893,9 @@ body {
 }
 
 .explanation {
-  font-size: var(--fifth-font-size);
+  font-size: var(--fourth-font-size);
   color: #555;
-  margin-top: -2vh
+  margin-bottom: -1vh;
 }
 
 .insulin-inputs {
@@ -904,7 +903,6 @@ body {
   flex-direction: column;
   gap: 0.3vh;
   margin: 1vh 0;
-  border: 1px solid orange
 }
 
 .insulin-inputs label {
@@ -924,8 +922,8 @@ body {
 
 .insulin-result {
   background: #f3f9f9;
-  border-left: 4px solid #00a9b7;
-  padding: 15px;
+  border-left: 4px solid var(--diabetes-color);
+  padding: 1vw;
   border-radius: 6px;
   color: #333;
 }
@@ -939,7 +937,7 @@ body {
   font-weight: bold;
   font-size: 1.1rem;
   margin-top: 10px;
-  color: #007d8c;
+  color: black;
 }
 
 .no-data-msg {
@@ -948,6 +946,60 @@ body {
   margin-top: 10px;
 }
 
+.error-message {
+ font-size: var(--fourth-font-size);
+ margin: 1vh 0
+}
+
+
+#target-glycemia {
+  width: 25vw;
+  padding: 0.2rem;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: var(--fourth-font-size);
+  margin-top: 0
+}
+
+#target-glycemia:hover {
+  width: 25vw;
+  padding: 0.2rem;
+  border-radius: 5px;
+  border: 1px solid var(--diabetes-color);
+  font-size: var(--fourth-font-size);
+}
+
+#target-glycemia:focus {
+  width: 25vw;
+  padding: 0.2rem;
+  border-radius: 5px;
+  border: 1px solid var(--diabetes-color);
+  font-size: var(--fourth-font-size);
+  outline: none;
+}
+
+.targetglycemia-reset {
+ display: grid;
+ grid-template-columns: repeat(2, 1fr);
+ height: vh
+}
+
+.reset-btn {
+  width: 30vw;
+  padding: 0.2rem;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: var(--fourth-font-size);
+  margin-left: -14vw
+}
+
+.reset-btn:hover {
+  border: 1px solid var(--diabetes-color);
+}
+
+.insulin-result {
+ background-color: #ffeeed
+}
 
 /* MEDICATION TAB END */
 
@@ -1082,7 +1134,6 @@ p {margin: 0}
 }
 
 .hospital-locator button {
-
   background-color: white;
   color: var(--diabetes-color);
   padding: 0.2rem 1rem;
