@@ -885,96 +885,124 @@ return (
   <div className="medication-tab">
     <h3 className="medication-title">Insulin Dose Calculator</h3>
     <p className="explanation">
-      Use this tool to calculate how much insulin you may need based on your current blood sugar and carbohydrate intake. The result includes both your meal bolus and correction dose.
+      Use this tool to calculate how much insulin you may need based on your current blood sugar and carbohydrate intake.
     </p>
 
     <div className="insulin-inputs">
-      <p>
-        At the moment, your glycemia value is <strong>{glucoseValue} {unit}</strong>
-      </p>
-      <p>
-        Based on the meal you planned in the Food Guide tab, your total carbs intake will be <strong>{totalCarbs} g</strong>.
-      </p>
-      <label>
-        Please insert the glycemia value you wish to reach:
-        <input 
-          type="number"
-          value={targetGlycemia}
-          onChange={(e) => setTargetGlycemia(e.target.value)}
-          placeholder="e.g. 100"
-        />
-      </label>
+      {glucoseValue === null ? (
+        <p className="error-message">
+          No glycemia value entered. Please enter it in the Home tab.
+        </p>
+      ) : (
+        <>
+          <p>
+           Current glycemia: <strong>{glucoseValue} {unit}</strong><br/>
+          </p>
+          <p>
+            Planned meal carbs intake: <strong>{totalCarbs !== null ? `${totalCarbs} g` : "Not entered"}</strong>
+          </p>
+          <div>Target glycemia:</div>
+          <div className="targetglycemia-reset">
+            <label>
+              <input id="target-glycemia"
+                type="number"
+                value={targetGlycemia}
+                onChange={(e) => {
+                  setTargetGlycemia(e.target.value);
+                  // Reset any derived calculations if needed
+                }}
+                placeholder="e.g. 100"
+              />
+            </label>
+            <button 
+                className="reset-btn"
+                onClick={() => {
+                  setTargetGlycemia("");
+                }}
+              >
+                Reset
+           </button>
+       </div>
+        </>
+      )}
     </div>
 
-    <div className="fixed-isf-note">
-      <p>
-        <strong>ISF (Insulin Sensitivity Factor):</strong> <span>50 mg/dL per unit</span> (preset)
-      </p>
-      <p className="isf-disclaimer">
-        ⚠️ Physical activity may increase insulin sensitivity. Adjust cautiously if you exercised recently.
-      </p>
-    </div>
+    {activeTab === "Medication" && (
+  <div className="medication-tab">
+    {/* ... (keep previous header and explanation) ... */}
 
-    {(glucoseValue !== null && totalCarbs !== null && targetGlycemia !== "")? (() => {
-     const ISF = 50;
-     const carbRatio = 10;
-     const glycemia = unit === "mmol/L" ? glucoseValue * 18 : glucoseValue;
-     const target = Number(targetGlycemia);
-     const mealInsulin = totalCarbs / carbRatio;
-     const correctionInsulin = Math.max((glycemia - target) / ISF, 0);
-     const totalDose = mealInsulin + correctionInsulin;
+    {glucoseValue === null ? (
+      <div className="insulin-result">
+        <p>⛔ Cannot calculate insulin dose</p>
+        <p>Please enter your current blood sugar in the Home tab first.</p>
+      </div>
+    ) : targetGlycemia === "" || totalCarbs === null ? (
+      <div className="insulin-result">
+        <p>ℹ️ Complete all fields to calculate dose</p>
+        <p>Enter target glycemia and ensure meal carbs are entered in Food Guide</p>
+      </div>
+    ) : (() => {
+      // Convert everything to mg/dL for calculations
+      const ISF = 50; // mg/dL per unit
+      const carbRatio = 10; // grams per unit
+      const currentMgDl = unit === "mmol/L" ? glucoseValue * 18 : glucoseValue;
+      const targetMgDl = unit === "mmol/L" ? targetGlycemia * 18 : Number(targetGlycemia);
+      
+      // Perform calculations in mg/dL
+      const mealInsulin = totalCarbs / carbRatio;
+      const correctionInsulin = Math.max((currentMgDl - targetMgDl) / ISF, 0);
+      const totalDose = Math.round(mealInsulin + correctionInsulin);
+      const predictedRise = (totalCarbs / carbRatio) * ISF;
+      const predictedMgDl = currentMgDl + predictedRise;
 
-     // Predict rise from planned carbs
-     const predictedRise = (totalCarbs / carbRatio) * ISF;
-     const predictedGlycemia = glycemia + predictedRise;
+      // Convert back to display units if needed
+      const displayValue = (value) => unit === "mmol/L" ? (value / 18).toFixed(1) : value.toFixed(0);
+      const displayUnit = unit === "mmol/L" ? "mmol/L" : "mg/dL";
 
-
-     if (glycemia < 75) {
-      if (predictedGlycemia < 75) {
-        const neededCarbs = Math.ceil(((75 - glycemia) / ISF) * carbRatio);
+      if (currentMgDl < 75) { // 75 mg/dL ≈ 4.2 mmol/L
+        if (predictedMgDl < 75) {
+          const neededCarbs = Math.ceil(((75 - currentMgDl) / ISF) * carbRatio);
+          return (
+            <div className="insulin-result warning">
+              <p>⚠️ Dangerously low blood sugar</p>
+              <p>With planned meal, you'll still be at {displayValue(predictedMgDl)} {displayUnit}</p>
+              <p>Eat <strong>{neededCarbs} g</strong> more carbs immediately</p>
+              <p>Do NOT take insulin now</p>
+            </div>
+          );
+        }
         return (
-          <div className="insulin-result warning">
-            <p>Your glycemia is too low for insulin.</p>
-            <p>Even with your planned meal, your blood sugar will not reach safe levels.</p>
-            <p>You should consume <strong>at least {neededCarbs} g</strong> more carbs to raise your glycemia above 75 mg/dL.</p>
-          </div>
-        );
-      } else {
-        return (
-          <div className="insulin-result warning">
-            <p>Your glycemia is too low to safely inject insulin now.</p>
-            <p>Based on your planned meal, your glycemia will rise — but you should <strong>not take insulin</strong> yet.</p>
-            <p>Wait and check your blood sugar again in 15–20 minutes.</p>
+          <div className="insulin-result">
+            <p>⚠️ Low blood sugar warning</p>
+            <p>Your blood sugar will rise to ~{displayValue(predictedMgDl)} {displayUnit}</p>
+            <p>Do not use Insulin unless glycemia level rises above 150</p>
           </div>
         );
       }
-    }
 
-
-      if (glycemia > 150) {
+      if (currentMgDl > 250) { // 250 mg/dL ≈ 13.9 mmol/L
         return (
           <div className="insulin-result warning">
-            <p>Your glycemia is currently high.</p>
-            <p>It’s recommended to avoid carbs right now.</p>
-            <p>
-              Correction Insulin Dose: <strong>{correctionInsulin.toFixed(1)} u</strong>
-            </p>
+            <p>⚠️ High blood sugar alert</p>
+            <p>Correction dose only: <strong>{correctionInsulin.toFixed(1)} units</strong></p>
+            <p>Consider delaying food until glucose is below {unit === "mmol/L" ? "11.1" : "200"} {displayUnit}</p>
           </div>
         );
       }
 
       return (
         <div className="insulin-result">
-          <p>Meal Insulin: <strong>{mealInsulin.toFixed(1)} u</strong></p>
-          <p>Correction Insulin: <strong>{correctionInsulin.toFixed(1)} u</strong></p>
           <p className="total-dose">
-            Total Suggested Dose: <strong>{totalDose.toFixed(1)} u</strong>
+            Insulin to be taken: <strong>{totalDose.toFixed(0)} units</strong>
+          </p>
+          <p className="prediction">
+            (Predicted post-meal glycemia without the insulin intake: ~{displayValue(predictedMgDl)} {displayUnit})
           </p>
         </div>
       );
-    })() : (
-      <p className="no-data-msg">Enter your target glycemia to calculate dose.</p>
-    )}
+    })()}
+  </div>
+)}
   </div>
 )}
 
