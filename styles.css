@@ -1,0 +1,1105 @@
+:root {
+  --uber-font-size: 1.2rem;
+  --main-font-size: 1.15rem;
+  --diabetes-color: #ec5557;
+  --second-font-size: 1.1rem;
+  --third-font-size: 1.05rem;
+  --fourth-font-size: 1rem;
+  --fifth-font-size: 0.80rem;
+}
+
+
+@media (max-width: 400px) {
+  .fasting-group {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .tabs {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+html {
+  overflow-y: scroll;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  border-radius: 5px;
+}
+
+
+
+#container {
+  background-color: transparent;
+  margin: 0 auto;
+  padding: 0 1rem;
+  width: 100%;
+  max-width: 420px; /* typical for mobile-first design */
+  min-height: 90vh;
+  border-radius: 5px;
+  box-sizing: border-box;
+  border: 1px solid green;
+}
+
+.logo {
+  display: block;
+  margin: 2vh auto;
+  width: 7rem;
+}
+
+#appDescription {
+  text-align: center;
+  margin: 1vh 0 1vh 0;
+  font-size: var(--second-font-size);
+  color: #333;
+ 
+}
+
+.highlight {
+  color: var(--diabetes-color);
+  font-size: var(--second-font-size);
+}
+
+/* --- tabs start --- */
+
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+  margin: 0.5vh auto 1vh auto;
+  width: 95%;
+}
+
+.tab {
+  text-align: center;
+  padding: 0.2rem 0;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  background-color: #e0e0e0;
+  cursor: pointer;
+  font-size: var(--third-font-size);
+}
+
+.tab:last-child {
+  border-right: none;
+}
+
+.tab:hover {
+  border: 1px solid #ec5557;
+  background-color: #e0e0e0;
+}
+
+.tab.active {
+  background-color: #ec5557;
+  color: white;
+}
+
+/* --- tabs end --- */
+
+/* --- text above input start --- */
+
+.textAboveInput {
+  font-size: 0.9rem;
+  margin: 4vh auto 1vh auto;
+  font-size: var(--fourth-font-size);
+}
+
+/* --- mg/dL mmol/L start --- */
+
+.unit-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.5rem;
+  margin: 0 auto;
+
+}
+
+.unit-label {
+  padding: 0.3rem 0.8rem;
+  cursor: pointer;
+  font-weight: bold;
+  color: #666;
+  text-color: white;
+  font-size: var(--third-font-size);
+  margin-top: -0.7rem;
+}
+
+.unit-label.active {
+  color: #ec5557;
+  background: transparent;
+  border-radius: 10px;
+}
+
+.unit-label:hover {
+  color: var(--diabetes-color);
+}
+
+/* --- mg/dL mmol/L end --- */
+
+/* --- slider start --- */
+
+.slider {
+  width: 35px;
+  height: 15px;
+  background-color: #ccc;
+  margin-top: -0.8rem;
+  border-radius: 10px;
+  position: relative;
+}
+
+.knob {
+  width: 13px;
+  height: 13px;
+  background-color: #444;
+  border-radius: 50%;
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  transition: left 0.25s ease;
+}
+
+.slider.right .knob {
+  left: 21px;
+}
+
+/* --- slider end --- */
+
+/* --- display glycemia start --- */
+
+.glycemia-input {
+  text-align: center;
+}
+
+#glycemiaValue {
+  width: 45%;
+  padding: 0.2rem;
+  margin-top: -0.5rem;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: var(--fourth-font-size);
+}
+
+#glycemiaValue:hover {
+  width: 45%;
+  padding: 0.2rem;
+  margin-top: -0.5rem;
+  border-radius: 5px;
+  border: 1px solid var(--diabetes-color);
+  font-size: var(--fourth-font-size);
+}
+
+#glycemiaValue:focus {
+  width: 45%;
+  padding: 0.2rem;
+  margin-top: -0.5rem;
+  border-radius: 5px;
+  border: 1px solid var(--diabetes-color);
+  font-size: var(--fourth-font-size);
+  outline: none;
+}
+
+/* --- display glycemia end-- */
+
+/* --- fasting radio btns start --- */
+
+.fasting-group {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  margin: 1vh auto 1vh auto;
+  max: 80vw;
+}
+
+.fasting-group label {
+  background: #f4f4f4;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: border 0.2s ease;
+  font-size: var(--fourth-font-size);
+  height: 3.5vh;
+  width: 10rem;
+  margin: 0 auto;
+ box-shadow: 0 2px 0 var(--diabetes-color)
+}
+
+.fasting-group label:hover {
+  border: 1px solid #ec5557;
+  background-color: #fafafa;
+}
+
+.fasting-group input[type="radio"] {
+  margin-right: 0.3rem;
+  accent-color: var(--diabetes-color);
+  transform: scale(0.8);
+  height: 2vh;
+}
+
+/* --- fasting radio btns end --- */
+
+.symptomsText {
+  font-size: var(--fourth-font-size);
+  maxLength={100};
+  margin: 0.5vh auto 1vh auto;
+}
+
+#symptoms {
+  width: 45%;
+  padding: 0.2rem;
+  margin: 0.5vh auto 1vh auto;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: var(--fifth-font-size);
+  height: 2.5vh
+}
+
+#symptoms:hover {
+  width: 45%;
+  padding: 0.2rem;
+  border-radius: 5px;
+  border: 1px solid var(--diabetes-color);
+  font-size: var(--fifth-font-size);
+}
+
+#symptoms:focus {
+  width: 45%;
+  padding: 0.2rem;
+  border-radius: 5px;
+  border: 1px solid var(--diabetes-color);
+  font-size: var(--fifth-font-size);
+  outline: none;
+}
+
+/* --- submit button start --- */
+
+#submit-button {
+  padding: 0.2rem 0.8rem ;
+  font-size: var(--third-font-size);
+  background-color: #e0e0e0;
+  color: black;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin: 0.5vh auto 1vh auto;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+#submit-button:hover {
+  background-color: var(--diabetes-color);
+  color: white;
+  margin: 0.5vh auto 1vh auto;
+}
+
+/* --- submit button end --- */ 
+
+
+/* --- value start --- */
+
+#value {
+  margin-bottom: -0.5rem;
+  margin-top: 0.1rem;
+  font-size: var(--second-font-size;
+  font-weight)
+}
+
+/* --- result end --- */
+
+/* --- interpretation start --- */
+
+.interpretation {
+  font-size: var(--second-font-size);
+  margin-top: 0.4rem;
+  font-weight: bold;
+  height: 2rem;
+}
+
+.low {
+  color: red;
+}
+
+.normal {
+  color: green;
+}
+
+.high {
+  color: orange;
+}
+
+/* --- interpretation end --- */
+
+/* --- recommendation start --- */
+
+.recommendations {
+  margin: 0 auto;
+  padding-left: 1rem;
+  border-left: 4px solid #ec5557;
+  text-align: left;
+  width: 19rem;
+  font-size: var(--fourth-font-size);
+  max-height: 30vh;  
+  overflow-y: auto;
+ }
+
+.recommendations.low {
+  margin-bottom: 2vh;
+  padding-left: 1rem;
+  border-left: 4px solid #ec5557;
+  text-align: left;
+  width: 19rem;
+  max-height: 35vh;
+  font-size: var(--fourth-font-size);
+  color: black;
+  border-radius: 5px;
+  overflow-y: auto;
+  resize: vertical;
+}
+
+.recommendations.high {
+  margin-bottom: 2vh;
+  padding-left: 1rem;
+  border-left: 4px solid #ffc054;
+  text-align: left;
+  width: 19rem;
+  max-height: 33vh;
+  font-size: var(--fourth-font-size);
+  color: black;
+  border-radius: 5px;
+  overflow-y: auto;
+  resize: vertical;  
+}
+
+.recommendations li {
+  margin-bottom: 0.3rem;
+  margin-left: 0.5rem;
+}
+
+/* --- recommendation end --- */
+
+
+
+/* --- HISTORY start --- */
+
+/* --- history tab start --- */
+
+
+
+
+/* --- filter stuff start ---*/
+
+.history-filters, .numberandtext {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  max-width: 30rem;
+  border-radius: 8px;
+  padding-top: 0.8rem;
+  margin: 0 auto;
+}
+
+.history-filters {
+  margin-top: 0.8rem;
+}
+
+.filtervalues {
+  margin: 0 auto;
+  max-width: max-content;
+  font-size: var(--fourth-font-size);
+  margin-bottom: -20px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  max-height: 50px;
+ 
+}
+
+.filter-label {
+  font-size: var(--fourth-font-size);
+  margin-top: 0.2vh;
+  margin-bottom: 0.2rem;
+}
+
+.filter-input {
+  padding: 0.4rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: var(--fourth-font-size);
+  width: 100%;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.filter-input:hover {
+  border-color: var(--diabetes-color);
+}
+
+.filter-input:focus {
+  border-color: var(--diabetes-color);
+  box-shadow: 0 0 0 2px rgba(236, 85, 87, 0.1);
+}
+
+.date-input {
+  width: 150px;
+  min-height: 1.3vh;
+}
+
+.number-input {
+  width: 150px;
+  min-height: 1.3vh
+}
+
+.filter-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.filter-btn {
+  padding: 0.4rem 0.8rem;
+  font-size: var(--fourth-font-size);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  width: max-content;
+  margin: 0 auto 1vh;
+}
+
+.filter-btn:hover {
+  background-color: var(--diabetes-color);
+  color: white;
+}
+
+/* --- filter stuff end ---*/
+
+
+
+/* --- values history end --- */
+
+/* --- values history start --- */
+
+.no-history {
+  font-size: var(--fourth-font-size);
+  text-align: center;
+}
+
+.no-results {
+  font-size: var(--fourth-font-size);
+  text-align: center;
+  color: #666;
+}
+
+.history-item {
+  background-color: #faf0f0;
+  border-radius: 5px;
+  line-height: 1.5;
+  color: black;
+  border-top: 1px solid transparent;
+  font-size: var(--fifth-font-size);
+  text-align: center;
+  height: 5vh;
+  margin-left: -7.5vw
+}
+
+.history-item.low {
+  border-top-color: red;
+}
+
+.history-item.normal {
+  border-top-color: green;
+  background-color: #f2fff2;
+
+}
+
+.history-item.high {
+  border-top-color: orange;
+  background-color: #fff8eb
+}
+
+.timestamp {
+  font-size: 0.85rem;
+  color: #666;
+  font-size: var(--fifth-font-size);
+}
+
+.fasting-label {
+  font-size: var(--fifth-font-size);
+}
+
+.symptoms-display {
+  font-size: var(--fifth-font-size);
+  width: max-content;
+  margin: 0 auto
+}
+
+
+.history-tab {
+  margin-top: 1rem;
+}
+
+.history-title {
+  text-align: center;
+  font-size: var(--second-font-size);
+  margin-bottom: 0.8rem;
+}
+
+.history-list {
+  list-style: none;
+  margin: 0 auto;
+  overflow-y: auto;
+  max-height: 25vh;
+}
+
+#history-result {
+  font-size: var(--fifth-font-size);
+  max-height: 1rem;
+  padding-bottom: 0.8rem;
+  max-width: 100%;
+  margin-bottom: 0.1rem;
+  padding-top: 0.5vh;
+ 
+}
+
+.notes {
+  margin: 0 auto;
+  margin-top: -0.2rem;
+}
+
+/* --- history measurement filters start --- */
+
+/* Parent container */
+.unit-filter {
+  display: flex;
+  justify-content: center;
+  gap: 0.7rem;
+  margin: 1rem auto;
+  font-size: var(--second-font-size);
+  flex-wrap: wrap;
+  margin-top: 0.8vh;
+  margin-bottom: 1.5vh;
+  padding: 0;
+  width: max-content;
+}
+
+/* Hide actual radio button but keep it accessible */
+.unit-filter input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+ 
+}
+
+/* Style the span next to hidden radio */
+.unit-filter label span {
+  display: inline-block; /* Required for width to work */
+  width: 80px; /* Fixed width for all buttons */
+  text-align: center; /* Center the text */
+  border-radius: 5px;
+  border: 1px solid var(--diabetes-color);  
+  padding: 0.5vw 1vw; /* Adjusted padding - vertical only */
+  transition: all 0.2s ease;
+  font-size: var(--fourth-font-size);
+ 
+}
+
+/* Change label style when radio is checked */
+.unit-filter input[type="radio"]:checked + span {
+  background-color: var(--diabetes-color);
+  color: white;
+  font-weight: bold;
+  border-color: var(--diabetes-color);
+}
+
+/* Hover effects */
+.unit-filter label:hover span {
+  color: var(--diabetes-color);
+  border-color: var(--diabetes-color);
+}
+
+.filtervaluetext {
+ font-size: var(--fourth-font-size);
+ text-align: center;
+ margin: 0 auto;
+ margin-top: 2.5vh;
+ width: max-content;
+}
+
+.filtervalue {
+  font-size: var(--second-font-size)
+}
+
+/* --- history measurement filters end --- */
+
+/*    HISTORY END    */
+
+/*    FOOD GUIDE START    */
+
+.foodguide-tab {
+  overflow-y: auto;
+}
+
+.foodguide-title {
+  text-align: center;
+  font-size: var(--fourth-font-size);
+  margin-bottom: 0.8rem;
+}
+
+.no-input-message, .simplep {
+ font-size: var(--fourth-font-size);
+ text-align: center;
+ margin: 0 auto;
+ width: max50vw;
+}
+
+/* Container for buttons */
+
+.lrm {
+  display: flex;
+  justify-content: center;
+  gap: 0.7rem;
+  margin: 1rem auto;
+  font-size: var(--fourth-font-size);
+  flex-wrap: wrap;
+  margin-top: 0.8vh;
+  margin-bottom: 1.5vh;
+  padding: 0;
+  width: max-content;
+}
+
+.lrm input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.lrm label span {
+  display: inline-block; /* Required for width to work */
+  width: 15vw; /* Fixed width for all buttons */
+  text-align: center; /* Center the text */
+  border-radius: 5px;
+  border: 1px solid var(--diabetes-color);  
+  padding: 0.5vw 0; /* Adjusted padding - vertical only */
+  transition: all 0.2s ease;
+}
+
+.lrm input[type="radio"]:checked + span {
+  background-color: var(--diabetes-color);
+  color: white;
+  font-weight: bold;
+  border-color: var(--diabetes-color);
+}
+
+.lrm label:hover span {
+  color: var(--diabetes-color);
+  border-color: var(--diabetes-color);
+}
+
+.food-suggestions {
+  background-color: white;
+  border-radius: 8px;
+  height: 30vh;
+  margin: 0 auto;
+  display: flex;
+ flex-direction: column
+}
+
+
+#suggested-foods {
+  font-weight: bold;
+  font-size: var(--fifth-font-size);
+  margin: 0 auto 0.5rem auto;
+  
+}
+
+.food-scroll-area {
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  max-height: 30vh;
+  width: 23rem;
+  margin: 0 auto;
+
+}
+#foodfamily {
+  margin: 3vh 1.8vw 0 auto;
+  font-size: var(--fourth-font-size);
+  color: #444;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 0.2vh;
+  font-weight: bold;
+  width: 21rem;
+}
+
+.food-suggestions ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.food-suggestions li {
+  background-color: #fff;
+  border-radius: 5px;
+  padding:  0 0.6rem;
+  margin: 0.3rem auto;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  width: 95%;
+}
+
+.food-suggestions li strong {
+  display: block;
+  color: #222;
+  font-size: var(--fifth-font-size);
+}
+
+.food-suggestions li span {
+  color: #555;
+  font-size: var(--fifth-font-size);
+  line-height: 1.2;
+  border-bottom: 1px solid #ccc;
+  display: block;
+  padding-bottom: 0.2vh;
+}
+
+.foodnameandadd {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.5vh;
+  width: 100%;
+  margin-bottom: -1vh
+}
+
+.addtomeal {
+  background-color: white;
+  color: gray;
+  border: 1px solid gray;
+  font-size: var(--fifth-font-size);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  height: 0.9rem;
+  padding: 0 0.4rem;
+}
+
+.addtomeal:hover {
+  background-color: var(--diabetes-color);
+  color: white;
+  border-color: var(--diabetes-color);
+}
+
+.addtomeal:active {
+  background-color: var(--diabetes-color);
+  color: white;
+}
+
+.meal-display {
+  background: white;
+  width: 21rem;
+  margin: 1rem auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: 30vh;
+  border-radius: 5px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.meal-items {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem 0;
+  font-size: var(--third-font-size);
+}
+
+.meal-items li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--fourth-font-size);
+  height: 0.8rem;
+  margin-bottom: 0.1rem;
+  border-bottom: 1px solid #eee;
+  padding: 0.4rem 0;
+}
+
+.remove-btn {
+  background: white;
+  color: gray;
+  font-size: var(--fourth-font-size);
+  padding: 0 0.5rem;
+  cursor: pointer;
+  border: 1px solid gray;
+  border-radius: 5px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  margin-right: 1vw
+}
+
+.remove-btn:hover,
+.remove-btn:active {
+  color: white;
+  background: var(--diabetes-color);
+  border-color: var(--diabetes-color);
+}
+
+.meal-totals {
+  background-color: white;
+  border-radius: 5px;
+  width: 19rem;
+  text-align: left;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.1rem;
+  margin: 0 auto 0.6vh auto;
+ 
+}
+
+.meal-totals div {
+  font-size: var(--fifth-font-size);
+  max-width: max-content;
+}
+
+.selectedItems {
+  font-size: var(--fourth-font-size);
+  margin-bottom: 0.3rem;
+}
+
+.nutrifacts {
+  width: max-content;
+  font-size: var(--fourth-font-size);
+  margin: 1rem auto 0 auto;
+}
+
+.horizontalbar {
+  border-bottom: 1px solid gray;
+ width: 100%
+}
+
+/* MEDICATION TAB START */
+
+.medication-tab {
+  width: 100%;
+  margin: 0 auto;
+  border: 1px solid red;
+}
+
+.medication-title {
+  color: #333;
+  font-size: var(--fourth-font-size);
+  text-align: center;
+}
+
+.explanation {
+  font-size: var(--fifth-font-size);
+  color: #555;
+  margin-top: -2vh
+}
+
+.insulin-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3vh;
+  margin: 1vh 0;
+  border: 1px solid orange
+}
+
+.insulin-inputs label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 500;
+  color: #444;
+}
+
+.insulin-inputs input {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  margin-top: 5px;
+  font-size: 1rem;
+}
+
+.insulin-result {
+  background: #f3f9f9;
+  border-left: 4px solid #00a9b7;
+  padding: 15px;
+  border-radius: 6px;
+  color: #333;
+}
+
+.insulin-result p {
+  margin: 6px 0;
+  font-size: 0.95rem;
+}
+
+.total-dose {
+  font-weight: bold;
+  font-size: 1.1rem;
+  margin-top: 10px;
+  color: #007d8c;
+}
+
+.no-data-msg {
+  font-style: italic;
+  color: #777;
+  margin-top: 10px;
+}
+
+
+/* MEDICATION TAB END */
+
+/* EMERGENCY TAB START */
+
+.emergency-symptoms {
+ width: 80vw;
+ margin: 0 auto;
+ font-size: var(--fourth-font-size);
+}
+
+.checksymp, .checksymptwo {
+ margin: 0.4rem auto 0 0;
+ font-size: var(--fourth-font-size);
+ font-weight: bold;
+ text-align: center;
+}
+
+.symptom-columns {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  max-width: 20rem;
+  margin: 0 auto;
+  font-size: var(--fourth-font-size);
+  
+}
+
+.symptom-columns p {
+  font-size: var(--fourth-font-size);
+  margin: 0.1rem 0;
+  color: #333;
+}
+
+.symptom-columns div {
+  width: max-content;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.checksymp span {
+ color: red;
+ }
+
+.emergency-instruction-box.high {
+ color: black;
+
+}
+
+.emergency-instruction-box p:last-of-type {
+ border-bottom: 1px solid rgba(128, 128, 128, 0.3);
+ padding-bottom: 0.4rem;
+}
+
+.checksymptwo span {
+ color: #ff7700;
+ font-weight: bold;
+}
+
+p {margin: 0}
+
+.emergency-call-box {
+  background-color: #fff8f8;
+  border: 1px solid var(--diabetes-color);
+  border-radius: 8px;
+  padding: 0 0 0.4rem 0 ;
+  margin: 1vh auto;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.emergency-call-box h3 {
+  font-size: var(--third-font-size);
+  color: var(--diabetes-color);
+  margin-bottom: 0.5rem;
+  margin-top: 0.2rem
+}
+
+.emergency-call-box p {
+  font-size: var(--fourth-font-size);
+  color: #333;
+  margin-bottom: 0.3rem;
+}
+
+.emergency-call-box p:nth-of-type(2) {
+ margin-top: 0.3vh;
+ color: red;
+ margin-bottom: 0
+}
+
+.emergency-call-button {
+  background-color: var(--diabetes-color);
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+  display: inline-block;
+  font-size: var(--second-font-size)
+}
+
+.emergency-call-button:hover {
+  background-color: #c90000;
+}
+
+.hospital-locator {
+  background-color: white;
+  margin: 0 auto;
+  border-radius: 10px;
+  width: 18rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  text-align: center;
+  font-size: var(--second-font-size);
+  border: 1px solid var(--diabetes-color);
+  padding-bottom: 0.5rem
+}
+
+.hospital-locator h3 {
+  font-size: var(--fourth-font-size);
+  margin: 0.5rem auto;
+}
+
+.hospital-locator input[type="text"] {
+  width: 80%;
+  padding: 0.2rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: var(--second-font-size);
+  margin-bottom: 0.5rem;
+  margin-top: 0;
+}
+
+.hospital-locator button {
+
+  background-color: white;
+  color: var(--diabetes-color);
+  padding: 0.2rem 1rem;
+  border: 1px solid var(--diabetes-color);
+  border-radius: 5px;
+  font-size: var(--third-font-size);
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.hospital-locator button:hover {
+  background-color: var(--diabetes-color);
+  color: white;
+}
+
+.uselocation {
+ margin: 0.5vh auto
+}
+
+/* EMERGENCY TAB END */
