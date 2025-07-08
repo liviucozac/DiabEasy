@@ -799,7 +799,7 @@ return (
 
       {foodAction && (
        <div className="food-suggestions">
-        <p id="suggested-foods">Suggested Foods, Drinks and Snacks</p>
+        <p id="suggested-foods">Suggested Foods, Drinks and Snacks<br/>In order for glycemia level to be lowered, <br/>physical activity is also required</p>
         <div className="food-scroll-area">
          {Object.entries(foodDatabase[foodAction]).map(([groupName, items]) => (
           <div key={groupName}>
@@ -938,8 +938,7 @@ return (
       </div>
     ) : targetGlycemia === "" || totalCarbs === null ? (
       <div className="insulin-result">
-        <p>ℹ️ Complete all fields to calculate dose</p>
-        <p>Enter target glycemia and ensure meal carbs are entered in Food Guide</p>
+        <p>ℹ️ Fill in the target glycemia field above</p>
       </div>
     ) : (() => {
       // Convert everything to mg/dL for calculations
@@ -975,7 +974,7 @@ return (
           <div className="insulin-result">
             <p>⚠️ Low blood sugar warning</p>
             <p>Your blood sugar will rise to ~{displayValue(predictedMgDl)} {displayUnit}</p>
-            <p>Do not use Insulin unless glycemia level rises above 150</p>
+            <p>Do not use Insulin unless glycemia level rises at a normal level</p>
           </div>
         );
       }
@@ -984,7 +983,7 @@ return (
         return (
           <div className="insulin-result warning">
             <p>⚠️ High blood sugar alert</p>
-            <p>Correction dose only: <strong>{correctionInsulin.toFixed(1)} units</strong></p>
+            <p>Correction dose only: <strong>{correctionInsulin.toFixed(0)} units</strong></p>
             <p>Consider delaying food until glucose is below {unit === "mmol/L" ? "11.1" : "200"} {displayUnit}</p>
           </div>
         );
@@ -993,7 +992,7 @@ return (
       return (
         <div className="insulin-result">
           <p className="total-dose">
-            Insulin to be taken: <strong>{totalDose.toFixed(0)} units</strong>
+            Insulin units to be injected: <strong>{totalDose.toFixed(0)} units</strong>
           </p>
           <p className="prediction">
             (Predicted post-meal glycemia without the insulin intake: ~{displayValue(predictedMgDl)} {displayUnit})
