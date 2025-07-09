@@ -29,7 +29,12 @@ const App = () => {
   const [isf, setIsf] = React.useState("");
   const [carbRatio, setCarbRatio] = React.useState("");
   const [targetGlycemia, setTargetGlycemia] = React.useState("");
-
+  const [insulinType, setInsulinType] = React.useState("Rapid-acting");
+  const [customName, setCustomName] = React.useState("");
+  const [units, setUnits] = React.useState("");
+  const [unitType, setUnitType] = React.useState("mg/dL");
+  const [timeTaken, setTimeTaken] = React.useState("");
+  const [entries, setEntries] = React.useState([]);
  
   const addToMeal = (item) => {
     setSelectedFoods((prev) => [...prev, item]);
@@ -331,6 +336,29 @@ const handleUseMyLocation = () => {
   }
 };
 
+   const handleAddEntry = () => {
+    if (!units || !timeTaken || (insulinType === "Other" && !customName)) return;
+
+    const entry = {
+      type: insulinType === "Other" ? customName : insulinType,
+      units,
+      unitType,
+      time: timeTaken,
+    };
+
+    setEntries([...entries, entry]);
+    setInsulinType("Rapid-acting");
+    setCustomName("");
+    setUnits("");
+    setTimeTaken("");
+  };
+
+  const handleReset = () => {
+    setInsulinType("Rapid-acting");
+    setCustomName("");
+    setUnits("");
+    setTimeTaken("");
+  };
  
  // Main render
 return (
@@ -1000,6 +1028,64 @@ return (
         </div>
       );
     })()}
+    <div className="insulin-log">
+      <h3>💉 Insulin Log Entry</h3>
+
+      <div className="insulin-switch">
+        <button id="rapid-long-acting"
+          className={insulinType === "Rapid-acting" ? "active" : ""}
+          onClick={() => setInsulinType("Rapid-acting")}
+        >
+          Rapid-acting
+        </button>
+        <button id="rapid-long-acting"
+          className={insulinType === "Long-acting" ? "active" : ""}
+          onClick={() => setInsulinType("Long-acting")}
+        >
+          Long-acting
+        </button>
+      </div>
+
+      {insulinType === "Other" && (
+        <>
+          <label>Custom Name:</label>
+          <input
+            type="text"
+            value={customName}
+            onChange={(e) => setCustomName(e.target.value)}
+          />
+        </>
+      )}
+
+      <label>Units:</label>
+      <input
+        type="number"
+        min="0"
+        value={units}
+        onChange={(e) => setUnits(e.target.value)}
+      />
+      <label>Time Taken:</label>
+      <input
+        type="time"
+        value={timeTaken}
+        onChange={(e) => setTimeTaken(e.target.value)}
+      />
+
+      <div style={{ marginTop: "1rem" }}>
+        <button onClick={handleAddEntry}>✅ Add Entry</button>{" "}
+        <button onClick={handleReset}>🔁 Reset</button>
+      </div>
+
+      <hr />
+      <h4>📋 Log:</h4>
+      <ul>
+        {entries.map((entry, index) => (
+          <li key={index}>
+            {entry.units} units of {entry.type} ({entry.unitType}) at {entry.time}
+          </li>
+        ))}
+      </ul>
+    </div>
   </div>
 )}
   </div>
