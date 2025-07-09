@@ -20,6 +20,7 @@
 
 html {
   overflow-y: scroll;
+ background-color: white
 }
 
 body {
@@ -592,7 +593,6 @@ body {
   opacity: 0;
   width: 0;
   height: 0;
- 
 }
 
 /* Style the span next to hidden radio */
@@ -999,6 +999,18 @@ body {
 
 .insulin-result {
  background-color: #ffeeed
+}
+
+#rapid-long-acting {
+ 
+  display: inline-block; /* Required for width to work */
+  width: 20vw; /* Fixed width for all buttons */
+  text-align: center; /* Center the text */
+  border-radius: 5px;
+  border: 1px solid var(--diabetes-color);  
+  padding: 0.5vw 1vw; /* Adjusted padding - vertical only */
+  transition: all 0.2s ease;
+  font-size: var(--fourth-font-size);
 }
 
 /* MEDICATION TAB END */
