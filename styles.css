@@ -1001,17 +1001,70 @@ body {
  background-color: #ffeeed
 }
 
-#rapid-long-acting {
- 
-  display: inline-block; /* Required for width to work */
-  width: 20vw; /* Fixed width for all buttons */
-  text-align: center; /* Center the text */
-  border-radius: 5px;
-  border: 1px solid var(--diabetes-color);  
-  padding: 0.5vw 1vw; /* Adjusted padding - vertical only */
-  transition: all 0.2s ease;
+#rapid-long-acting, #units-and-time, #add-entry, #reset-entry, #clear-log {
+  display: inline-block;
+  margin-right: 2vw;
+  border: 1px solid var(--diabetes-color);
+  border-radius: 8px;
+  margin-top: 1vh;
+  margin-bottom: 1vh;
+  height: 5vh;
   font-size: var(--fourth-font-size);
+  padding: 0.5vh 0.5rem;
+  background-color: #fff;
+  color: black;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  max-width: 35vw;
+  
 }
+
+#rapid-long-acting:hover, #units-and-time:hover, #add-entry:hover, #reset-entry:hover, clear-log:hover {
+  background-color: white;
+  color: var(--diabetes-color);
+   height: 5vh;
+}
+
+#rapid-long-acting.active, #add-entry.active, #reset-entry.active, clear-log.active {
+  background-color: var(--diabetes-color);
+  color: #fff;
+  border: 1px solid var(--diabetes-color); 
+   height: 5vh;
+}
+
+.insulin-switch {
+  border: 1px solid var(--diabetes-color);
+  border-radius: 6px;
+  height: 3.5vh;
+  padding: 0 1rem;
+  font-size: var(--fourth-font-size);
+  color: var(--diabetes-color);
+  background-color: #fff;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.insulin-switch:hover {
+  background-color: var(--diabetes-color);
+  color: #fff;
+}
+
+.insulin-log-main-p {
+ display: block;
+ font-weight: bold;
+ margin: 2vh 0
+}
+
+.insulin-log-p {
+  font-size: var(--fourth-font-size);
+  border-left: 4px solid var(--diabetes-color);
+  padding-left: 0.6rem;
+  margin: 0.7vh 0;
+  color: var(--text-color);;
+  margin: 0 auto
+}
+
+
 
 /* MEDICATION TAB END */
 
