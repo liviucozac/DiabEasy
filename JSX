@@ -360,6 +360,11 @@ const handleUseMyLocation = () => {
     setTimeTaken("");
   };
  
+ const handleClearLog = () => {
+  setEntries([]);
+};
+
+ 
  // Main render
 return (
  <div id="container">
@@ -1029,9 +1034,8 @@ return (
       );
     })()}
     <div className="insulin-log">
-      <h3>💉 Insulin Log Entry</h3>
-
-      <div className="insulin-switch">
+      <div className="insulin-log-main-p">Insulin Log Entry</div>
+      <div className="insulin-log-p">Please select the insuline type injected</div>
         <button id="rapid-long-acting"
           className={insulinType === "Rapid-acting" ? "active" : ""}
           onClick={() => setInsulinType("Rapid-acting")}
@@ -1044,36 +1048,24 @@ return (
         >
           Long-acting
         </button>
-      </div>
-
-      {insulinType === "Other" && (
-        <>
-          <label>Custom Name:</label>
-          <input
-            type="text"
-            value={customName}
-            onChange={(e) => setCustomName(e.target.value)}
-          />
-        </>
-      )}
-
-      <label>Units:</label>
-      <input
+      <div className="insulin-log-p">Units:</div>
+      <input id="units-and-time"
         type="number"
         min="0"
         value={units}
         onChange={(e) => setUnits(e.target.value)}
       />
-      <label>Time Taken:</label>
-      <input
+      <div className="insulin-log-p">Time Taken:</div>
+      <input id="units-and-time"
         type="time"
         value={timeTaken}
         onChange={(e) => setTimeTaken(e.target.value)}
       />
 
       <div style={{ marginTop: "1rem" }}>
-        <button onClick={handleAddEntry}>✅ Add Entry</button>{" "}
-        <button onClick={handleReset}>🔁 Reset</button>
+        <button id="add-entry" onClick={handleAddEntry}>✅ Add Entry</button>{" "}
+        <button id="reset-entry" onClick={handleReset}>🔁 Reset</button>
+        <button id="clear-log" onClick={handleClearLog}>🗑️ Clear Log</button>
       </div>
 
       <hr />
@@ -1081,7 +1073,7 @@ return (
       <ul>
         {entries.map((entry, index) => (
           <li key={index}>
-            {entry.units} units of {entry.type} ({entry.unitType}) at {entry.time}
+            {entry.units} units of {entry.type} insulin at {entry.time}
           </li>
         ))}
       </ul>
