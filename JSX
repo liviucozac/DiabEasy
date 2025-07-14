@@ -35,7 +35,9 @@ const App = () => {
   const [unitType, setUnitType] = React.useState("mg/dL");
   const [timeTaken, setTimeTaken] = React.useState("");
   const [entries, setEntries] = React.useState([]);
- 
+  const [showHypoPopup, setShowHypoPopup] = React.useState(false);
+  const [showHyperPopup, setShowHyperPopup] = React.useState(false);
+
   const addToMeal = (item) => {
     setSelectedFoods((prev) => [...prev, item]);
   };
@@ -1093,70 +1095,86 @@ return (
   {activeTab === "Emergency" && (
    <div className="emergency-symptoms">
     <div className="checksymp">
-     Check for Symptoms of <span>Hypoglycemia</span>
+  Check for Symptoms of <span>Hypoglycemia</span>
+</div>
+
+<button className="find-out-btn" onClick={() => setShowHypoPopup(true)}>
+  Find out more
+</button>
+
+{showHypoPopup && (
+  <div className="popup-blur-overlay">
+    <div className="popup-mini-window">
+      <h3>Hypoglycemia Symptoms</h3>
+      <div className="symptom-columns">
+        <div>
+          <p>• Shakiness</p>
+          <p>• Sweating</p>
+          <p>• Dizziness</p>
+          <p>• Hunger</p>
+        </div>
+        <div>
+          <p>• Irritability</p>
+          <p>• Blurry vision</p>
+          <p>• Confusion</p>
+          <p>• Weakness</p>
+        </div>
+      </div>
+      <hr />
+      <p><strong>If you experience any of the symptoms listed above:</strong></p>
+      <p>• Eat or drink 15–20g of fast-acting carbohydrates</p>
+      <p>• Wait 15 minutes, then recheck your blood sugar</p>
+      <p>• If still low, repeat and prepare to seek emergency help</p>
+
+      <button className="close-btn" onClick={() => setShowHypoPopup(false)}>
+        Close
+      </button>
     </div>
-    <div className="symptom-columns">
-     <div>
-      <p>• Shakiness</p>
-      <p>• Sweating</p>
-      <p>• Dizziness</p>
-      <p>• Hunger</p>
-     </div>
-     <div>
-      <p>• Irritability</p>
-      <p>• Blurry vision</p>
-      <p>• Confusion</p>
-      <p>• Weakness</p>
-     </div>
-    </div>
-    <div className="emergency-instruction-box">
-     <p>
-      <strong>If you experience any of the symptoms listed above:</strong>
-     </p>
-     <p>
-      • Eat or drink 15–20g of fast-acting carbohydrates, such as juice, glucose
-      tablets, or candy.
-     </p>
-     <p>• Wait 15 minutes, then recheck your blood sugar.</p>
-     <p>
-      If your blood sugar doesn't improve, repeat the treatment and prepare to
-      seek emergency help.
-     </p>
-    </div>
+  </div>
+)}
+    <div class="horizontalbar"></div>
     <div className="checksymptwo">
-     Check for Symptoms of <span>Hyperglycemia</span>
+  Check for Symptoms of <span>Hyperglycemia</span>
+</div>
+
+<button className="find-out-btn" onClick={() => setShowHyperPopup(true)}>
+  Find out more
+</button>
+
+{showHyperPopup && (
+  <div className="popup-blur-overlay">
+    <div className="popup-mini-window">
+
+      <h3>Hyperglycemia Symptoms</h3>
+
+      <div className="symptom-columns">
+        <div>
+          <p>• Thirst</p>
+          <p>• Urination</p>
+          <p>• Fatigue</p>
+          <p>• Headache</p>
+        </div>
+        <div>
+          <p>• Dryness</p>
+          <p>• Nausea</p>
+          <p>• Focus</p>
+          <p>• Breathlessness</p>
+        </div>
+      </div>
+
+      <hr />
+
+      <p><strong>If you experience any of the symptoms listed above:</strong></p>
+      <p>• Drink plenty of water to stay hydrated and help flush out excess glucose.</p>
+      <p>• Engage in light physical activity (like walking), if safe and appropriate.</p>
+      <p>If your blood sugar doesn't improve, repeat the treatment and prepare to seek emergency help.</p>
+           <button className="close-btn" onClick={() => setShowHyperPopup(false)}>
+        Close
+      </button>
     </div>
-    <div className="symptom-columns">
-     <div>
-      <p>• Increased thirst</p>
-      <p>• Frequent urination</p>
-      <p>• Fatigue</p>
-      <p>• Headache</p>
-     </div>
-     <div>
-      <p>• Dry mouth</p>
-      <p>• Nausea or vomiting</p>
-      <p>• Concentration issues</p>
-      <p>• Shortness of breath</p>
-     </div>
-    </div>
-    <div className="emergency-instruction-box">
-     <p>
-      <strong>If you experience any of the symptoms listed above:</strong>
-     </p>
-     <p>
-      • Drink plenty of water to stay hydrated and help flush out excess
-      glucose.
-     </p>
-     <p>
-      • Engage in light physical activity (like walking), if safe and
-      appropriate.
-     </p>
-     <p>
-      If your blood sugar doesn't improve, repeat the treatment and prepare to
-      seek emergency help.
-     </p>
-    </div>
+  </div>
+)}
+
     <div className="emergency-call-box">
      <h3>Need Immediate Help?</h3>
      <p>
