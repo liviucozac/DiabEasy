@@ -2,6 +2,7 @@
   --uber-font-size: 1.2rem;
   --main-font-size: 1.15rem;
   --diabetes-color: #ec5557;
+  --light-diabetes-color: #ff7577;
   --second-font-size: 1.1rem;
   --third-font-size: 1.05rem;
   --fourth-font-size: 1rem;
@@ -333,48 +334,62 @@ body {
 
 /* --- recommendation start --- */
 
-.recommendations {
-  margin: 0 auto;
-  padding-left: 1rem;
-  border-left: 4px solid #ec5557;
-  text-align: left;
-  width: 19rem;
-  font-size: var(--fourth-font-size);
-  max-height: 30vh;  
-  overflow-y: auto;
- }
 
-.recommendations.low {
-  margin-bottom: 2vh;
-  padding-left: 1rem;
-  border-left: 4px solid #ec5557;
-  text-align: left;
-  width: 19rem;
-  max-height: 35vh;
-  font-size: var(--fourth-font-size);
-  color: black;
-  border-radius: 5px;
-  overflow-y: auto;
-  resize: vertical;
+
+.popup-blur-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4); /* semi-transparent dark background */
+  backdrop-filter: blur(3px); /* blur background */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
 }
 
-.recommendations.high {
-  margin-bottom: 2vh;
-  padding-left: 1rem;
-  border-left: 4px solid #ffc054;
-  text-align: left;
-  width: 19rem;
-  max-height: 33vh;
-  font-size: var(--fourth-font-size);
-  color: black;
-  border-radius: 5px;
+.popup-mini-window {
+  background: #fff;
+  border: 2px solid var(--light-diabetes-color);
+  border-radius: 10px;
+  padding: 20px 25px;
+  padding-top: 10vh;
+  max-width: 90%;
+  width: 400px;
+  max-height: 80%;
   overflow-y: auto;
-  resize: vertical;  
+  font-size: var(--fifth-font-size);
+  text-align: left;
+
+  /* 3D glow and blur-style shadow */
+  box-shadow:
+    0 0 8px var(--diabetes-color),
+    0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
-.recommendations li {
-  margin-bottom: 0.3rem;
-  margin-left: 0.5rem;
+
+.popup-mini-window p:first-of-type, .popup-mini-window span {
+ font-weight: 600;
+ font-size: var(--fourth-font-size)
+}
+
+.popup-mini-window h3 {
+ font-size: var(--fifth-font-size)
+}
+
+.close-btn {
+  position: fixed;
+  top: 14vh;
+  right: 14vw;
+  padding: 8px 16px;
+  background-color: var(--light-diabetes-color);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  z-index: 9999;
 }
 
 /* --- recommendation end --- */
@@ -1056,6 +1071,14 @@ body {
  margin: 2vh 0
 }
 
+.insulin-log-p-mother {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px; /* optional spacing between children */
+  align-items: center; /* optional vertical alignment */
+}
+
+
 .insulin-log-p {
   font-size: var(--fourth-font-size);
   border-left: 4px solid var(--diabetes-color);
@@ -1065,6 +1088,9 @@ body {
   margin: 0 auto
 }
 
+.insulin-log-p-mother .insulin-log-p:last-of-type {
+  border-left: 1px solid transparent;
+}
 
 
 /* MEDICATION TAB END */
@@ -1072,7 +1098,7 @@ body {
 /* EMERGENCY TAB START */
 
 .emergency-symptoms {
- width: 80vw;
+ width: 80%;
  margin: 0 auto;
  font-size: var(--fourth-font-size);
 }
@@ -1243,9 +1269,6 @@ p {margin: 0}
 
 
 .popup-blur-overlay {
-  position: fixed;           /* Full-screen overlay */
-  top: 0;
-  left: 0;
   width: 100%;
   height: 100%;
   backdrop-filter: blur(6px); 
@@ -1265,7 +1288,8 @@ p {margin: 0}
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
   text-align: left;
   position: relative;
-  z-index: 10000;            /* Higher than overlay just in case */
+  z-index: 10000;   
+  height: 50vh;
 }
 
 
