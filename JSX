@@ -2,7 +2,7 @@ const App = () => {
  
     const getCurrentTab = () => {
     const hash = window.location.hash.substring(1); // Remove #
-    return ["Home", "History", "Food Guide", "Medication", "Emergency", "About"].includes(hash) 
+    return ["Home", "History", "Food Guide", "Medication", "Emergency", "Profile"].includes(hash) 
       ? hash 
       : "Home";
   };
@@ -35,7 +35,12 @@ const App = () => {
   const [unitType, setUnitType] = React.useState("mg/dL");
   const [timeTaken, setTimeTaken] = React.useState("");
   const [entries, setEntries] = React.useState([]);
- 
+  const [showHypoPopup, setShowHypoPopup] = React.useState(false);
+  const [showHyperPopup, setShowHyperPopup] = React.useState(false);
+  const [showRecommendationPopup, setShowRecommendationPopup] = React.useState(false);
+  const [showHyperRecPopup, setShowHyperRecPopup] = React.useState(false);
+  const [theme, setTheme] = React.useState("light"); {/* dark theme logo switcher */}
+
   const addToMeal = (item) => {
     setSelectedFoods((prev) => [...prev, item]);
   };
@@ -43,25 +48,44 @@ const App = () => {
  
   // Form submission handler
   const handleSubmit = () => {
-    if (inputValue) {
-      const value = Number(inputValue);
-      const now = new Date();
-      const timestamp = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  if (inputValue) {
+    const value = Number(inputValue);
+    const now = new Date();
+    const timestamp = `${String(now.getDate()).padStart(2, '0')}/${String(
+      now.getMonth() + 1
+    ).padStart(2, '0')}/${now.getFullYear()} ${now.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    })}`;
 
-      const interpretation = getInterpretation(value, unit);
-      setGlucoseValue(value);
-      setHistory(prev => [...prev, { 
-        value, 
-        unit, 
-        timestamp, 
-        interpretation, 
-        fasting,
-        symptoms 
-      }]);
-      setInputValue("");
-      setSymptoms("");
+    const interpretation = getInterpretation(value, unit);
+    setGlucoseValue(value);
+
+    const colorClass = getColorClass(value, unit);
+
+    if (colorClass === 'low') {
+      setShowRecommendationPopup(true);
+    } else if (colorClass === 'high') {
+      setShowHyperRecPopup(true); // 🔥 trigger hyperglycemia popup
     }
-  };
+
+    setHistory(prev => [
+      ...prev,
+      {
+        value,
+        unit,
+        timestamp,
+        interpretation,
+        fasting,
+        symptoms,
+      },
+    ]);
+    setInputValue('');
+    setSymptoms('');
+  }
+};
+
+
 
   // Clear all filters
   const clearFilters = () => {
@@ -364,6 +388,17 @@ const handleUseMyLocation = () => {
   setEntries([]);
 };
 
+ {/* dark theme logo switcher */}
+ React.useEffect(() => {
+  const observer = new MutationObserver(() => {
+    setTheme(document.documentElement.getAttribute("data-theme") || "light");
+  });
+
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  return () => observer.disconnect();
+}, []);
+ {/* dark theme logo switcher */}
  
  // Main render
 return (
@@ -381,7 +416,7 @@ return (
 
   {/* Navigation tabs */}
   <nav className="tabs">
-   {["Home", "History", "Food Guide", "Medication", "Emergency", "About"].map(
+   {["Home", "History", "Food Guide", "Medication", "Emergency", "Profile"].map(
     (tab) => (
      <button
       key={tab}
@@ -489,7 +524,7 @@ return (
      <input
       id="symptoms"
       type="text"
-      maxLength={70}
+      maxLength={30}
       placeholder="e.g. dizziness, insulin intake"
       value={symptoms}
       onChange={(e) => setSymptoms(e.target.value)}
@@ -500,145 +535,87 @@ return (
      Submit
     </button>
 
+    {showRecommendationPopup && (
+  <div className="popup-blur-overlay">
+    <div className="popup-mini-window">
+     <button className="close-btn" onClick={() => setShowRecommendationPopup(false)}>
+        Close
+     </button>
+     <p>Your glycemia is low: <span>{glucoseValue}</span> {unit}</p>
+      <h3>Quick Fixes for Low Blood Sugar</h3>
+      <p>Eat 3–4 glucose tablets (the fastest solution)</p>
+      <p>Drink a small glass of juice (orange or apple works best)</p>
+      <p>Have a spoonful of honey (just swallow it straight)</p>
+      <p>Munch on a few candies (about 6–7 gummies or hard sweets)</p>
+      <p>Try a handful of raisins (if you prefer something natural)</p>
+
+      <hr />
+      <h4>After the First Boost</h4>
+      <p>Wait 15 minutes, then check again – if still low, repeat.</p>
+      <p>Eat something small like a cracker with cheese or yogurt.</p>
+
+      <hr />
+      <h4>If You Feel Really Bad</h4>
+      <p>Don't walk it off – sit down and rest.</p>
+      <p>If you can't swallow, use a glucagon shot or call for help.</p>
+
+      <hr />
+      <h4>Smart Habits</h4>
+      <p>Always keep glucose tabs or candy in your bag.</p>
+      <p>Tell someone nearby if you're feeling shaky.</p>
+    </div>
+  </div>
+)}
+
+    {showHyperRecPopup && (
+     
+  <div className="popup-blur-overlay">
+    <div className="popup-mini-window">
+     <p>Your glycemia is high: <span>{glucoseValue}</span> {unit}</p>
+      <h3>What to Do When Blood Sugar Is High</h3>
+<p>Drink plenty of water – helps flush out excess sugar.</p>
+<p>Take a short walk – gentle movement helps lower levels.</p>
+<p>Check for ketones if over 13.9 mmol/L (250 mg/dL).</p>
+<hr />
+<p>Insulin adjustment:</p>
+<p>Use correction doses if prescribed.</p>
+<p>For pump users: consider temporary basal rate increase.</p>
+<p>Never double-dose without medical advice.</p>
+<p>Avoid sugary foods until levels normalize.</p>
+<hr />
+<h4>If Levels Stay High</h4>
+<p>Test again in 2–3 hours to monitor progress.</p>
+<p>Consult your healthcare provider if levels remain high.</p>
+<p>Check injection sites for issues.</p>
+<hr />
+<h4>When to Seek Help</h4>
+<p>If over 16.7 mmol/L (300 mg/dL) for several hours.</p>
+<p>If experiencing nausea, vomiting, or confusion – possible DKA.</p>
+
+
+      <button className="close-btn" onClick={() => setShowHyperRecPopup(false)}>
+        Close
+      </button>
+    </div>
+  </div>
+)}
+
+
+    
     {glucoseValue !== null && (
-     <div className="result">
-      <p id="value" className="glucose-value">
-       {glucoseValue} {unit}
-      </p>
-      <p
-       id="lowOrHigh"
-       className={`interpretation ${getColorClass(glucoseValue, unit)}`}
-      >
-       {getInterpretation(glucoseValue, unit)}
-      </p>
-      {(getColorClass(glucoseValue, unit) === "low" ||
-       getColorClass(glucoseValue, unit) === "high") && (
-       <ul className={`recommendations ${getColorClass(glucoseValue, unit)}`}>
-        {getColorClass(glucoseValue, unit) === "low" ? (
-         <>
-          <h3>Quick Fixes for Low Blood Sugar</h3>
-          <ul>
-           <li>
-            <strong>Eat 3-4 glucose tablets</strong> (the fastest solution)
-           </li>
-           <li>
-            <strong>Drink a small glass of juice</strong> (orange or apple works
-            best)
-           </li>
-           <li>
-            <strong>Have a spoonful of honey</strong> (just swallow it straight)
-           </li>
-           <li>
-            <strong>Munch on a few candies</strong> (about 6-7 gummies or hard
-            sweets)
-           </li>
-           <li>
-            <strong>Try a handful of raisins</strong> (if you prefer something
-            natural)
-           </li>
-          </ul>
+  <div className="result">
+    <p id="value" className="glucose-value">
+      {glucoseValue} {unit}
+    </p>
+    <p
+      id="lowOrHigh"
+      className={`interpretation ${getColorClass(glucoseValue, unit)}`}
+    >
+      {getInterpretation(glucoseValue, unit)}
+    </p>
+  </div>
+)}
 
-          <h3>After the First Boost</h3>
-          <ul>
-           <li>
-            <strong>Wait 15 minutes</strong>, then check again – if still low,
-            repeat.
-           </li>
-           <li>
-            <strong>Eat something small</strong> like a cracker with cheese or a
-            yogurt to keep levels steady.
-           </li>
-          </ul>
-
-          <h3>If You Feel Really Bad</h3>
-          <ul>
-           <li>
-            <strong>Don't walk it off</strong> – sit down and rest.{" "}
-           </li>
-           <li>
-            <strong>If you can't swallow</strong>, use a glucagon shot (or
-            someone should call for help).
-           </li>
-          </ul>
-
-          <h3>Smart Habits</h3>
-          <ul>
-           <li>
-            <strong>Always keep glucose tabs or candy in your bag</strong> – you
-            never know.
-           </li>
-           <li>
-            <strong>Tell someone nearby</strong> if you're feeling shaky – don't
-            tough it out alone.
-           </li>
-          </ul>
-          {/* Rest of low blood sugar content */}
-         </>
-        ) : (
-         <>
-          <h3>What to Do When Blood Sugar Is High</h3>
-          <ul>
-           <li>
-            <strong>Drink plenty of water</strong> (helps flush out excess
-            sugar)
-           </li>
-           <li>
-            <strong>Take a short walk</strong> (gentle movement helps lower
-            levels)
-           </li>
-           <li>
-            <strong>Check for ketones</strong> if over 13.9 mmol/L (250 mg/dL)
-           </li>
-           <li>
-            <strong>💉 Insulin adjustment:</strong>
-            <br />- <em>If using correction doses:</em> Calculate based on your
-            insulin sensitivity factor
-            <br />- <em>For pump users:</em> Consider a temporary basal rate
-            increase
-            <br />- <em>Never double-dose</em> without medical advice
-           </li>
-           <li>
-            <strong>Avoid sugary foods</strong> until levels normalize
-           </li>
-          </ul>
-
-          <h3>If Levels Stay High</h3>
-          <ul>
-           <li>
-            <strong>Test again in 2-3 hours</strong> to monitor progress
-           </li>
-           <li>
-            <strong>💉 Insulin follow-up:</strong>
-            <br />
-            - If still high after correction, consult your healthcare provider
-            <br />- Check injection sites for lumps/absorption issues
-           </li>
-           <li>
-            <strong>Consider adjusting your next meal</strong> - reduce carbs
-           </li>
-          </ul>
-
-          <h3>When to Seek Help</h3>
-          <ul>
-           <li>
-            <strong>If over 16.7 mmol/L (300 mg/dL) for several hours</strong>{" "}
-            despite insulin
-           </li>
-           <li>
-            <strong>If you have moderate/large ketones</strong> with high
-            glucose
-           </li>
-           <li>
-            <strong>If experiencing nausea, vomiting, or confusion</strong>{" "}
-            (possible DKA)
-           </li>
-          </ul>
-         </>
-        )}
-       </ul>
-      )}
-     </div>
-    )}
    </div>
   )}
 
@@ -960,6 +937,8 @@ return (
       )}
     </div>
 
+    {/* MEDICATION TAB START */}
+    
     {activeTab === "Medication" && (
   <div className="medication-tab">
     {/* ... (keep previous header and explanation) ... */}
@@ -1048,19 +1027,21 @@ return (
         >
           Long-acting
         </button>
-      <div className="insulin-log-p">Units:</div>
+     <div className="insulin-log-p-mother"> 
+      <div className="insulin-log-p">Units:
       <input id="units-and-time"
         type="number"
         min="0"
         value={units}
         onChange={(e) => setUnits(e.target.value)}
-      />
-      <div className="insulin-log-p">Time Taken:</div>
+      /></div>
+      <div className="insulin-log-p">Time Taken:
       <input id="units-and-time"
         type="time"
         value={timeTaken}
         onChange={(e) => setTimeTaken(e.target.value)}
-      />
+      /></div>
+      </div>
 
       <div style={{ marginTop: "1rem" }}>
         <button id="add-entry" onClick={handleAddEntry}>✅ Add Entry</button>{" "}
@@ -1092,74 +1073,9 @@ return (
 
   {activeTab === "Emergency" && (
    <div className="emergency-symptoms">
-    <div className="checksymp">
-     Check for Symptoms of <span>Hypoglycemia</span>
-    </div>
-    <div className="symptom-columns">
-     <div>
-      <p>• Shakiness</p>
-      <p>• Sweating</p>
-      <p>• Dizziness</p>
-      <p>• Hunger</p>
-     </div>
-     <div>
-      <p>• Irritability</p>
-      <p>• Blurry vision</p>
-      <p>• Confusion</p>
-      <p>• Weakness</p>
-     </div>
-    </div>
-    <div className="emergency-instruction-box">
-     <p>
-      <strong>If you experience any of the symptoms listed above:</strong>
-     </p>
-     <p>
-      • Eat or drink 15–20g of fast-acting carbohydrates, such as juice, glucose
-      tablets, or candy.
-     </p>
-     <p>• Wait 15 minutes, then recheck your blood sugar.</p>
-     <p>
-      If your blood sugar doesn't improve, repeat the treatment and prepare to
-      seek emergency help.
-     </p>
-    </div>
-    <div className="checksymptwo">
-     Check for Symptoms of <span>Hyperglycemia</span>
-    </div>
-    <div className="symptom-columns">
-     <div>
-      <p>• Increased thirst</p>
-      <p>• Frequent urination</p>
-      <p>• Fatigue</p>
-      <p>• Headache</p>
-     </div>
-     <div>
-      <p>• Dry mouth</p>
-      <p>• Nausea or vomiting</p>
-      <p>• Concentration issues</p>
-      <p>• Shortness of breath</p>
-     </div>
-    </div>
-    <div className="emergency-instruction-box">
-     <p>
-      <strong>If you experience any of the symptoms listed above:</strong>
-     </p>
-     <p>
-      • Drink plenty of water to stay hydrated and help flush out excess
-      glucose.
-     </p>
-     <p>
-      • Engage in light physical activity (like walking), if safe and
-      appropriate.
-     </p>
-     <p>
-      If your blood sugar doesn't improve, repeat the treatment and prepare to
-      seek emergency help.
-     </p>
-    </div>
-    <div className="emergency-call-box">
+        <div className="emergency-call-box">
      <h3>Need Immediate Help?</h3>
-     <p>
+     <p id="if-condition">
       If your condition doesn’t improve or you feel it’s an emergency, please
       contact emergency services.
      </p>
@@ -1180,9 +1096,108 @@ return (
      <div className = "uselocation">Or use your current location</div>
        <button onClick={handleUseMyLocation}>Use My Location</button>
    </div>
+    <div className="checksymp">
+  Check for Symptoms of <span>Hypoglycemia</span>
+</div>
+
+<button className="find-out-btn" onClick={() => setShowHypoPopup(true)}>
+  Find out more
+</button>
+
+{showHypoPopup && (
+  <div className="popup-blur-overlay">
+    <div className="popup-mini-window">
+      <h3>Hypoglycemia Symptoms</h3>
+      <div className="symptom-columns">
+        <div>
+          <p>• Shakiness</p>
+          <p>• Sweating</p>
+          <p>• Dizziness</p>
+          <p>• Hunger</p>
+        </div>
+        <div>
+          <p>• Irritability</p>
+          <p>• Blurry vision</p>
+          <p>• Confusion</p>
+          <p>• Weakness</p>
+        </div>
+      </div>
+      <hr />
+      <p>If you experience any of the symptoms listed above:</p>
+      <p>• Eat or drink 15–20g of fast-acting carbohydrates</p>
+      <p>• Wait 15 minutes, then recheck your blood sugar</p>
+      <p>• If still low, repeat and prepare to seek emergency help</p>
+
+      <button className="close-btn" onClick={() => setShowHypoPopup(false)}>
+        Close
+      </button>
+    </div>
+  </div>
+)}
+    <div class="horizontalbar"></div>
+    <div className="checksymptwo">
+  Check for Symptoms of <span>Hyperglycemia</span>
+</div>
+
+<button className="find-out-btn" onClick={() => setShowHyperPopup(true)}>
+  Find out more
+</button>
+
+{showHyperPopup && (
+  <div className="popup-blur-overlay">
+    <div className="popup-mini-window">
+
+      <h3>Hyperglycemia Symptoms</h3>
+
+      <div className="symptom-columns">
+        <div>
+          <p>• Thirst</p>
+          <p>• Urination</p>
+          <p>• Fatigue</p>
+          <p>• Headache</p>
+        </div>
+        <div>
+          <p>• Dryness</p>
+          <p>• Nausea</p>
+          <p>• Focus</p>
+          <p>• Breathlessness</p>
+        </div>
+      </div>
+
+      <hr />
+
+      <p>If you experience any of the symptoms listed above:</p>
+      <p>Drink plenty of water to stay hydrated and help flush out excess glucose.</p>
+      <p>Engage in light physical activity (like walking), if safe and appropriate.</p>
+      <p>If your blood sugar doesn't improve, repeat the treatment and prepare to seek emergency help.</p>
+           <button className="close-btn" onClick={() => setShowHyperPopup(false)}>
+        Close
+      </button>
+    </div>
+  </div>
+)}
    </div>
   )}
  
+{activeTab === "Profile" && (
+  <div className="profile-tab">
+    <h3 className="profile-title">User Profile</h3>
+    <p className="simplep">Choose your preferred theme:</p>
+    <div className="theme-options">
+      <button onClick={() => document.documentElement.setAttribute("data-theme", "light")}>
+        ☀️ Light
+      </button>
+      <button onClick={() => document.documentElement.setAttribute("data-theme", "dark")}>
+        🌙 Dark
+      </button>
+      <button onClick={() => document.documentElement.setAttribute("data-theme", "eye")}>
+        👁️ Eye Protection
+      </button>
+    </div>
+  </div>
+)}
+
+
   {/* EMERGENCY TAB END */}
  </div>
 );
