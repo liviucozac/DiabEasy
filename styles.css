@@ -6,6 +6,7 @@
   --third-font-size: 1.05rem;
   --fourth-font-size: 1rem;
   --fifth-font-size: 0.80rem;
+  --dark-diabetes-color: #80231c;
 }
 
 
@@ -20,15 +21,15 @@
 
 html {
   overflow-y: scroll;
- background-color: white
+  background-color: var(--bg-color);
 }
 
 body {
   font-family: Arial, sans-serif;
   border-radius: 5px;
+   color: var(--text-color);
+
 }
-
-
 
 #container {
   background-color: transparent;
@@ -39,21 +40,51 @@ body {
   min-height: 90vh;
   border-radius: 5px;
   box-sizing: border-box;
-  border: 1px solid green;
 }
 
 .logo {
-  display: block;
-  margin: 2vh auto;
-  width: 7rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 auto;
 }
+
+.logo-img {
+  width: 50px;
+  height: auto;
+}
+
+.diabeasy {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--diabetes-color);
+}
+
+.diabeasy {
+  margin: 0;
+  padding: 0.25rem 0.6rem;
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: var(--diabetes-color);
+  border-radius: 8px;
+  background-color: transparent;
+  width: max-content;
+  font-family: inherit;
+}
+
 
 #appDescription {
   text-align: center;
   margin: 1vh 0 1vh 0;
   font-size: var(--second-font-size);
-  color: #333;
- 
+  color: #333
+}
+
+[data-theme="dark"] #appDescription {
+  text-align: center;
+  margin: 1vh 0 1vh 0;
+  font-size: var(--second-font-size);
+  color: white
 }
 
 .highlight {
@@ -85,11 +116,6 @@ body {
   border-right: none;
 }
 
-.tab:hover {
-  border: 1px solid #ec5557;
-  background-color: #e0e0e0;
-}
-
 .tab.active {
   background-color: #ec5557;
   color: white;
@@ -105,7 +131,14 @@ body {
   font-size: var(--fourth-font-size);
 }
 
-/* --- mg/dL mmol/L start --- */
+[data-theme="dark"]
+.textAboveInput {
+  color: var(--text-color);
+}
+
+/* --- text above input end --- */
+
+/* --- home tab .unit-toggle start --- */
 
 .unit-toggle {
   display: flex;
@@ -113,8 +146,11 @@ body {
   justify-content: center;
   height: 1.5rem;
   margin: 0 auto;
-
 }
+
+/* --- home tab .unit-toggle end --- */
+
+/* --- home tab .unit-label start --- */
 
 .unit-label {
   padding: 0.3rem 0.8rem;
@@ -127,18 +163,16 @@ body {
 }
 
 .unit-label.active {
-  color: #ec5557;
-  background: transparent;
-  border-radius: 10px;
+ color: var(--diabetes-color)
 }
 
-.unit-label:hover {
-  color: var(--diabetes-color);
+[data-theme="dark"] .unit-label.active {
+ color: var(--dark-diabetes-color)
 }
 
-/* --- mg/dL mmol/L end --- */
+/* --- home tab .unit-label end --- */
 
-/* --- slider start --- */
+/* --- slider, knob start --- */
 
 .slider {
   width: 35px;
@@ -164,7 +198,7 @@ body {
   left: 21px;
 }
 
-/* --- slider end --- */
+/* --- slider, knob end --- */
 
 /* --- display glycemia start --- */
 
@@ -177,16 +211,7 @@ body {
   padding: 0.2rem;
   margin-top: -0.5rem;
   border-radius: 5px;
-  border: 1px solid #ccc;
-  font-size: var(--fourth-font-size);
-}
-
-#glycemiaValue:hover {
-  width: 45%;
-  padding: 0.2rem;
-  margin-top: -0.5rem;
-  border-radius: 5px;
-  border: 1px solid var(--diabetes-color);
+  border: 2px solid #ccc;
   font-size: var(--fourth-font-size);
 }
 
@@ -195,10 +220,21 @@ body {
   padding: 0.2rem;
   margin-top: -0.5rem;
   border-radius: 5px;
-  border: 1px solid var(--diabetes-color);
+  border: 2px solid var(--diabetes-color);
   font-size: var(--fourth-font-size);
   outline: none;
+  }
+
+[data-theme="dark"] #glycemiaValue {
+  border: 2px solid transparent !important;
+  background-color: var(--tab-bg);
+ color: white
 }
+
+[data-theme="dark"] #glycemiaValue:focus {
+  border: 2px solid var(--dark-diabetes-color) !important;
+}
+
 
 /* --- display glycemia end-- */
 
@@ -207,8 +243,8 @@ body {
 .fasting-group {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.5rem;
-  margin: 1vh auto 1vh auto;
+  gap: 1rem;
+  margin: 2vh auto;
   max: 80vw;
 }
 
@@ -221,13 +257,14 @@ body {
   border: 1px solid transparent;
   transition: border 0.2s ease;
   font-size: var(--fourth-font-size);
-  height: 3.5vh;
+  height: 6vh;
   width: 10rem;
   margin: 0 auto;
- box-shadow: 0 2px 0 var(--diabetes-color)
+  box-shadow: 0 2px 0 var(--diabetes-color);
+  padding-left: 1rem;
 }
 
-.fasting-group label:hover {
+.fasting-group label.active {
   border: 1px solid #ec5557;
   background-color: #fafafa;
 }
@@ -235,46 +272,61 @@ body {
 .fasting-group input[type="radio"] {
   margin-right: 0.3rem;
   accent-color: var(--diabetes-color);
-  transform: scale(0.8);
+  transform: scale(1.4);
   height: 2vh;
+  display: yes;
+}
+
+[data-theme="dark"] .fasting-group input[type="radio"] {
+  accent-color: var(--dark-diabetes-color);
+}
+
+[data-theme="dark"] .fasting-group label {
+  height: 6vh;
+  box-shadow: 0 2px 0 var(--dark-diabetes-color);
+  background-color: #2C2C2C;
+}
+
+[data-theme="dark"] .close-btn {
+ background: transparent;
+ border: 2px solid var(--dark-diabetes-color);
+ border-radius: 6px
 }
 
 /* --- fasting radio btns end --- */
 
+/* home tab symptoms start */
+
 .symptomsText {
   font-size: var(--fourth-font-size);
-  maxLength={100};
-  margin: 0.5vh auto 1vh auto;
-}
+  }
 
-#symptoms {
+ .symptoms {
   width: 45%;
   padding: 0.2rem;
   margin: 0.5vh auto 1vh auto;
   border-radius: 5px;
   border: 1px solid #ccc;
   font-size: var(--fifth-font-size);
-  height: 2.5vh
+  height: 2.5vh;
 }
 
-#symptoms:hover {
-  width: 45%;
-  padding: 0.2rem;
-  border-radius: 5px;
-  border: 1px solid var(--diabetes-color);
-  font-size: var(--fifth-font-size);
+.symptoms:focus {
+  border: 1px solid var(--diabetes-color) !important;
 }
 
-#symptoms:focus {
-  width: 45%;
-  padding: 0.2rem;
-  border-radius: 5px;
-  border: 1px solid var(--diabetes-color);
-  font-size: var(--fifth-font-size);
-  outline: none;
+[data-theme="dark"] .symptoms {
+ background-color: var(--tab-bg);
+ border: 1px solid transparent
 }
 
-/* --- submit button start --- */
+[data-theme="dark"] .symptoms:focus {
+  border: 1px solid var(--dark-diabetes-color) !important;
+}
+
+/* home tab symptoms end */
+
+/* --- home tab submit button start --- */
 
 #submit-button {
   padding: 0.2rem 0.8rem ;
@@ -288,14 +340,24 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-#submit-button:hover {
+#submit-button:focus {
   background-color: var(--diabetes-color);
   color: white;
   margin: 0.5vh auto 1vh auto;
 }
 
-/* --- submit button end --- */ 
+[data-theme="dark"] #submit-button {
+ background-color: var(--tab-bg);
+ color: white
+}
 
+[data-theme="dark"] #submit-button:focus {
+ background-color: var(--dark-diabetes-color)
+}
+
+/* --- home tab submit button end --- */ 
+
+/* HISTR
 
 /* --- value start --- */
 
@@ -303,7 +365,7 @@ body {
   margin-bottom: -0.5rem;
   margin-top: 0.1rem;
   font-size: var(--second-font-size;
-  font-weight)
+  font-weight) /* DO NOT CHANGE THIS */
 }
 
 /* --- result end --- */
@@ -312,7 +374,7 @@ body {
 
 .interpretation {
   font-size: var(--second-font-size);
-  margin-top: 0.4rem;
+  margin-top: 0.7rem;
   font-weight: bold;
   height: 2rem;
 }
@@ -331,62 +393,9 @@ body {
 
 /* --- interpretation end --- */
 
-/* --- recommendation start --- */
-
-.recommendations {
-  margin: 0 auto;
-  padding-left: 1rem;
-  border-left: 4px solid #ec5557;
-  text-align: left;
-  width: 19rem;
-  font-size: var(--fourth-font-size);
-  max-height: 30vh;  
-  overflow-y: auto;
- }
-
-.recommendations.low {
-  margin-bottom: 2vh;
-  padding-left: 1rem;
-  border-left: 4px solid #ec5557;
-  text-align: left;
-  width: 19rem;
-  max-height: 35vh;
-  font-size: var(--fourth-font-size);
-  color: black;
-  border-radius: 5px;
-  overflow-y: auto;
-  resize: vertical;
-}
-
-.recommendations.high {
-  margin-bottom: 2vh;
-  padding-left: 1rem;
-  border-left: 4px solid #ffc054;
-  text-align: left;
-  width: 19rem;
-  max-height: 33vh;
-  font-size: var(--fourth-font-size);
-  color: black;
-  border-radius: 5px;
-  overflow-y: auto;
-  resize: vertical;  
-}
-
-.recommendations li {
-  margin-bottom: 0.3rem;
-  margin-left: 0.5rem;
-}
-
-/* --- recommendation end --- */
-
-
+/* --- HOME TAB END --- */
 
 /* --- HISTORY start --- */
-
-/* --- history tab start --- */
-
-
-
 
 /* --- filter stuff start ---*/
 
@@ -416,7 +425,6 @@ body {
   align-items: center;
   flex: 1;
   max-height: 50px;
- 
 }
 
 .filter-label {
@@ -432,16 +440,14 @@ body {
   font-size: var(--fourth-font-size);
   width: 100%;
   outline: none;
-  transition: border-color 0.2s ease;
-}
-
-.filter-input:hover {
-  border-color: var(--diabetes-color);
 }
 
 .filter-input:focus {
-  border-color: var(--diabetes-color);
-  box-shadow: 0 0 0 2px rgba(236, 85, 87, 0.1);
+ border: 2px solid var(--diabetes-color)
+}
+
+[data-theme="dark"] .filter-input:focus {
+ border: 2px solid var(--dark-diabetes-color) !important
 }
 
 .date-input {
@@ -471,10 +477,31 @@ body {
   margin: 0 auto 1vh;
 }
 
-.filter-btn:hover {
-  background-color: var(--diabetes-color);
-  color: white;
+
+.filter-btn:active {
+ background: var(--diabetes-color);
+ color: white;
+ transition: background 0s ease, color 0s ease;
 }
+
+[data-theme="dark"] .filter-btn {
+ background: #1d1f20;
+ border: 2px solid var(--dark-diabetes-color);
+ color: white;
+}
+
+[data-theme="dark"] .filter-btn:active {
+  background: var(--dark-diabetes-color);
+ color: white;
+ transition: background 0s ease, color 0s ease;
+}
+
+[data-theme="dark"] .filter-input {
+  background-color: var(--input-bg);
+  color: var(--text-color);
+  border: 1px solid #555;
+}
+
 
 /* --- filter stuff end ---*/
 
@@ -495,31 +522,51 @@ body {
   color: #666;
 }
 
-.history-item {
+.history-item, [data-theme="dark"] .history-item {
   background-color: #faf0f0;
   border-radius: 5px;
   line-height: 1.5;
   color: black;
   border-top: 1px solid transparent;
   font-size: var(--fifth-font-size);
+  height: 6.5vh;
+  width: 90%;
   text-align: center;
-  height: 5vh;
-  margin-left: -7.5vw
 }
 
 .history-item.low {
   border-top-color: red;
 }
 
+[data-theme="dark"] .history-item.low {
+  background-color: var(--dark-diabetes-color);
+  color: white;
+}
+
+[data-theme="dark"] .history-item.low .timestamp, 
+[data-theme="dark"] .history-item.normal .timestamp, 
+[data-theme="dark"] .history-item.high .timestamp {
+ color: white
+}
+
 .history-item.normal {
   border-top-color: green;
   background-color: #f2fff2;
+}
 
+[data-theme="dark"] .history-item.normal {
+ background-color: #004003;
+ color: white
 }
 
 .history-item.high {
   border-top-color: orange;
   background-color: #fff8eb
+}
+
+[data-theme="dark"] .history-item.high {
+ background-color: #735400;
+ color: white
 }
 
 .timestamp {
@@ -535,7 +582,7 @@ body {
 .symptoms-display {
   font-size: var(--fifth-font-size);
   width: max-content;
-  margin: 0 auto
+  margin: 0 auto;
 }
 
 
@@ -563,8 +610,7 @@ body {
   max-width: 100%;
   margin-bottom: 0.1rem;
   padding-top: 0.5vh;
- 
-}
+ }
 
 .notes {
   margin: 0 auto;
@@ -616,10 +662,9 @@ body {
   border-color: var(--diabetes-color);
 }
 
-/* Hover effects */
-.unit-filter label:hover span {
-  color: var(--diabetes-color);
-  border-color: var(--diabetes-color);
+[data-theme="dark"] .unit-filter input[type="radio"]:checked + span {
+  border-color: var(--dark-diabetes-color);
+  background-color: var(--dark-diabetes-color);
 }
 
 .filtervaluetext {
@@ -669,7 +714,7 @@ body {
   margin-top: 0.8vh;
   margin-bottom: 1.5vh;
   padding: 0;
-  width: max-content;
+  width: 75%;
 }
 
 .lrm input[type="radio"] {
@@ -681,12 +726,25 @@ body {
 
 .lrm label span {
   display: inline-block; /* Required for width to work */
-  width: 15vw; /* Fixed width for all buttons */
+  max-width: 100%; /* Fixed width for all buttons */
   text-align: center; /* Center the text */
   border-radius: 5px;
-  border: 1px solid var(--diabetes-color);  
-  padding: 0.5vw 0; /* Adjusted padding - vertical only */
-  transition: all 0.2s ease;
+  border: 2px solid var(--diabetes-color);  
+  padding: 0.25vw 1vw; /* Adjusted padding - vertical only */
+}
+
+[data-theme="dark"] .lrm label span {
+ border: 2px solid var(--dark-diabetes-color)
+}
+
+[data-theme="dark"] .lrm input[type="radio"] span {
+ border: 2px solid var(--dark-diabetes-color)
+}
+
+[data-theme="dark"] .lrm input[type="radio"]:checked + span {
+ background-color: var(--dark-diabetes-color);
+ border: 2px solid var(--dark-diabetes-color);
+ font-weight: none;
 }
 
 .lrm input[type="radio"]:checked + span {
@@ -696,10 +754,7 @@ body {
   border-color: var(--diabetes-color);
 }
 
-.lrm label:hover span {
-  color: var(--diabetes-color);
-  border-color: var(--diabetes-color);
-}
+/* Food Guide food list start */
 
 .food-suggestions {
   background-color: white;
@@ -707,7 +762,11 @@ body {
   height: 30vh;
   margin: 0 auto;
   display: flex;
- flex-direction: column
+  flex-direction: column;
+}
+
+[data-theme="dark"] .food-suggestions {
+ background-color: var(--tab-bg)
 }
 
 
@@ -787,19 +846,70 @@ body {
   padding: 0 0.4rem;
 }
 
-.addtomeal:hover {
+.addtomeal:focus {
   background-color: var(--diabetes-color);
   color: white;
-  border-color: var(--diabetes-color);
 }
 
-.addtomeal:active {
-  background-color: var(--diabetes-color);
+[data-theme="dark"] .addtomeal:focus {
+  background-color: var(--dark-diabetes-color);
   color: white;
 }
+
+[data-theme="dark"] .addtomeal {
+  background-color: var(--tab-bg);
+  color: white;
+  border-color: #888;
+}
+
+[data-theme="dark"] .food-suggestions {
+  background-color: var(--tab-bg);
+}
+
+[data-theme="dark"] .food-suggestions li {
+  background-color: var(--tab-bg);
+  box-shadow: none;
+}
+
+[data-theme="dark"] .food-suggestions li strong {
+  color: white;
+}
+
+[data-theme="dark"] .food-suggestions li span {
+  color: #ccc;
+  border-bottom: 1px solid #555;
+}
+
+[data-theme="dark"] #foodfamily {
+  color: #ddd;
+  border-bottom: 1px solid #444;
+}
+
+
+
+/* Scrollbar container */
+.food-scroll-area::-webkit-scrollbar {
+  width: 8px;
+}
+
+/* Scrollbar track */
+.food-scroll-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Scrollbar thumb */
+.food-scroll-area::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 5px;
+}
+
+
+/* Food Guide food list end */
+
+/* Food Guide displayed meal start */
 
 .meal-display {
-  background: white;
+  background: transparent;
   width: 21rem;
   margin: 1rem auto;
   overflow-y: auto;
@@ -833,21 +943,32 @@ body {
   font-size: var(--fourth-font-size);
   padding: 0 0.5rem;
   cursor: pointer;
-  border: 1px solid gray;
+  border: 2px solid var(--diabetes-color);
   border-radius: 5px;
   transition: background-color 0.2s ease, color 0.2s ease;
   margin-right: 1vw
 }
 
-.remove-btn:hover,
 .remove-btn:active {
   color: white;
   background: var(--diabetes-color);
   border-color: var(--diabetes-color);
 }
 
+[data-theme="dark"] .remove-btn {
+  background: var(--tab-bg);
+  color: white;
+ border: none
+}
+
+[data-theme="dark"] .remove-btn:active {
+  background: var(--dark-diabetes-color);
+  color: white;
+}
+
+
 .meal-totals {
-  background-color: white;
+  background-color: transparent;
   border-radius: 5px;
   width: 19rem;
   text-align: left;
@@ -855,13 +976,24 @@ body {
   grid-template-columns: repeat(2, 1fr);
   gap: 0.1rem;
   margin: 0 auto 0.6vh auto;
- 
 }
 
 .meal-totals div {
   font-size: var(--fifth-font-size);
   max-width: max-content;
 }
+
+[data-theme="dark"] .meal-totals {
+  background-color: #121212;
+}
+
+[data-theme="dark"] .meal-totals div {
+  color: white;
+}
+
+/* meal totals end */
+
+/* selected items start */
 
 .selectedItems {
   font-size: var(--fourth-font-size);
@@ -876,7 +1008,28 @@ body {
 
 .horizontalbar {
   border-bottom: 1px solid gray;
- width: 100%
+ width: 100%;
+ margin-top: 0.5rem
+}
+
+[data-theme="dark"] .horizontalbar {
+ border-bottom: 1px solid var(--tab-bg)
+}
+
+[data-theme="dark"] .meal-display::-webkit-scrollbar,
+[data-theme="dark"] .meal-totals::-webkit-scrollbar {
+  width: 8px;
+}
+
+[data-theme="dark"] .meal-display::-webkit-scrollbar-thumb,
+[data-theme="dark"] .meal-totals::-webkit-scrollbar-thumb {
+  background-color: #555;
+  border-radius: 5px;
+}
+
+[data-theme="dark"] .meal-display::-webkit-scrollbar-track,
+[data-theme="dark"] .meal-totals::-webkit-scrollbar-track {
+  background: var(--tab-bg);
 }
 
 /* MEDICATION TAB START */
@@ -887,15 +1040,23 @@ body {
 }
 
 .medication-title {
-  color: #333;
+  color: black;
   font-size: var(--fourth-font-size);
   text-align: center;
 }
 
+[data-theme="dark"] .medication-title {
+ color: white
+}
+
 .explanation {
   font-size: var(--fourth-font-size);
-  color: #555;
+  color: black;
   margin-bottom: -1vh;
+}
+
+[data-theme="dark"] .explanation {
+ color: white
 }
 
 .insulin-inputs {
@@ -914,23 +1075,32 @@ body {
 
 .insulin-inputs input {
   padding: 8px;
-  border: 1px solid #ccc;
+  border: 2px solid #ccc;
   border-radius: 6px;
   margin-top: 5px;
   font-size: 1rem;
 }
 
 .insulin-result {
-  background: #f3f9f9;
+  background-color: #ffeeed;
   border-left: 4px solid var(--diabetes-color);
   padding: 1vw;
   border-radius: 6px;
   color: #333;
 }
 
+[data-theme="dark"] .insulin-result {
+  background-color: #332323;
+}
+
 .insulin-result p {
   margin: 6px 0;
   font-size: 0.95rem;
+}
+
+[data-theme="dark"] .insulin-result p {
+  background-color: #332323;
+  color: white
 }
 
 .total-dose {
@@ -947,67 +1117,170 @@ body {
 }
 
 .error-message {
- font-size: var(--fourth-font-size);
- margin: 1vh 0
+  font-size: var(--fourth-font-size);
+  margin: 1vh 0;
 }
-
 
 #target-glycemia {
-  width: 25vw;
+  width: 15vw;
   padding: 0.2rem;
   border-radius: 5px;
-  border: 1px solid #ccc;
+  border: 2px solid var(--diabetes-color);
   font-size: var(--fourth-font-size);
-  margin-top: 0
-}
-
-#target-glycemia:hover {
-  width: 25vw;
-  padding: 0.2rem;
-  border-radius: 5px;
-  border: 1px solid var(--diabetes-color);
-  font-size: var(--fourth-font-size);
+  margin-top: 0;
+  background-color: var(--tab-bg)
 }
 
 #target-glycemia:focus {
-  width: 25vw;
-  padding: 0.2rem;
-  border-radius: 5px;
-  border: 1px solid var(--diabetes-color);
-  font-size: var(--fourth-font-size);
+  border: 2px solid var(--diabetes-color);
   outline: none;
 }
 
 .targetglycemia-reset {
- display: grid;
- grid-template-columns: repeat(2, 1fr);
- height: vh
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 0.4rem; /* adjust if needed */
 }
+
 
 .reset-btn {
-  width: 30vw;
-  padding: 0.2rem;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-  font-size: var(--fourth-font-size);
-  margin-left: -14vw
-}
-
-.reset-btn:hover {
-  border: 1px solid var(--diabetes-color);
-}
-
-.insulin-result {
- background-color: #ffeeed
-}
-
-#rapid-long-acting, #units-and-time, #add-entry, #reset-entry, #clear-log {
-  display: inline-block;
-  margin-right: 2vw;
-  border: 1px solid var(--diabetes-color);
+  padding: 0.3rem 0.4rem;
+  border: 2px solid var(--diabetes-color);
+  background-color: transparent;
+  color: var(--text-color);
   border-radius: 8px;
-  margin-top: 1vh;
-  margin-bottom: 1vh;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+  width: max-content;
+}
+
+[data-theme="dark"] .reset-btn:focus {
+ background-color: var(--dark-diabetes-color)
+}
+
+[data-theme="dark"] .reset-btn, [data-theme="dark"] #target-glycemia {
+ background-color: var(--tab-bg);
+ color: white;
+ border: 2px solid var(--dark-diabetes-color)
+}
+
+/* insulin units increase decrease start */
+
+#insulin-units {
+  display: flex;
+  align-items: center;
+  max-width: 1rem;
+ height: 5vh;
+ margin: 0.5vh 0
+}
+
+#insulin-units button {
+  background-color: var(--diabetes-color);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  width: 2rem;
+  height: 2rem;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+#insulin-units button:active {
+  background-color: var(--dark-diabetes-color);
+}
+
+#insulin-units span {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #333;
+  min-width: 1.5rem;
+  text-align: center;
+}
+
+[data-theme="dark"] #insulin-units {
+  background-color: var(--tab-bg);
+}
+
+[data-theme="dark"] #insulin-units button {
+  background-color: var(--dark-diabetes-color);
+  color: white;
+}
+
+[data-theme="dark"] #insulin-units button:active {
+  background-color: #5a1510; /* optional darker variant */
+}
+
+[data-theme="dark"] #insulin-units span {
+  color: white;
+}
+
+/* insulin units increase decrease end */
+
+/* insuline time taken start */
+
+#insulin-time {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  align-items: center;
+}
+
+#insulin-time button {
+  background-color: #fff;
+  border: 2px solid var(--diabetes-color);
+  color: var(--diabetes-color);
+  padding: 0.3rem 0.7rem;
+  font-size: var(--fifth-font-size);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+#insulin-time button:active {
+  background-color: var(--diabetes-color);
+  color: white;
+}
+
+#insulin-time input {
+  padding: 0.35rem 0.6rem;
+  border: 2px solid var(--diabetes-color);
+  border-radius: 8px;
+  font-size: var(--fifth-font-size);
+  width: 7rem;
+  color: black;
+  background-color: #fff;
+}
+
+[data-theme="dark"] #insulin-time button {
+  background-color: var(--tab-bg);
+  border-color: var(--dark-diabetes-color);
+  color: white;
+}
+
+[data-theme="dark"] #insulin-time button:active {
+  background-color: var(--dark-diabetes-color);
+  color: white;
+}
+
+[data-theme="dark"] #insulin-time input {
+  background-color: var(--tab-bg);
+  border-color: var(--dark-diabetes-color);
+  color: white;
+}
+
+/* insuline time taken end */
+
+#rapid-long-acting,
+#add-entry,
+#reset-entry,
+#clear-log {
+  display: inline-block;
+  border: 2px solid var(--diabetes-color);
+  border-radius: 8px;
+  margin: 1vh 2vw;
   height: 5vh;
   font-size: var(--fourth-font-size);
   padding: 0.5vh 0.5rem;
@@ -1016,24 +1289,46 @@ body {
   transition: all 0.2s ease-in-out;
   cursor: pointer;
   max-width: 35vw;
-  
 }
 
-#rapid-long-acting:hover, #units-and-time:hover, #add-entry:hover, #reset-entry:hover, clear-log:hover {
-  background-color: white;
-  color: var(--diabetes-color);
-   height: 5vh;
+[data-theme="dark"] #rapid-long-acting,
+[data-theme="dark"] #add-entry,
+[data-theme="dark"] #reset-entry,
+[data-theme="dark"] #clear-log {
+  background-color: var(--tab-bg);
+  border: 2px solid var(--dark-diabetes-color);
+ color: white
 }
 
-#rapid-long-acting.active, #add-entry.active, #reset-entry.active, clear-log.active {
+#rapid-long-acting.active,
+#add-entry.active,
+#reset-entry.active,
+#clear-log.active {
   background-color: var(--diabetes-color);
   color: #fff;
-  border: 1px solid var(--diabetes-color); 
-   height: 5vh;
+  border: 2px solid var(--diabetes-color);
+  height: 5vh;
+}
+
+#add-entry:active,
+#reset-entry:active,
+#clear-log:active {
+  background-color: var(--diabetes-color);
+  color: white;
+  border: 2px solid var(--diabetes-color);
+}
+
+[data-theme="dark"] #add-entry:active,
+[data-theme="dark"] #reset-entry:active,
+[data-theme="dark"] #clear-log:active,
+[data-theme="dark"] #rapid-long-acting.active {
+  background-color: var(--dark-diabetes-color);
+  color: white;
+  border: 2px solid var(--dark-diabetes-color);
 }
 
 .insulin-switch {
-  border: 1px solid var(--diabetes-color);
+  border: 2px solid var(--diabetes-color);
   border-radius: 6px;
   height: 3.5vh;
   padding: 0 1rem;
@@ -1044,15 +1339,10 @@ body {
   cursor: pointer;
 }
 
-.insulin-switch:hover {
-  background-color: var(--diabetes-color);
-  color: #fff;
-}
-
 .insulin-log-main-p {
- display: block;
- font-weight: bold;
- margin: 2vh 0
+  display: block;
+  font-weight: bold;
+  margin: 2vh 0;
 }
 
 .insulin-log-p {
@@ -1060,27 +1350,52 @@ body {
   border-left: 4px solid var(--diabetes-color);
   padding-left: 0.6rem;
   margin: 0.7vh 0;
-  color: var(--text-color);;
-  margin: 0 auto
+  color: var(--text-color);
+  margin: 0 auto;
 }
 
+/* number increase-decrease button start */
 
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield; /* Firefox */
+  appearance: textfield;      /* Modern browsers */
+}
+
+[data-theme="dark"] input[type="number"]::-webkit-inner-spin-button,
+[data-theme="dark"] input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+[data-theme="dark"] input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* number increase-decrease button end */
 
 /* MEDICATION TAB END */
 
 /* EMERGENCY TAB START */
 
 .emergency-symptoms {
- width: 80vw;
- margin: 0 auto;
- font-size: var(--fourth-font-size);
+  width: 90%;
+  margin: 0 auto;
+  font-size: var(--fourth-font-size);
 }
 
-.checksymp, .checksymptwo {
- margin: 0.4rem auto 0 0;
- font-size: var(--fourth-font-size);
- font-weight: bold;
- text-align: center;
+.checksymp,
+.checksymptwo {
+  margin: 0.4rem auto 0 0;
+  font-size: var(--fourth-font-size);
+  font-weight: bold;
+  text-align: center;
 }
 
 .symptom-columns {
@@ -1089,13 +1404,16 @@ body {
   max-width: 20rem;
   margin: 0 auto;
   font-size: var(--fourth-font-size);
-  
 }
 
 .symptom-columns p {
   font-size: var(--fourth-font-size);
   margin: 0.1rem 0;
   color: #333;
+}
+
+[data-theme="dark"] .symptom-columns p {
+  color: white;
 }
 
 .symptom-columns div {
@@ -1105,42 +1423,50 @@ body {
 }
 
 .checksymp span {
- color: red;
- }
+  color: red;
+}
 
 .emergency-instruction-box.high {
- color: black;
-
+  color: black;
 }
 
 .emergency-instruction-box p:last-of-type {
- border-bottom: 1px solid rgba(128, 128, 128, 0.3);
- padding-bottom: 0.4rem;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.3);
+  padding-bottom: 0.4rem;
 }
 
 .checksymptwo span {
- color: #ff7700;
- font-weight: bold;
+  color: #ff7700;
+  font-weight: bold;
 }
 
-p {margin: 0}
+p {
+  margin: 0;
+}
 
 .emergency-call-box {
-  background-color: #fff8f8;
-  border: 1px solid var(--diabetes-color);
+  background-color: transparent;
   border-radius: 8px;
-  padding: 0 0 0.4rem 0 ;
+  padding: 0 0 0.4rem 0;
   margin: 1vh auto;
   width: 90%;
   text-align: center;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
+[data-theme="dark"] .emergency-call-box {
+  border: none;
+}
+
 .emergency-call-box h3 {
   font-size: var(--third-font-size);
   color: var(--diabetes-color);
   margin-bottom: 0.5rem;
-  margin-top: 0.2rem
+  margin-top: 0.2rem;
+}
+
+[data-theme="dark"] .emergency-call-box h3 {
+  color: var(--diabetes-color);
 }
 
 .emergency-call-box p {
@@ -1149,10 +1475,14 @@ p {margin: 0}
   margin-bottom: 0.3rem;
 }
 
+[data-theme="dark"] .emergency-call-box p {
+  color: white;
+ opacity: 1;
+}
+
 .emergency-call-box p:nth-of-type(2) {
- margin-top: 0.3vh;
- color: red;
- margin-bottom: 0
+  margin-top: 0.3vh;
+  margin-bottom: 0;
 }
 
 .emergency-call-button {
@@ -1162,13 +1492,13 @@ p {margin: 0}
   border-radius: 6px;
   text-decoration: none;
   font-weight: bold;
-  transition: background-color 0.3s ease;
   display: inline-block;
-  font-size: var(--second-font-size)
+  font-size: var(--second-font-size);
 }
 
-.emergency-call-button:hover {
-  background-color: #c90000;
+[data-theme="dark"] .emergency-call-button {
+  background-color: var(--dark-diabetes-color);
+  color: white;
 }
 
 .hospital-locator {
@@ -1179,8 +1509,14 @@ p {margin: 0}
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
   text-align: center;
   font-size: var(--second-font-size);
-  border: 1px solid var(--diabetes-color);
-  padding-bottom: 0.5rem
+  border: 2px solid var(--diabetes-color);
+  padding-bottom: 0.5rem;
+}
+
+[data-theme="dark"] .hospital-locator {
+  background-color: #222;
+  border: 2px solid var(--dark-diabetes-color);
+  color: white;
 }
 
 .hospital-locator h3 {
@@ -1191,31 +1527,270 @@ p {margin: 0}
 .hospital-locator input[type="text"] {
   width: 80%;
   padding: 0.2rem;
-  border: 1px solid #ccc;
+  border: 2px solid #ccc;
   border-radius: 5px;
   font-size: var(--second-font-size);
   margin-bottom: 0.5rem;
   margin-top: 0;
+  background-color: white;
+}
+
+[data-theme="dark"] .hospital-locator input[type="text"] {
+  border-width: 2px;
+  border-style: solid;
+  border-color: var(--dark-diabetes-color);
+  background-color: #333;
+  color: white;
 }
 
 .hospital-locator button {
   background-color: white;
   color: var(--diabetes-color);
   padding: 0.2rem 1rem;
-  border: 1px solid var(--diabetes-color);
+  border: 2px solid var(--diabetes-color);
   border-radius: 5px;
   font-size: var(--third-font-size);
   cursor: pointer;
-  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.hospital-locator button:hover {
-  background-color: var(--diabetes-color);
+[data-theme="dark"] .hospital-locator button {
+  background-color: #222;
   color: white;
+  border: 2px solid var(--dark-diabetes-color) !important;
 }
+
 
 .uselocation {
- margin: 0.5vh auto
+  margin: 0.5vh auto;
+}
+
+/* emergency pop-up */
+
+.find-out-btn {
+  background-color: white;
+  color: var(--diabetes-color);
+  border: 2px solid var(--diabetes-color);
+  border-radius: 5px;
+  padding: 0.3rem 0.8rem;
+  font-size: var(--fourth-font-size);
+  font-weight: bold;
+  cursor: pointer;
+  display: block;
+  margin: 0.4rem auto 0 auto;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="dark"] .find-out-btn {
+  background-color: #2c2c2c;
+  color: white;
+  border: 2px solid var(--dark-diabetes-color);
+}
+
+.checksymp,
+.checksymptwo {
+  margin: 0.4rem auto 0 0;
+  font-size: var(--fourth-font-size);
+  font-weight: 500;
+  text-align: center;
+}
+
+.checksymp span {
+  color: #ff6666; /* light red */
+}
+
+.checksymptwo span {
+  color: #ff9933; /* light orange */
+  font-weight: 500;
+}
+
+.popup-blur-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  backdrop-filter: blur(6px);
+  background-color: rgba(0, 0, 0, 0.3);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.popup-mini-window {
+  background: white;
+  padding: 1.8rem 2rem;
+  border-radius: 16px;
+  width: 50%;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.25);
+  text-align: left;
+  font-family: inherit;
+  font-size: var(--fourth-font-size);
+  color: #2c2c2c;
+  border: 2px solid #ec5557;
+  position: relative;
+  z-index: 10000;
+  line-height: 1.5;
+  animation: fadeInScale 0.3s ease-out;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+[data-theme="dark"] .popup-mini-window {
+  background: #1a1a1a;
+  color: white;
+  border: 2px solid var(--dark-diabetes-color);
+}
+
+.close-btn {
+  top: 12px;
+  right: 16px;
+  background: white;
+  border: 2px solid var(--diabetes-color);
+  font-size: var(--third-font-size);
+  color: #ec5557;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0.2rem;
+  position: fixed;
+  z-index: 10001;
+  margin-top: 2vh;
+  margin-right: 14vw;
+  border-radius: 6px;
+}
+
+[data-theme="dark"] .close-btn {
+  background: #222;
+  color: white;
+  border: 2px solid var(--dark-diabetes-color);
+}
+
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* EMERGENCY TAB END */
+
+
+
+/* EMERGENCY TAB END */
+
+/* PROFILE TAB START */
+
+:root {
+  --bg-color: white;
+  --text-color: #222;
+  /* existing variables stay */
+}
+
+/* DARK MODE */
+
+/* === DARK MODE OVERRIDE === */
+/* === DARK MODE BORDERLESS === */
+[data-theme="dark"] {
+  --bg-color: #121212;
+  --text-color: #e0e0e0;
+  --card-bg: #1e1e1e;
+  --input-bg: #1f1f1f;
+  --hover-bg: #2a2a2a;
+  --tab-bg: #2c2c2c;
+  --tab-active-bg: var(--dark-diabetes-color);
+  --popup-bg: #1c1c1c;
+}
+
+/* Base background & text */
+[data-theme="dark"] body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+
+/* Tabs */
+[data-theme="dark"] .tab {
+  background-color: var(--tab-bg);
+  color: var(--text-color);
+  border: none;
+}
+
+[data-theme="dark"] .tab.active {
+  background-color: var(--tab-active-bg);
+  color: white;
+}
+
+/* Popup */
+[data-theme="dark"] .popup-mini-window {
+  background-color: var(--popup-bg);
+  color: var(--text-color);
+  border: none;
+}
+
+/* PROFILE TAB START */
+
+.profile-tab {
+  display: flex;
+  flex-direction: column;
+}
+
+.theme-options,
+.language-options,
+.unit-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.3rem auto;
+}
+
+.theme-options button, .language-options button, button.defaultGlucoseSelector  {
+  padding: 0.2rem 0.4rem;
+  border: 2px solid var(--diabetes-color);
+  background-color: transparent;
+  color: var(--text-color);
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.language-options button {
+ padding: 0.2rem 1rem
+}
+
+/* language start */
+
+
+.language-options, .unit-toggle {
+  display: flex;
+  gap: 0.3rem'
+}
+
+.profile-tab > .unit-toggle {
+ margin-right: 7.7rem
+}
+
+.profile-tab > .simplep,
+.profile-tab > .theme-options,
+.profile-tab > .language-options,
+.profile-tab > .unit-toggle,
+[data-theme="dark"] .profile-tab > .simplep,
+[data-theme="dark"] .profile-tab > .theme-options,
+[data-theme="dark"] .profile-tab > .language-options.
+[data-theme="dark"] .profile-tab > .unit-toggle {
+  margin-top: 0.3rem
+}
+
+[data-theme="dark"] .theme-options button,
+[data-theme="dark"] .language-options button,
+[data-theme="dark"] button.defaultGlucoseSelector {
+  border: 2px solid var(--dark-diabetes-color) !important;
+}
+
+/* PROFILE TAB END */
+
