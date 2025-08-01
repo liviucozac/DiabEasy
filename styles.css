@@ -43,7 +43,7 @@ body {
   border-radius: 2rem;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
   box-sizing: border-box;
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 #container::before {
@@ -1705,8 +1705,8 @@ p {
 }
 
 .close-btn {
-  top: 12px;
-  right: 16px;
+  top: 45px;
+  right: 28px;
   background: white;
   border: 2px solid var(--diabetes-color);
   font-size: var(--third-font-size);
