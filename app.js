@@ -1,3 +1,11 @@
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+
+import en from './locales/en.json';
+import ro from './locales/ro.json';
+import it from './locales/it.json';
+import fr from './locales/fr.json';
+
 const App = () => {
  const getCurrentTab = () => {
   const hash = window.location.hash.substring(1); // Remove #
@@ -52,7 +60,11 @@ const App = () => {
   /* dark theme logo switcher */
  }
  const [defaultGlucoseUnit, setDefaultGlucoseUnit] = React.useState("mg/dL");
+ const [insulinUnits, setInsulinUnits] = React.useState(0);
+ const [authMode, setAuthMode] = React.useState("signIn");
+ 
 
+ 
  const addToMeal = (item) => {
   setSelectedFoods((prev) => [...prev, item]);
  };
@@ -2627,9 +2639,9 @@ const App = () => {
          <div className="insulin-log-p">
           Units:
           <div id="insulin-units">
-            <button onClick={() => setUnits(units > 0 ? units - 1 : 0)}>-</button>
-            <span palceholder="0">{units}</span>
-            <button onClick={() => setUnits(units + 1)}>+</button>
+            <button id="decrease-units" onClick={() => setInsulinUnits(insulinUnits - 1)}>-</button>
+            <span id="units-display">{insulinUnits}</span>
+            <button id="increase-units" onClick={() => setInsulinUnits(insulinUnits + 1)}>+</button>
           </div>
         </div>
 
@@ -2648,7 +2660,7 @@ const App = () => {
           </div>
         </div>
         </div>
-        <div style={{ marginTop: "1rem" }}>
+        <div className = "add-reset-clear" style={{ marginTop: "1rem" }}>
          <button id="add-entry" onClick={handleAddEntry}>
           ✅ Add Entry
          </button>{" "}
@@ -2841,6 +2853,44 @@ const App = () => {
        mmol/L
       </button>
      </div>
+     <div id="auth-container">
+  <h2>{authMode === "signIn" ? "Sign In" : "Sign Up"}</h2>
+
+  <form>
+    {authMode === "signUp" && (
+      <>
+        <input type="text" placeholder="Name" />
+        <input type="text" placeholder="Surname" />
+      </>
+    )}
+    <input type="email" placeholder="Email" />
+    <input type="password" placeholder="Password" />
+    {authMode === "signUp" && (
+      <input type="password" placeholder="Confirm Password" />
+    )}
+    <button type="submit">
+      {authMode === "signIn" ? "Sign In" : "Sign Up"}
+    </button>
+  </form>
+
+  <p>
+    {authMode === "signIn" ? "Don't have an account?" : "Already have an account?"}
+    <button
+      type="button"
+      onClick={() =>
+        setAuthMode(authMode === "signIn" ? "signUp" : "signIn")
+      }
+    >
+      {authMode === "signIn" ? "Sign Up" : "Sign In"}
+    </button>
+    <p className="forgot-link">
+      <button type="button" onClick={() => alert("Password reset not implemented yet")}>
+        Forgot password?
+      </button>
+    </p>
+  </p>
+</div>
+
     </div>
    )}
 
