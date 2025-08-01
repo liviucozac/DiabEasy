@@ -1771,7 +1771,6 @@ p {
 }
 
 .theme-options,
-.language-options,
 .unit-toggle {
   display: flex;
   align-items: center;
@@ -1779,7 +1778,7 @@ p {
   margin: 0.3rem auto;
 }
 
-.theme-options button, .language-options button, button.defaultGlucoseSelector  {
+.theme-options button, button.defaultGlucoseSelector  {
   padding: 0.2rem 0.4rem;
   border: 2px solid var(--diabetes-color);
   background-color: transparent;
@@ -1789,21 +1788,30 @@ p {
   font-weight: bold;
 }
 
-.language-options button {
- padding: 0.2rem 1rem
+.defaultGlucoseSelector:focus {
+ color: white;
+ background-color: var(--diabetes-color)
 }
 
-/* language start */
-
-
-.language-options, .unit-toggle {
-  display: flex;
-  gap: 0.3rem'
+[data-theme="dark"] .defaultGlucoseSelector {
+ border: 2px solid var(--dark-diabetes-color);
 }
 
-.profile-tab > .unit-toggle {
- margin-right: 7.7rem
+[data-theme="dark"] .defaultGlucoseSelector:focus {
+ background-color: var(--dark-diabetes-color)
 }
+
+.profile-unit-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem; /* optional spacing */
+  margin: 0 auto; /* centers the whole grid if it has fixed width */
+  width: max-content; /* shrink to fit */
+}
+
+
 
 .profile-tab > .simplep,
 .profile-tab > .theme-options,
