@@ -1,11 +1,3 @@
-import i18n from 'i18next';
-import { initReactI18next } from 'react-i18next';
-
-import en from './locales/en.json';
-import ro from './locales/ro.json';
-import it from './locales/it.json';
-import fr from './locales/fr.json';
-
 const App = () => {
  const getCurrentTab = () => {
   const hash = window.location.hash.substring(1); // Remove #
@@ -62,9 +54,7 @@ const App = () => {
  const [defaultGlucoseUnit, setDefaultGlucoseUnit] = React.useState("mg/dL");
  const [insulinUnits, setInsulinUnits] = React.useState(0);
  const [authMode, setAuthMode] = React.useState("signIn");
- 
 
- 
  const addToMeal = (item) => {
   setSelectedFoods((prev) => [...prev, item]);
  };
@@ -1870,21 +1860,22 @@ const App = () => {
  };
 
  const handleAddEntry = () => {
-  if (!units || !timeTaken || (insulinType === "Other" && !customName)) return;
 
-  const entry = {
-   type: insulinType === "Other" ? customName : insulinType,
-   units,
-   unitType,
-   time: timeTaken
+  if (!insulinUnits || !timeTaken || !insulinType) return;
+
+  const newEntry = {
+
+    units: insulinUnits,
+
+    time: timeTaken,
+
+    type: insulinType,
+
   };
 
-  setEntries([...entries, entry]);
-  setInsulinType("Rapid-acting");
-  setCustomName("");
-  setUnits("");
-  setTimeTaken("");
- };
+  setEntries((prevEntries) => [...prevEntries, newEntry]);
+
+};
 
  const handleReset = () => {
   setInsulinType("Rapid-acting");
@@ -2829,17 +2820,8 @@ const App = () => {
        🌙 Dark
       </button>
      </div>
-     
-     <p className="simplep">Select your language:</p>
-     <div className="language-options">
-      <button onClick={() => changeLang("en")}>EN</button>
-      <button onClick={() => changeLang("fr")}>FR</button>
-      <button onClick={() => changeLang("it")}>IT</button>
-      <button onClick={() => changeLang("ro")}>RO</button>
-     </div>
-     
      <p className="simplep">Preferred glucose unit:</p>
-     <div className="unit-toggle">
+     <div className="profile-unit-toggle">
       <button 
        className="defaultGlucoseSelector"
        onClick={() => setDefaultGlucoseUnit("mg/dL")}
