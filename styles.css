@@ -9,62 +9,6 @@
   --dark-diabetes-color: #80231c;
 }
 
-/* Ultra-small phones (≤320px wide) */
-@media (max-width: 320px) {
-  .fasting-group,
-  .tabs {
-    grid-template-columns: 1fr;
-  }
-
-  #container {
-    padding: 0.5rem;
-    border-width: 2px;
-  }
-
-  .tab {
-    font-size: 0.85rem;
-  }
-
-  #glycemiaValue,
-  .symptoms {
-    width: 80%;
-  }
-}
-
-/* Small phones (≤375px wide) */
-@media (max-width: 375px) {
-  .tab {
-    font-size: 0.9rem;
-  }
-
-  #glycemiaValue,
-  .symptoms {
-    width: 70%;
-  }
-}
-
-/* Small tablets (≤768px) */
-@media (max-width: 768px) {
-  .food-scroll-area,
-  .meal-display,
-  .meal-totals {
-    width: 90%;
-  }
-
-  .hospital-locator {
-    width: 90%;
-  }
-}
-
-/* Larger tablets / small laptops (≤1024px) */
-@media (max-width: 1024px) {
-  #container {
-    max-width: 100%;
-    height: auto;
-    border-radius: 1rem;
-  }
-}
-
 
 @media (max-width: 400px) {
   .fasting-group {
@@ -74,6 +18,12 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
 
 html {
   overflow-y: scroll;
@@ -90,7 +40,7 @@ body {
 #container {
   position: relative;
   width: 100%;
-  max-width: 420px;
+  max-width: 100vw%;
   height: 100vh;
   margin: 0 auto;
   padding: 1rem;
