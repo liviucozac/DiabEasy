@@ -487,11 +487,12 @@ body {
 
 .history-filters {
   margin-top: 0.8rem;
+ width: 100%
 }
 
 .filtervalues {
   margin: 0 auto;
-  max-width: max-content;
+  max-width: 100%;
   font-size: var(--fourth-font-size);
   margin-bottom: -20px;
 }
@@ -508,6 +509,7 @@ body {
   font-size: var(--fourth-font-size);
   margin-top: 0.2vh;
   margin-bottom: 0.2rem;
+  width: 45vw;
 }
 
 .filter-input {
@@ -515,7 +517,7 @@ body {
   border-radius: 4px;
   border: 1px solid #ccc;
   font-size: var(--fourth-font-size);
-  width: 100%;
+  width: 45vw;
   outline: none;
 }
 
@@ -662,9 +664,20 @@ body {
   margin: 0 auto;
 }
 
-
 .history-tab {
   margin-top: 1rem;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  border: 2px solid black;
+  padding: 0 1rem;
+}
+
+.history-tab * {
+  box-sizing: border-box;
+  max-width: 100%;
+  word-break: break-word;
 }
 
 .history-title {
@@ -673,44 +686,45 @@ body {
   margin-bottom: 0.8rem;
 }
 
-.history-list {
-  list-style: none;
-  margin: 0 auto;
-  overflow-y: auto;
-  max-height: 25vh;
+/* Filters layout */
+.history-filters,
+.numberandtext {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 1rem;
 }
 
-#history-result {
-  font-size: var(--fifth-font-size);
-  max-height: 1rem;
-  padding-bottom: 0.8rem;
-  max-width: 100%;
-  margin-bottom: 0.1rem;
-  padding-top: 0.5vh;
- }
-
-.notes {
-  margin: 0 auto;
-  margin-top: -0.2rem;
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 140px; /* grow, shrink, min width */
+  max-width: 180px;
 }
 
-/* --- history measurement filters start --- */
+.filter-label {
+  margin-bottom: 0.3rem;
+  font-size: 0.9rem;
+}
 
-/* Parent container */
+.filter-input {
+  padding: 0.4rem;
+  font-size: 1rem;
+  width: 100%;
+}
+
+/* Radio buttons */
 .unit-filter {
   display: flex;
-  justify-content: center;
-  gap: 0.7rem;
-  margin: 1rem auto;
-  font-size: var(--second-font-size);
   flex-wrap: wrap;
-  margin-top: 0.8vh;
-  margin-bottom: 1.5vh;
-  padding: 0;
-  width: max-content;
+  justify-content: center;
+  gap: 0.6rem;
+  margin: 1rem auto;
+  width: 100%;
 }
 
-/* Hide actual radio button but keep it accessible */
 .unit-filter input[type="radio"] {
   position: absolute;
   opacity: 0;
@@ -718,43 +732,75 @@ body {
   height: 0;
 }
 
-/* Style the span next to hidden radio */
 .unit-filter label span {
-  display: inline-block; /* Required for width to work */
-  width: 80px; /* Fixed width for all buttons */
-  text-align: center; /* Center the text */
+  display: inline-block;
+  min-width: 5rem;
+  padding: 0.5rem 1rem;
+  text-align: center;
   border-radius: 5px;
-  border: 1px solid var(--diabetes-color);  
-  padding: 0.5vw 1vw; /* Adjusted padding - vertical only */
-  transition: all 0.2s ease;
+  border: 1px solid var(--diabetes-color);
   font-size: var(--fourth-font-size);
- 
+  transition: all 0.2s ease;
 }
 
-/* Change label style when radio is checked */
 .unit-filter input[type="radio"]:checked + span {
   background-color: var(--diabetes-color);
   color: white;
   font-weight: bold;
-  border-color: var(--diabetes-color);
 }
 
 [data-theme="dark"] .unit-filter input[type="radio"]:checked + span {
-  border-color: var(--dark-diabetes-color);
   background-color: var(--dark-diabetes-color);
+  border-color: var(--dark-diabetes-color);
 }
 
-.filtervaluetext {
- font-size: var(--fourth-font-size);
- text-align: center;
- margin: 0 auto;
- margin-top: 2.5vh;
- width: max-content;
+/* Filter buttons */
+.filter-buttons {
+  text-align: center;
+  margin-bottom: 1rem;
 }
 
+.filter-btn {
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  width: 100%;
+  max-width: 240px;
+}
+
+/* Labels and feedback */
+.filtervaluetext,
 .filtervalue {
-  font-size: var(--second-font-size)
+  text-align: center;
+  width: 100%;
+  font-size: var(--fourth-font-size);
+  margin-top: 1rem;
 }
+
+/* History list */
+.history-list {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  max-height: 25vh;
+  overflow-y: auto;
+  width: 100%;
+}
+
+#history-result {
+  font-size: var(--fifth-font-size);
+  padding: 0.5vh 0;
+  margin-bottom: 0.1rem;
+  width: 100%;
+}
+
+.notes {
+  margin: 0.5rem auto 0;
+  font-size: 0.85rem;
+  width: 100%;
+  padding: 0 0.5rem;
+}
+
 
 /* --- history measurement filters end --- */
 
@@ -1551,11 +1597,13 @@ p {
 .emergency-call-box {
   background-color: transparent;
   border-radius: 8px;
-  padding: 0 0 0.4rem 0;
+  padding: 0 1rem 0.4rem 1rem;
   margin: 1vh auto;
-  width: 90%;
+  width: 100%;
+  max-width: 90vw;
   text-align: center;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
 }
 
 [data-theme="dark"] .emergency-call-box {
