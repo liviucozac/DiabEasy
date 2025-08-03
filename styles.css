@@ -670,7 +670,6 @@ body {
   max-width: 100vw;
   overflow-x: hidden;
   box-sizing: border-box;
-  border: 2px solid black;
   padding: 0 1rem;
 }
 
