@@ -2653,13 +2653,13 @@ const App = () => {
         </div>
         <div className = "add-reset-clear" style={{ marginTop: "1rem" }}>
          <button id="add-entry" onClick={handleAddEntry}>
-          ✅ Add Entry
+          Add Entry
          </button>{" "}
          <button id="reset-entry" onClick={handleReset}>
-          🔁 Reset
+          Reset
          </button>
          <button id="clear-log" onClick={handleClearLog}>
-          🗑️ Clear Log
+          Clear Log
          </button>
         </div>
 
