@@ -918,10 +918,8 @@ body {
   overflow-y: auto;
   padding: 2px 0.5rem;   /* 2px vertical padding, 0.5rem right padding */
   max-height: 45vh;
-  width: 22rem;  
-  margin: 0 5%;
-  border-top: 2px solid rgb(114, 114, 114);
-  border-bottom: 2px solid rgb(114, 114, 114)}
+  width: 21rem;  
+  margin: 0 5%}
 
 
 #foodfamily {

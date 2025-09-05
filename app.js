@@ -2337,6 +2337,9 @@ const App = () => {
           In order for glycemia level to be lowered, <br />
           physical activity is also required
          </p>
+         <p style={{ margin: "5% auto", textAlign: "center", display: "block" }}>
+           Select your meal items, then scroll to see your nutritional facts and your planned meal
+         </p>
          <div className="food-scroll-area">
           {Object.entries(foodDatabase[foodAction]).map(
            ([groupName, items]) => (
@@ -2378,9 +2381,6 @@ const App = () => {
        No glycemia input. Enter a value on the Home tab.
       </p>
      )}
-     <p style={{ fontSize: "var(--fourth-font-size)", margin: "5% auto", textAlign: "center", display: "block" }}>
-       Select your meal items, then scroll to see your nutritional facts and your planned meal
-     </p>
      {currentMeal.length > 0 && (
       <div className="meal-section">
        <div class="horizontalbar"></div>
