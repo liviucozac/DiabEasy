@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 b9920acf9c92a00075cc9981e3732e68fd66a79b liviucozac <liviucozac28@gmail.com> 1774377655 +0200	commit (initial): Initial commit
+b9920acf9c92a00075cc9981e3732e68fd66a79b f8ebffc3798f6e0b9f0faaf0c4914eab901f5c67 liviucozac <liviucozac28@gmail.com> 1774897387 +0300	commit: Initial commit — DiabEasy 2.0
+f8ebffc3798f6e0b9f0faaf0c4914eab901f5c67 0000000000000000000000000000000000000000 liviucozac <liviucozac28@gmail.com> 1774900560 +0300	Branch: renamed refs/heads/master to refs/heads/main
+0000000000000000000000000000000000000000 f8ebffc3798f6e0b9f0faaf0c4914eab901f5c67 liviucozac <liviucozac28@gmail.com> 1774900560 +0300	Branch: renamed refs/heads/master to refs/heads/main
+f8ebffc3798f6e0b9f0faaf0c4914eab901f5c67 ddf0f000d70060ceb6b4bc4ca30fb5888606b75e liviucozac <liviucozac28@gmail.com> 1774902521 +0300	commit: Add info cards, empty state fills, SOS screen, Meds improvements
+ddf0f000d70060ceb6b4bc4ca30fb5888606b75e 437799fd121ae01c755ef6d1806aad33373d5fd5 liviucozac <liviucozac28@gmail.com> 1774982678 +0300	commit: Add Profile & Settings tab, update store with user profile and insulin defaults
