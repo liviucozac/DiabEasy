@@ -1,11 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
-  ScrollView, Modal, StyleSheet, KeyboardAvoidingView, Platform, Alert,
+  ScrollView, Modal, StyleSheet, KeyboardAvoidingView,
+  Platform, Alert, Animated,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useGlucoseStore } from '../store/glucoseStore';
 import type { GlucoseEntry } from '../store/glucoseStore';
 import { useTheme } from '../context/AppContext';
+import { PressBtn } from '../components/PressBtn';
+import { Shadow } from 'react-native-shadow-2';
+import { ShadowBtn } from '../components/ShadowBtn';
+
 
 type Unit = 'mg/dL' | 'mmol/L';
 type FastingType = 'Fasting' | 'Pre-meal' | 'Post-meal' | 'Random' | 'Bedtime' | 'Post-exercise' | '';
@@ -44,14 +50,16 @@ function formatTimestamp(): string {
   return `${dd}/${mm}/${yyyy} ${time}`;
 }
 
+// ─── Quick Stats ──────────────────────────────────────────────────────────────
+
 function QuickStats({ unit }: { unit: string }) {
   const { history } = useGlucoseStore();
-  const { colors }  = useTheme();
+  const { colors, isDark }  = useTheme();
 
   const now = new Date();
   const dd  = String(now.getDate()).padStart(2, '0');
   const mm  = String(now.getMonth() + 1).padStart(2, '0');
-  const todayPrefix = `${dd}/${mm}/${now.getFullYear()}`;
+  const todayPrefix  = `${dd}/${mm}/${now.getFullYear()}`;
   const todayEntries = history.filter((e) => e.timestamp.startsWith(todayPrefix) && e.unit === unit);
 
   const count   = todayEntries.length;
@@ -61,7 +69,10 @@ function QuickStats({ unit }: { unit: string }) {
   const lows    = todayEntries.filter((e) => getColorClass(e.value, e.unit as Unit) === 'low').length;
 
   return (
-    <View style={[styles.statsCard, { borderColor: colors.border, backgroundColor: colors.bgCard }]}>
+    <View style={[styles.statsCard, {
+      borderColor: colors.border, backgroundColor: colors.bgCard,
+      shadowColor: isDark ? '#000' : '#6070a0', shadowOffset: { width: 0, height: 8 }, shadowOpacity: isDark ? 0.45 : 0.13, shadowRadius: 18, elevation: 6,
+    }]}>
       <Text style={[styles.statsTitle, { color: colors.textMuted }]}>Today's Summary</Text>
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
@@ -93,16 +104,21 @@ function QuickStats({ unit }: { unit: string }) {
   );
 }
 
+// ─── Hypo Popup ───────────────────────────────────────────────────────────────
+
 function HypoPopup({ visible, glucoseValue, unit, onClose }: {
   visible: boolean; glucoseValue: number; unit: Unit; onClose: () => void;
 }) {
   const { colors } = useTheme();
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={[styles.overlayBg, { backgroundColor: colors.overlay }]}>
         <View style={{ width: '100%', maxHeight: '80%' }}>
           <ScrollView contentContainerStyle={styles.popupScroll}>
-            <View style={[styles.popupCard, { backgroundColor: colors.bg, borderColor: colors.red }]}>
+            <View style={[styles.popupCard, {
+              backgroundColor: colors.bg, borderColor: colors.red,
+              shadowColor: colors.red, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 20, elevation: 16,
+            }]}>
               <Text style={[styles.popupValueLine, { color: colors.text }]}>
                 Your glycemia is low: <Text style={[styles.popupValueRed, { color: colors.red }]}>{glucoseValue} {unit}</Text>
               </Text>
@@ -121,9 +137,12 @@ function HypoPopup({ visible, glucoseValue, unit, onClose }: {
               <Text style={[styles.popupSection, { color: colors.text }]}>Smart Habits</Text>
               <Text style={[styles.popupTip, { color: colors.textMuted }]}>Always keep glucose tabs or candy in your bag.</Text>
               <Text style={[styles.popupTip, { color: colors.textMuted }]}>Tell someone nearby if you're feeling shaky.</Text>
-              <TouchableOpacity style={[styles.closeBtn, { borderColor: colors.red }]} onPress={onClose}>
+              <PressBtn
+                style={[styles.closeBtn, { borderColor: colors.red, backgroundColor: 'transparent' }]}
+                onPress={onClose}
+              >
                 <Text style={[styles.closeBtnText, { color: colors.red }]}>Close</Text>
-              </TouchableOpacity>
+              </PressBtn>
             </View>
           </ScrollView>
         </View>
@@ -132,16 +151,21 @@ function HypoPopup({ visible, glucoseValue, unit, onClose }: {
   );
 }
 
+// ─── Hyper Popup ──────────────────────────────────────────────────────────────
+
 function HyperPopup({ visible, glucoseValue, unit, onClose }: {
   visible: boolean; glucoseValue: number; unit: Unit; onClose: () => void;
 }) {
   const { colors } = useTheme();
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={[styles.overlayBg, { backgroundColor: colors.overlay }]}>
         <View style={{ width: '100%', maxHeight: '80%' }}>
           <ScrollView contentContainerStyle={styles.popupScroll}>
-            <View style={[styles.popupCard, { backgroundColor: colors.bg, borderColor: colors.red }]}>
+            <View style={[styles.popupCard, {
+              backgroundColor: colors.bg, borderColor: colors.red,
+              shadowColor: colors.high, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 20, elevation: 16,
+            }]}>
               <Text style={[styles.popupValueLine, { color: colors.text }]}>
                 Your glycemia is high: <Text style={{ fontWeight: 'bold', color: colors.high }}>{glucoseValue} {unit}</Text>
               </Text>
@@ -156,9 +180,12 @@ function HyperPopup({ visible, glucoseValue, unit, onClose }: {
               <Text style={[styles.popupSection, { color: colors.text }]}>When to Seek Help</Text>
               <Text style={[styles.popupTip, { color: colors.textMuted }]}>If over 16.7 mmol/L (300 mg/dL) for several hours.</Text>
               <Text style={[styles.popupTip, { color: colors.textMuted }]}>Nausea, vomiting, or confusion – possible DKA.</Text>
-              <TouchableOpacity style={[styles.closeBtn, { borderColor: colors.high }]} onPress={onClose}>
+              <PressBtn
+                style={[styles.closeBtn, { borderColor: colors.high, backgroundColor: 'transparent' }]}
+                onPress={onClose}
+              >
                 <Text style={[styles.closeBtnText, { color: colors.high }]}>Close</Text>
-              </TouchableOpacity>
+              </PressBtn>
             </View>
           </ScrollView>
         </View>
@@ -176,35 +203,49 @@ const FASTING_OPTIONS: { label: string; value: FastingType }[] = [
   { label: 'Post-exercise', value: 'Post-exercise' },
 ];
 
-export default function HomeScreen() {
-  const { addEntry, setGlucoseValue: setGlobalGlucose, glucoseValue: globalGlucoseValue, unit: globalUnit } = useGlucoseStore();
-  const { colors } = useTheme();
+// ─── Main Screen ──────────────────────────────────────────────────────────────
 
-  const [unit, setUnit]                   = useState<Unit>(globalUnit ?? 'mg/dL');
-  const [inputValue, setInputValue]       = useState('');
-  const [inputFocused, setInputFocused]   = useState(false);
-  const [fasting, setFasting]             = useState<FastingType>('');
-  const [symptoms, setSymptoms]           = useState('');
-  const [glucoseValue, setGlucoseValue]   = useState<number | null>(globalGlucoseValue ?? null);
-  const [showHypoPopup, setShowHypoPopup] = useState(false);
+export default function HomeScreen() {
+  const { addEntry, setGlucoseValue: setGlobalGlucose, glucoseValue: globalGlucoseValue, unit: globalUnit, setHasSeenOnboarding } = useGlucoseStore();
+  const { colors, isDark } = useTheme();
+
+  const [unit, setUnit]                     = useState<Unit>(globalUnit ?? 'mg/dL');
+  const [inputValue, setInputValue]         = useState('');
+  const [inputFocused, setInputFocused]     = useState(false);
+  const [fasting, setFasting]               = useState<FastingType>('');
+  const [symptoms, setSymptoms]             = useState('');
+  const [glucoseValue, setGlucoseValue]     = useState<number | null>(globalGlucoseValue ?? null);
+  const [showHypoPopup, setShowHypoPopup]   = useState(false);
   const [showHyperPopup, setShowHyperPopup] = useState(false);
+
+  const submitScale = useRef(new Animated.Value(1)).current;
+  const resultScale = useRef(new Animated.Value(0)).current;
 
   const handleSubmit = () => {
     const raw = inputValue.trim();
     if (!raw) return;
     const value = parseFloat(raw);
     if (isNaN(value) || value <= 0) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    Animated.sequence([
+      Animated.spring(submitScale, { toValue: 0.92, useNativeDriver: true, tension: 300, friction: 10 }),
+      Animated.spring(submitScale, { toValue: 1,    useNativeDriver: true, tension: 200, friction: 8  }),
+    ]).start();
+
     const timestamp      = formatTimestamp();
     const interpretation = getInterpretation(value, unit);
     const colorClass     = getColorClass(value, unit);
     setGlucoseValue(value);
     setGlobalGlucose(value, unit);
     addEntry({ value, unit, timestamp, interpretation, fasting, symptoms });
-    if (colorClass === 'low')        setShowHypoPopup(true);
-    else if (colorClass === 'high')  setShowHyperPopup(true);
-    setInputValue('');
-    setSymptoms('');
-    setFasting('');
+
+    resultScale.setValue(0);
+    Animated.spring(resultScale, { toValue: 1, useNativeDriver: true, tension: 180, friction: 7 }).start();
+
+    if (colorClass === 'low')       setShowHypoPopup(true);
+    else if (colorClass === 'high') setShowHyperPopup(true);
+    setInputValue(''); setSymptoms(''); setFasting('');
   };
 
   const cls = glucoseValue !== null ? getColorClass(glucoseValue, unit) : null;
@@ -212,6 +253,14 @@ export default function HomeScreen() {
     cls === 'low'    ? colors.low :
     cls === 'high'   ? colors.high :
     cls === 'normal' ? colors.normal : colors.text;
+
+  const liveNum   = parseFloat(inputValue);
+  const liveClass = inputValue && !isNaN(liveNum) && liveNum > 0 ? getColorClass(liveNum, unit) : null;
+  const inputBorderColor = liveClass
+    ? liveClass === 'low'  ? colors.low
+    : liveClass === 'high' ? colors.high
+    : colors.normal
+    : inputFocused ? colors.red : colors.border;
 
   const handleSeeHelp = () => {
     if (!glucoseValue) return;
@@ -257,9 +306,14 @@ export default function HomeScreen() {
           {/* Input */}
           <TextInput
             style={[styles.glycemiaInput, {
-              borderColor: inputFocused ? colors.red : colors.border,
-              color: colors.text,
+              borderColor: inputBorderColor,
+              color: liveClass === 'low' ? colors.low : liveClass === 'high' ? colors.high : liveClass === 'normal' ? colors.normal : colors.text,
               backgroundColor: colors.inputBg,
+              shadowColor: inputFocused ? colors.red : '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: inputFocused ? 0.15 : 0.05,
+              shadowRadius: 6,
+              elevation: inputFocused ? 4 : 1,
             }]}
             keyboardType="decimal-pad"
             placeholder="Enter glycemia value"
@@ -278,12 +332,16 @@ export default function HomeScreen() {
                 key={opt.value}
                 style={[styles.fastingRow, {
                   backgroundColor: colors.bgSecondary,
-                  shadowColor: colors.red,
                   borderColor: colors.red,
                   borderWidth: fasting === opt.value ? 1 : 0,
+                  shadowColor: fasting === opt.value ? colors.red : '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: fasting === opt.value ? 0.18 : 0.06,
+                  shadowRadius: fasting === opt.value ? 6 : 3,
+                  elevation: fasting === opt.value ? 4 : 2,
                 }]}
                 onPress={() => setFasting(fasting === opt.value ? '' : opt.value)}
-                activeOpacity={0.8}
+                activeOpacity={0.75}
               >
                 <View style={[styles.radio, {
                   borderColor: fasting === opt.value ? colors.red : colors.border,
@@ -297,11 +355,7 @@ export default function HomeScreen() {
           {/* Notes */}
           <Text style={[styles.symptomsLabel, { color: colors.text }]}>Notes, if any:</Text>
           <TextInput
-            style={[styles.symptomsInput, {
-              borderColor: colors.border,
-              color: colors.text,
-              backgroundColor: colors.inputBg,
-            }]}
+            style={[styles.symptomsInput, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]}
             placeholder="e.g. dizziness, insulin intake"
             placeholderTextColor={colors.placeholder}
             value={symptoms}
@@ -311,30 +365,48 @@ export default function HomeScreen() {
             multiline
           />
 
-          {/* Submit */}
-          <TouchableOpacity style={[styles.submitBtn, { backgroundColor: colors.red }]} onPress={handleSubmit} activeOpacity={0.75}>
-            <Text style={styles.submitBtnText}>Submit</Text>
-          </TouchableOpacity>
+          {/* Submit — with bounce animation + red shadow */}
+          <ShadowBtn
+            label="Submit"
+            onPress={handleSubmit}
+            style={[styles.submitBtn, { backgroundColor: colors.red }]}
+            textStyle={styles.submitBtnText}
+          />
 
-          {/* Result */}
+          {/* Result — with pop-in spring */}
           {glucoseValue !== null && (
-            <View style={styles.resultContainer}>
+            <Animated.View style={[styles.resultContainer, { transform: [{ scale: resultScale }] }]}>
               <Text style={[styles.resultValue, { color: resultColor }]}>{glucoseValue} {unit}</Text>
               <Text style={[styles.resultInterpretation, { color: resultColor }]}>
                 {getInterpretation(glucoseValue, unit)}
               </Text>
               {cls !== 'normal' && (
-                <TouchableOpacity style={[styles.seeHelpBtn, { borderColor: colors.red }]} onPress={handleSeeHelp} activeOpacity={0.75}>
+                <PressBtn
+                  style={[styles.seeHelpBtn, {
+                    borderColor: colors.red,
+                    backgroundColor: colors.bg,
+                    shadowColor: colors.red,
+                    shadowOffset: { width: 2, height: 2 },
+                    shadowOpacity: 0.2,
+                    shadowRadius: 3,
+                    elevation: 3,
+                  }]}
+                  onPress={handleSeeHelp}
+                  activeOpacity={0.75}
+                >
                   <Text style={[styles.seeHelpBtnText, { color: colors.red }]}>See Help</Text>
-                </TouchableOpacity>
+                </PressBtn>
               )}
-            </View>
+            </Animated.View>
           )}
 
           <QuickStats unit={unit} />
 
           {/* Tip card */}
-          <View style={[styles.tipCard, { borderColor: colors.border, backgroundColor: colors.bgCard }]}>
+          <View style={[styles.tipCard, {
+            borderColor: colors.border, backgroundColor: colors.bgCard,
+            shadowColor: isDark ? '#000' : '#6070a0', shadowOffset: { width: 0, height: 8 }, shadowOpacity: isDark ? 0.45 : 0.13, shadowRadius: 18, elevation: 6,
+          }]}>
             <Text style={[styles.tipTitle, { color: colors.textMuted }]}>💡 Quick Tip</Text>
             <Text style={[styles.tipText, { color: colors.textMuted }]}>
               {glucoseValue === null
@@ -346,6 +418,14 @@ export default function HomeScreen() {
                 : 'Your blood sugar is in range. Keep up the good work! Stay hydrated and maintain your current routine.'}
             </Text>
           </View>
+
+          <PressBtn
+            style={[styles.howToBtn, { borderColor: colors.red, backgroundColor: colors.bgCard }]}
+            onPress={() => setHasSeenOnboarding(false)}
+            activeOpacity={0.75}
+          >
+            <Text style={[styles.howToBtnText, { color: colors.red }]}>📖 How to use the app</Text>
+          </PressBtn>
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -353,15 +433,12 @@ export default function HomeScreen() {
       <HyperPopup visible={showHyperPopup} glucoseValue={glucoseValue ?? 0} unit={unit} onClose={() => setShowHyperPopup(false)} />
     </View>
   );
-
 }
-
-
 
 const styles = StyleSheet.create({
   safeArea:  { flex: 1 },
   container: { alignItems: 'center', padding: 16, paddingBottom: 32 },
-  appDescription: { textAlign:  'center', fontSize: 14, lineHeight: 20, marginBottom: 2 },
+  appDescription: { textAlign: 'center', fontSize: 14, lineHeight: 20, marginBottom: 2 },
   highlight:      { fontWeight: '600' },
   instruction:    { textAlign: 'center', fontSize: 14, lineHeight: 20, marginBottom: 6 },
   unitToggleRow:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 8 },
@@ -369,21 +446,21 @@ const styles = StyleSheet.create({
   sliderTrack:    { width: 36, height: 16, borderRadius: 10, justifyContent: 'center', position: 'relative' },
   sliderKnob:     { width: 14, height: 14, borderRadius: 7, position: 'absolute', left: 1 },
   sliderKnobRight:{ left: 21 },
-  glycemiaInput:  { width: '55%', borderWidth: 2, borderRadius: 5, paddingHorizontal: 10, paddingVertical: 4, fontSize: 15, textAlign: 'center', marginBottom: 10 },
+  glycemiaInput:  { width: '55%', borderWidth: 2, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, fontSize: 15, textAlign: 'center', marginBottom: 10 },
   fastingGrid:    { flexDirection: 'row', flexWrap: 'wrap', width: '85%', gap: 8, marginBottom: 8, justifyContent: 'center' },
-  fastingRow:     { flexDirection: 'row', alignItems: 'center', borderRadius: 6, width: '46%', height: 32, paddingLeft: 10, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 1, shadowRadius: 0, elevation: 2 },
+  fastingRow:     { flexDirection: 'row', alignItems: 'center', borderRadius: 8, width: '46%', height: 32, paddingLeft: 10 },
   radio:          { width: 14, height: 14, borderRadius: 7, borderWidth: 2, marginRight: 8 },
   fastingText:    { fontSize: 14 },
   symptomsLabel:  { fontSize: 14, marginBottom: 4, alignSelf: 'center' },
-  symptomsInput:  { width: '55%', height: 40, borderWidth: 1, borderRadius: 5, paddingHorizontal: 8, paddingTop: 8, fontSize: 13, marginBottom: 10, textAlign: 'center', textAlignVertical: 'top' },
-  submitBtn:      { paddingHorizontal: 28, paddingVertical: 6, borderRadius: 5, marginBottom: 8 },
-  submitBtnText:  { fontSize: 15, color: '#fff', fontWeight: 'bold' },
+  symptomsInput:  { width: '55%', height: 40, borderWidth: 1, borderRadius: 8, paddingHorizontal: 8, paddingTop: 8, fontSize: 13, marginBottom: 10, textAlign: 'center', textAlignVertical: 'top' },
+  submitBtn:      { paddingHorizontal: 36, paddingVertical: 10, borderRadius: 10, marginBottom: 8 },
+  submitBtnText:  { fontSize: 15, color: '#fff', fontWeight: 'bold', backgroundColor: 'transparent' },
   resultContainer:{ alignItems: 'center', marginBottom: 10 },
   resultValue:    { fontSize: 17, fontWeight: 'bold', marginBottom: 2 },
   resultInterpretation: { fontSize: 17, fontWeight: 'bold', marginBottom: 8 },
-  seeHelpBtn:     { borderWidth: 2, borderRadius: 6, paddingHorizontal: 20, paddingVertical: 5 },
-  seeHelpBtnText: { fontSize: 14, fontWeight: 'bold' },
-  statsCard:      { width: '100%', borderRadius: 12, borderWidth: 1, padding: 8, marginTop: 4 },
+  seeHelpBtn:     { borderWidth: 2, borderRadius: 8, paddingHorizontal: 20, paddingVertical: 5 },
+  seeHelpBtnText: { fontSize: 14, fontWeight: 'bold', backgroundColor: 'transparent' },
+  statsCard:      { width: '100%', borderRadius: 14, borderWidth: 1, padding: 8, marginTop: 4 },
   statsTitle:     { fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8, textAlign: 'center', marginBottom: 6 },
   statsRow:       { flexDirection: 'row', justifyContent: 'space-between' },
   statsDivider:   { height: 1, marginVertical: 6 },
@@ -393,15 +470,20 @@ const styles = StyleSheet.create({
   statsEmpty:     { textAlign: 'center', fontSize: 10, marginTop: 4 },
   overlayBg:      { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
   popupScroll:    { width: '100%', flexGrow: 0 },
-  popupCard:      { borderRadius: 16, borderWidth: 2, padding: 20, width: '100%', maxWidth: 400, shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.18, shadowRadius: 14, elevation: 10 },
+  popupCard:      { borderRadius: 16, borderWidth: 2, padding: 20, width: '100%', maxWidth: 400 },
   popupValueLine: { fontSize: 14, marginBottom: 8 },
   popupValueRed:  { fontWeight: 'bold' },
   popupSection:   { fontSize: 14, fontWeight: 'bold', marginBottom: 4, marginTop: 4 },
   popupTip:       { fontSize: 13, lineHeight: 19, marginBottom: 2 },
   popupDivider:   { height: 1, marginVertical: 10 },
-  closeBtn:       { marginTop: 16, alignSelf: 'center', borderWidth: 2, borderRadius: 6, paddingHorizontal: 20, paddingVertical: 5 },
-  closeBtnText:   { fontSize: 15, fontWeight: 'bold' },
-  tipCard:        { width: '100%', borderRadius: 12, borderWidth: 1, padding: 8, marginTop: 10, marginBottom: 15 },
+  closeBtn:       { marginTop: 16, alignSelf: 'center', borderWidth: 2, borderRadius: 8, paddingHorizontal: 20, paddingVertical: 5 },
+  closeBtnText:   { fontSize: 15, fontWeight: 'bold', backgroundColor: 'transparent' },
+  tipCard:        { width: '100%', borderRadius: 14, borderWidth: 1, padding: 8, marginTop: 10, marginBottom: 15 },
   tipTitle:       { fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 2 },
   tipText:        { fontSize: 14, lineHeight: 20 },
+
+  outlineBtnShadow: { shadowColor: '#000', shadowOffset: { width: 1, height: 1 }, shadowOpacity: 0.06, shadowRadius: 2 },
+
+  howToBtn:     { width: '100%', borderWidth: 1.5, borderRadius: 10, paddingVertical: 11, alignItems: 'center', marginTop: 4, marginBottom: 8 },
+  howToBtnText: { fontSize: 14, fontWeight: '600' },
 });

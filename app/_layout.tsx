@@ -1,12 +1,27 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AppProvider, useTheme } from '../context/AppContext';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet, Animated } from 'react-native';
+import { useGlucoseStore } from '../store/glucoseStore';
+import OnboardingScreen from './onboarding';
+import { useRef, useEffect } from 'react';
+import { UIManager, Platform } from 'react-native';
+
+if (Platform.OS === 'android') {
+  UIManager.setLayoutAnimationEnabledExperimental?.(true);
+}
 
 function Header() {
   const { colors } = useTheme();
   return (
-    <View style={[styles.header, { backgroundColor: colors.bg }]}>
+    <View style={[styles.header, {
+      backgroundColor: colors.bg,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 6,
+      elevation: 4,
+    }]}>
       <Image
         source={{ uri: 'https://i.imgur.com/XRrP3SM.png' }}
         style={styles.logo}
@@ -17,33 +32,92 @@ function Header() {
   );
 }
 
+function AnimatedTabIcon({ name, color, focused }: { name: string; color: string; focused: boolean }) {
+  const { colors } = useTheme();
+  const scale = useRef(new Animated.Value(focused ? 1.18 : 1)).current;
+
+  useEffect(() => {
+    Animated.spring(scale, {
+      toValue: focused ? 1.18 : 1,
+      useNativeDriver: true,
+      tension: 300,
+      friction: 10,
+    }).start();
+  }, [focused]);
+
+  return (
+    <Animated.View
+      style={{
+        transform: [{ scale }],
+        shadowColor: focused ? colors.red : 'transparent',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: focused ? 0.75 : 0,
+        shadowRadius: 8,
+      }}
+    >
+      <Ionicons name={name as any} size={22} color={color} />
+    </Animated.View>
+  );
+}
+
 function TabsLayout() {
   const { colors } = useTheme();
+
+  const TAB_SCREENS = [
+    { name: 'index',      title: 'Home',    icon: 'home' },
+    { name: 'history',    title: 'History', icon: 'time' },
+    { name: 'foodguide',  title: 'Food',    icon: 'nutrition' },
+    { name: 'medication', title: 'Meds',    icon: 'medical' },
+    { name: 'emergency',  title: 'SOS',     icon: 'warning' },
+    { name: 'profile',    title: 'Profile', icon: 'person' },
+  ];
+
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor:   colors.red,
         tabBarInactiveTintColor: colors.tabInactive,
-        tabBarStyle:             { backgroundColor: colors.tabBar },
-        tabBarLabelStyle:        { fontSize: 10 },
-        headerShown:             true,
-        header:                  () => <Header />,
+        tabBarStyle: {
+          backgroundColor: colors.tabBar,
+          shadowColor: colors.red,
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.12,
+          shadowRadius: 12,
+          elevation: 16,
+          borderTopWidth: 0,
+        },
+        tabBarLabelStyle: { fontSize: 10 },
+        headerShown:      true,
+        header:           () => <Header />,
       }}
     >
-      <Tabs.Screen name="index"      options={{ title: 'Home',    tabBarIcon: ({ color }) => <Ionicons name="home"      size={22} color={color} /> }} />
-      <Tabs.Screen name="history"    options={{ title: 'History', tabBarIcon: ({ color }) => <Ionicons name="time"      size={22} color={color} /> }} />
-      <Tabs.Screen name="foodguide"  options={{ title: 'Food',    tabBarIcon: ({ color }) => <Ionicons name="nutrition" size={22} color={color} /> }} />
-      <Tabs.Screen name="medication" options={{ title: 'Meds',    tabBarIcon: ({ color }) => <Ionicons name="medical"   size={22} color={color} /> }} />
-      <Tabs.Screen name="emergency"  options={{ title: 'SOS',     tabBarIcon: ({ color }) => <Ionicons name="warning"   size={22} color={color} /> }} />
-      <Tabs.Screen name="profile"    options={{ title: 'Profile', tabBarIcon: ({ color }) => <Ionicons name="person"    size={22} color={color} /> }} />
+      {TAB_SCREENS.map(({ name, title, icon }) => (
+        <Tabs.Screen
+          key={name}
+          name={name}
+          options={{
+            title,
+            tabBarIcon: ({ color, focused }) => (
+              <AnimatedTabIcon name={icon} color={color} focused={focused} />
+            ),
+          }}
+        />
+      ))}
+      <Tabs.Screen name="onboarding" options={{ href: null }} />
     </Tabs>
   );
+}
+
+function RootContent() {
+  const { hasSeenOnboarding } = useGlucoseStore();
+  if (!hasSeenOnboarding) return <OnboardingScreen />;
+  return <TabsLayout />;
 }
 
 export default function RootLayout() {
   return (
     <AppProvider>
-      <TabsLayout />
+      <RootContent />
     </AppProvider>
   );
 }

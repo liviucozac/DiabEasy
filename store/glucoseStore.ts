@@ -26,6 +26,15 @@ export interface InsulinEntry {
   type: 'Rapid-acting' | 'Long-acting';
 }
 
+export interface Reminder {
+  id: string;
+  label: string;
+  time: string;            // "HH:MM"
+  type: 'Rapid-acting' | 'Long-acting';
+  units: number;
+  active: boolean;
+}
+
 // ─── User Profile ─────────────────────────────────────────────────────────────
 
 export interface UserProfile {
@@ -54,6 +63,10 @@ export interface AppSettings {
 // ─── Store interface ──────────────────────────────────────────────────────────
 
 interface GlucoseStore {
+  // Onboarding
+  hasSeenOnboarding: boolean;
+  setHasSeenOnboarding: (v: boolean) => void;
+
   // Current reading (shared with Medication & Food Guide tabs)
   glucoseValue: number | null;
   unit: Unit;
@@ -73,6 +86,12 @@ interface GlucoseStore {
   insulinEntries: InsulinEntry[];
   addInsulinEntry: (entry: InsulinEntry) => void;
   clearInsulinLog: () => void;
+
+  // Reminders
+  reminders: Reminder[];
+  addReminder: (r: Reminder) => void;
+  updateReminder: (id: string, changes: Partial<Reminder>) => void;
+  deleteReminder: (id: string) => void;
 
   // User profile
   profile: UserProfile;
@@ -108,6 +127,9 @@ const DEFAULT_SETTINGS: AppSettings = {
 // ─── Store ────────────────────────────────────────────────────────────────────
 
 export const useGlucoseStore = create<GlucoseStore>((set) => ({
+  hasSeenOnboarding: false,
+  setHasSeenOnboarding: (v) => set({ hasSeenOnboarding: v }),
+
   glucoseValue: null,
   unit: 'mg/dL',
   setGlucoseValue: (value, unit) => set({ glucoseValue: value, unit }),
@@ -128,6 +150,16 @@ export const useGlucoseStore = create<GlucoseStore>((set) => ({
   addInsulinEntry: (entry) =>
     set((state) => ({ insulinEntries: [...state.insulinEntries, entry] })),
   clearInsulinLog: () => set({ insulinEntries: [] }),
+
+  reminders: [
+    { id: '1', label: 'Morning rapid insulin', time: '08:00', type: 'Rapid-acting', units: 0,  active: true },
+    { id: '2', label: 'Evening long insulin',  time: '22:00', type: 'Long-acting',  units: 10, active: true },
+  ],
+  addReminder: (r) => set((state) => ({ reminders: [...state.reminders, r] })),
+  updateReminder: (id, changes) =>
+    set((state) => ({ reminders: state.reminders.map((r) => r.id === id ? { ...r, ...changes } : r) })),
+  deleteReminder: (id) =>
+    set((state) => ({ reminders: state.reminders.filter((r) => r.id !== id) })),
 
   profile: DEFAULT_PROFILE,
   setProfile: (partial) =>

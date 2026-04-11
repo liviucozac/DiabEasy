@@ -5,17 +5,28 @@ import {
 } from 'react-native';
 import { useGlucoseStore, DiabetesType, ThemeType } from '../store/glucoseStore';
 import { useTheme } from '../context/AppContext';
+import { PressBtn } from '../components/PressBtn';
 
 const RED = '#EC5557';
 
 type ActiveTab = 'profile' | 'settings';
 type AuthMode = 'signIn' | 'signUp';
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 function SectionCard({ children }: { children: React.ReactNode }) {
-  const { colors } = useTheme();
-  return <View style={[s.sectionCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>{children}</View>;
+  const { colors, isDark } = useTheme();
+  return (
+    <View style={[s.sectionCard, {
+      backgroundColor: colors.bgCard,
+      borderColor: colors.border,
+      shadowColor: isDark ? '#000' : '#6070a0',
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: isDark ? 0.3 : 0.09,
+      shadowRadius: 14,
+      elevation: isDark ? 5 : 4,
+    }]}>
+      {children}
+    </View>
+  );
 }
 
 function SectionTitle({ text }: { text: string }) {
@@ -33,31 +44,19 @@ function FieldLabel({ text }: { text: string }) {
   return <Text style={[s.fieldLabel, { color: colors.textMuted }]}>{text}</Text>;
 }
 
-function StyledInput({
-  value, onChangeText, placeholder, keyboardType, secureTextEntry, autoCapitalize,
-}: {
-  value: string;
-  onChangeText: (v: string) => void;
-  placeholder: string;
-  keyboardType?: any;
-  secureTextEntry?: boolean;
-  autoCapitalize?: any;
+function StyledInput({ value, onChangeText, placeholder, keyboardType, secureTextEntry, autoCapitalize }: {
+  value: string; onChangeText: (v: string) => void; placeholder: string;
+  keyboardType?: any; secureTextEntry?: boolean; autoCapitalize?: any;
 }) {
   const { colors } = useTheme();
   const [focused, setFocused] = useState(false);
   return (
     <TextInput
       style={[s.input, { borderColor: focused ? colors.red : colors.border, color: colors.text, backgroundColor: colors.inputBg }]}
-      value={value}
-      onChangeText={onChangeText}
-      placeholder={placeholder}
-      placeholderTextColor={colors.placeholder}
-      keyboardType={keyboardType ?? 'default'}
-      secureTextEntry={secureTextEntry}
-      autoCapitalize={autoCapitalize ?? 'sentences'}
-      onFocus={() => setFocused(true)}
-      onBlur={() => setFocused(false)}
-      returnKeyType="done"
+      value={value} onChangeText={onChangeText} placeholder={placeholder}
+      placeholderTextColor={colors.placeholder} keyboardType={keyboardType ?? 'default'}
+      secureTextEntry={secureTextEntry} autoCapitalize={autoCapitalize ?? 'sentences'}
+      onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} returnKeyType="done"
     />
   );
 }
@@ -67,29 +66,19 @@ function StyledInput({
 function ProfileTab() {
   const { profile, setProfile } = useGlucoseStore();
   const { colors } = useTheme();
-  const [authMode, setAuthMode] = useState<AuthMode>('signIn');
-  const [password, setPassword] = useState('');
+  const [authMode, setAuthMode]               = useState<AuthMode>('signIn');
+  const [password, setPassword]               = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn]           = useState(false);
 
   const DIABETES_TYPES: DiabetesType[] = ['Type 1', 'Type 2', 'LADA', 'Other'];
 
   const handleAuth = () => {
     if (authMode === 'signUp') {
-      if (!profile.name.trim() || !profile.email.trim()) {
-        Alert.alert('Missing info', 'Please enter your name and email.');
-        return;
-      }
-      if (password !== confirmPassword) {
-        Alert.alert('Password mismatch', 'Passwords do not match.');
-        return;
-      }
+      if (!profile.name.trim() || !profile.email.trim()) { Alert.alert('Missing info', 'Please enter your name and email.'); return; }
+      if (password !== confirmPassword) { Alert.alert('Password mismatch', 'Passwords do not match.'); return; }
     }
-    if (!profile.email.trim()) {
-      Alert.alert('Missing info', 'Please enter your email.');
-      return;
-    }
-    // Simulated auth — replace with real backend later
+    if (!profile.email.trim()) { Alert.alert('Missing info', 'Please enter your email.'); return; }
     setIsLoggedIn(true);
     Alert.alert('Success', authMode === 'signIn' ? 'Signed in!' : 'Account created!');
   };
@@ -102,22 +91,14 @@ function ProfileTab() {
   };
 
   return (
-    <ScrollView
-      showsVerticalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled"
-      contentContainerStyle={{ paddingBottom: 32 }}
-    >
-      {/* ── Account ── */}
+    <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 32 }}>
       <SectionCard>
         <SectionTitle text="Account" />
-
         {isLoggedIn ? (
           <>
             <View style={s.avatarRow}>
               <View style={[s.avatar, { backgroundColor: colors.red }]}>
-                <Text style={s.avatarText}>
-                  {profile.name ? profile.name.charAt(0).toUpperCase() : '?'}
-                </Text>
+                <Text style={s.avatarText}>{profile.name ? profile.name.charAt(0).toUpperCase() : '?'}</Text>
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[s.avatarName, { color: colors.text }]}>{profile.name || 'No name set'}</Text>
@@ -125,80 +106,29 @@ function ProfileTab() {
               </View>
             </View>
             <Divider />
-            <TouchableOpacity style={[s.signOutBtn, { borderColor: colors.red }]} onPress={handleSignOut} activeOpacity={0.75}>
+            <PressBtn style={[s.signOutBtn, { borderColor: colors.red, backgroundColor: 'transparent' }]} onPress={handleSignOut} activeOpacity={0.75}>
               <Text style={[s.signOutBtnText, { color: colors.red }]}>Sign Out</Text>
-            </TouchableOpacity>
+            </PressBtn>
           </>
         ) : (
           <>
-            {authMode === 'signUp' && (
-              <>
-                <FieldLabel text="Name" />
-                <StyledInput
-                  value={profile.name}
-                  onChangeText={(v) => setProfile({ name: v })}
-                  placeholder="Your full name"
-                />
-              </>
-            )}
-
+            {authMode === 'signUp' && (<><FieldLabel text="Name" /><StyledInput value={profile.name} onChangeText={(v) => setProfile({ name: v })} placeholder="Your full name" /></>)}
             <FieldLabel text="Email" />
-            <StyledInput
-              value={profile.email}
-              onChangeText={(v) => setProfile({ email: v })}
-              placeholder="your@email.com"
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-
+            <StyledInput value={profile.email} onChangeText={(v) => setProfile({ email: v })} placeholder="your@email.com" keyboardType="email-address" autoCapitalize="none" />
             <FieldLabel text="Password" />
-            <StyledInput
-              value={password}
-              onChangeText={setPassword}
-              placeholder="••••••••"
-              secureTextEntry
-              autoCapitalize="none"
-            />
-
-            {authMode === 'signUp' && (
-              <>
-                <FieldLabel text="Confirm Password" />
-                <StyledInput
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  placeholder="••••••••"
-                  secureTextEntry
-                  autoCapitalize="none"
-                />
-              </>
-            )}
-
-            <TouchableOpacity style={[s.authBtn, { backgroundColor: colors.red }]} onPress={handleAuth} activeOpacity={0.75}>
-              <Text style={s.authBtnText}>
-                {authMode === 'signIn' ? 'Sign In' : 'Create Account'}
-              </Text>
-            </TouchableOpacity>
-
+            <StyledInput value={password} onChangeText={setPassword} placeholder="••••••••" secureTextEntry autoCapitalize="none" />
+            {authMode === 'signUp' && (<><FieldLabel text="Confirm Password" /><StyledInput value={confirmPassword} onChangeText={setConfirmPassword} placeholder="••••••••" secureTextEntry autoCapitalize="none" /></>)}
+            <PressBtn style={[s.authBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={handleAuth}>
+              <Text style={s.authBtnText}>{authMode === 'signIn' ? 'Sign In' : 'Create Account'}</Text>
+            </PressBtn>
             <View style={s.authToggleRow}>
-              <Text style={[s.authToggleText, { color: colors.textMuted }]}>
-                {authMode === 'signIn' ? "Don't have an account? " : 'Already have an account? '}
-              </Text>
-              <TouchableOpacity
-                onPress={() => setAuthMode(authMode === 'signIn' ? 'signUp' : 'signIn')}
-                activeOpacity={0.75}
-              >
-                <Text style={[s.authToggleLink, { color: colors.red }]}>
-                  {authMode === 'signIn' ? 'Sign Up' : 'Sign In'}
-                </Text>
+              <Text style={[s.authToggleText, { color: colors.textMuted }]}>{authMode === 'signIn' ? "Don't have an account? " : 'Already have an account? '}</Text>
+              <TouchableOpacity onPress={() => setAuthMode(authMode === 'signIn' ? 'signUp' : 'signIn')} activeOpacity={0.75}>
+                <Text style={[s.authToggleLink, { color: colors.red }]}>{authMode === 'signIn' ? 'Sign Up' : 'Sign In'}</Text>
               </TouchableOpacity>
             </View>
-
             {authMode === 'signIn' && (
-              <TouchableOpacity
-                style={{ alignItems: 'center', marginTop: 8 }}
-                onPress={() => Alert.alert('Reset password', 'Password reset not implemented yet.')}
-                activeOpacity={0.75}
-              >
+              <TouchableOpacity style={{ alignItems: 'center', marginTop: 8 }} onPress={() => Alert.alert('Reset password', 'Password reset not implemented yet.')} activeOpacity={0.75}>
                 <Text style={[s.forgotLink, { color: colors.textFaint }]}>Forgot password?</Text>
               </TouchableOpacity>
             )}
@@ -206,63 +136,31 @@ function ProfileTab() {
         )}
       </SectionCard>
 
-      {/* ── Personal Info ── */}
       <SectionCard>
         <SectionTitle text="Personal Info" />
-
         <FieldLabel text="Full name" />
-        <StyledInput
-          value={profile.name}
-          onChangeText={(v) => setProfile({ name: v })}
-          placeholder="Your full name"
-        />
-
+        <StyledInput value={profile.name} onChangeText={(v) => setProfile({ name: v })} placeholder="Your full name" />
         <FieldLabel text="Age" />
-        <StyledInput
-          value={profile.age}
-          onChangeText={(v) => setProfile({ age: v })}
-          placeholder="e.g. 28"
-          keyboardType="number-pad"
-        />
-
+        <StyledInput value={profile.age} onChangeText={(v) => setProfile({ age: v })} placeholder="e.g. 28" keyboardType="number-pad" />
         <FieldLabel text="Diabetes type" />
         <View style={s.pillRow}>
           {DIABETES_TYPES.map((t) => {
             const active = profile.diabetesType === t;
             return (
-              <TouchableOpacity
-                key={t}
-                style={[s.pill, active && { borderColor: colors.red, backgroundColor: colors.red }]}
-                onPress={() => setProfile({ diabetesType: t })}
-                activeOpacity={0.75}
-              >
-                <Text style={[s.pillText, { color: colors.textMuted }, active && s.pillTextActive]}>{t}</Text>
+              <TouchableOpacity key={t}
+                style={[s.pill, active ? s.primaryBtnShadow : null, { borderColor: active ? colors.red : colors.border, backgroundColor: active ? colors.red : 'transparent' }]}
+                onPress={() => setProfile({ diabetesType: t })} activeOpacity={0.75}>
+                <Text style={[s.pillText, { color: active ? '#fff' : colors.textMuted }]}>{t}</Text>
               </TouchableOpacity>
             );
           })}
         </View>
-
         <FieldLabel text="Diagnosis date (MM/YYYY)" />
-        <StyledInput
-          value={profile.diagnosisDate}
-          onChangeText={(v) => setProfile({ diagnosisDate: v })}
-          placeholder="e.g. 03/2018"
-          keyboardType="numbers-and-punctuation"
-        />
-
+        <StyledInput value={profile.diagnosisDate} onChangeText={(v) => setProfile({ diagnosisDate: v })} placeholder="e.g. 03/2018" keyboardType="numbers-and-punctuation" />
         <FieldLabel text="Doctor / specialist name" />
-        <StyledInput
-          value={profile.doctorName}
-          onChangeText={(v) => setProfile({ doctorName: v })}
-          placeholder="e.g. Dr. Smith"
-        />
-
+        <StyledInput value={profile.doctorName} onChangeText={(v) => setProfile({ doctorName: v })} placeholder="e.g. Dr. Smith" />
         <FieldLabel text="Clinic / hospital" />
-        <StyledInput
-          value={profile.clinicName}
-          onChangeText={(v) => setProfile({ clinicName: v })}
-          placeholder="e.g. City Medical Centre"
-        />
+        <StyledInput value={profile.clinicName} onChangeText={(v) => setProfile({ clinicName: v })} placeholder="e.g. City Medical Centre" />
       </SectionCard>
     </ScrollView>
   );
@@ -278,32 +176,20 @@ function SettingsTab() {
   const [targetFocused, setTargetFocused] = useState(false);
 
   const THEMES: { label: string; value: ThemeType }[] = [
-    { label: '☀️ Light',  value: 'light' },
-    { label: '🌙 Dark',   value: 'dark' },
-    { label: '⚙️ System', value: 'system' },
+    { label: '☀️ Light', value: 'light' },
+    { label: '🌙 Dark',  value: 'dark' },
+    { label: '⚙️ System',value: 'system' },
   ];
 
   const handleClearData = () => {
-    Alert.alert(
-      'Clear all data',
-      'This will delete your entire glucose history and insulin log. This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Clear', style: 'destructive',
-          onPress: () => { clearHistory(); clearInsulinLog(); },
-        },
-      ],
-    );
+    Alert.alert('Clear all data', 'This will delete your entire glucose history and insulin log. This cannot be undone.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Clear', style: 'destructive', onPress: () => { clearHistory(); clearInsulinLog(); } },
+    ]);
   };
 
   return (
-    <ScrollView
-      showsVerticalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled"
-      contentContainerStyle={{ paddingBottom: 32 }}
-    >
-      {/* ── Appearance ── */}
+    <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 32 }}>
       <SectionCard>
         <SectionTitle text="Appearance" />
         <FieldLabel text="Theme" />
@@ -311,101 +197,64 @@ function SettingsTab() {
           {THEMES.map((t) => {
             const active = settings.theme === t.value;
             return (
-              <TouchableOpacity
-                key={t.value}
-                style={[s.pill, active && { borderColor: colors.red, backgroundColor: colors.red }]}
-                onPress={() => setSettings({ theme: t.value })}
-                activeOpacity={0.75}
-              >
-                <Text style={[s.pillText, { color: colors.textMuted }, active && s.pillTextActive]}>{t.label}</Text>
+              <TouchableOpacity key={t.value}
+                style={[s.pill, active ? s.primaryBtnShadow : null, { borderColor: active ? colors.red : colors.border, backgroundColor: active ? colors.red : 'transparent' }]}
+                onPress={() => setSettings({ theme: t.value })} activeOpacity={0.75}>
+                <Text style={[s.pillText, { color: active ? '#fff' : colors.textMuted }]}>{t.label}</Text>
               </TouchableOpacity>
             );
           })}
         </View>
       </SectionCard>
 
-      {/* ── Units & Language ── */}
       <SectionCard>
         <SectionTitle text="Units & Language" />
-
         <FieldLabel text="Default glucose unit" />
         <View style={s.pillRow}>
           {(['mg/dL', 'mmol/L'] as const).map((u) => {
             const active = settings.glucoseUnit === u;
             return (
-              <TouchableOpacity
-                key={u}
-                style={[s.pill, active && { borderColor: colors.red, backgroundColor: colors.red }]}
-                onPress={() => setSettings({ glucoseUnit: u })}
-                activeOpacity={0.75}
-              >
-                <Text style={[s.pillText, { color: colors.textMuted }, active && s.pillTextActive]}>{u}</Text>
+              <TouchableOpacity key={u}
+                style={[s.pill, active ? s.primaryBtnShadow : null, { borderColor: active ? colors.red : colors.border, backgroundColor: active ? colors.red : 'transparent' }]}
+                onPress={() => setSettings({ glucoseUnit: u })} activeOpacity={0.75}>
+                <Text style={[s.pillText, { color: active ? '#fff' : colors.textMuted }]}>{u}</Text>
               </TouchableOpacity>
             );
           })}
         </View>
-
         <Divider />
-
         <View style={s.settingRow}>
           <View style={{ flex: 1 }}>
             <Text style={[s.settingLabel, { color: colors.text }]}>Language</Text>
             <Text style={[s.settingSubLabel, { color: colors.textFaint }]}>Internationalisation coming soon</Text>
           </View>
-          <View style={[s.pill, { borderColor: colors.red, backgroundColor: colors.red, paddingHorizontal: 12 }]}>
+          <View style={[s.pill, { borderColor: colors.red, backgroundColor: colors.red, paddingHorizontal: 12 }, s.primaryBtnShadow]}>
             <Text style={s.pillTextActive}>🇬🇧 EN</Text>
           </View>
         </View>
       </SectionCard>
 
-      {/* ── Insulin Calculator Defaults ── */}
       <SectionCard>
         <SectionTitle text="Insulin Calculator Defaults" />
-        <Text style={[s.sectionHint, { color: colors.textMuted }]}>
-          These values are used by the Meds calculator. Ask your healthcare provider for your personal settings.
-        </Text>
-
+        <Text style={[s.sectionHint, { color: colors.textMuted }]}>These values are used by the Meds calculator. Ask your healthcare provider for your personal settings.</Text>
         <View style={s.paramGrid}>
-          <View style={s.paramItem}>
-            <Text style={[s.paramLabel, { color: colors.textMuted }]}>Target glycemia{'\n'}(mg/dL)</Text>
-            <TextInput
-              style={[s.paramInput, targetFocused && { borderColor: colors.red }, { color: colors.text, backgroundColor: colors.inputBg }]}
-              keyboardType="decimal-pad"
-              value={String(settings.targetGlucose)}
-              onChangeText={(v) => setSettings({ targetGlucose: parseFloat(v) || 100 })}
-              onFocus={() => setTargetFocused(true)}
-              onBlur={() => setTargetFocused(false)}
-              returnKeyType="done"
-            />
-          </View>
-          <View style={s.paramItem}>
-            <Text style={[s.paramLabel, { color: colors.textMuted }]}>ISF{'\n'}(mg/dL per unit)</Text>
-            <TextInput
-              style={[s.paramInput, isfFocused && { borderColor: colors.red }, { color: colors.text, backgroundColor: colors.inputBg }]}
-              keyboardType="decimal-pad"
-              value={String(settings.isf)}
-              onChangeText={(v) => setSettings({ isf: parseFloat(v) || 50 })}
-              onFocus={() => setIsfFocused(true)}
-              onBlur={() => setIsfFocused(false)}
-              returnKeyType="done"
-            />
-          </View>
-          <View style={s.paramItem}>
-            <Text style={[s.paramLabel, { color: colors.textMuted }]}>Carb ratio{'\n'}(g per unit)</Text>
-            <TextInput
-              style={[s.paramInput, ratioFocused && { borderColor: colors.red }, { color: colors.text, backgroundColor: colors.inputBg }]}
-              keyboardType="decimal-pad"
-              value={String(settings.carbRatio)}
-              onChangeText={(v) => setSettings({ carbRatio: parseFloat(v) || 10 })}
-              onFocus={() => setRatioFocused(true)}
-              onBlur={() => setRatioFocused(false)}
-              returnKeyType="done"
-            />
-          </View>
+          {[
+            { label: 'Target glycemia\n(mg/dL)', value: String(settings.targetGlucose), focused: targetFocused, setFocused: setTargetFocused, onChange: (v: string) => setSettings({ targetGlucose: parseFloat(v) || 100 }) },
+            { label: 'ISF\n(mg/dL per unit)',    value: String(settings.isf),           focused: isfFocused,    setFocused: setIsfFocused,    onChange: (v: string) => setSettings({ isf: parseFloat(v) || 50 }) },
+            { label: 'Carb ratio\n(g per unit)', value: String(settings.carbRatio),     focused: ratioFocused,  setFocused: setRatioFocused,  onChange: (v: string) => setSettings({ carbRatio: parseFloat(v) || 10 }) },
+          ].map((param, i) => (
+            <View key={i} style={s.paramItem}>
+              <Text style={[s.paramLabel, { color: colors.textMuted }]}>{param.label}</Text>
+              <TextInput
+                style={[s.paramInput, param.focused && { borderColor: colors.red }, { color: colors.text, backgroundColor: colors.inputBg }]}
+                keyboardType="decimal-pad" value={param.value} onChangeText={param.onChange}
+                onFocus={() => param.setFocused(true)} onBlur={() => param.setFocused(false)} returnKeyType="done"
+              />
+            </View>
+          ))}
         </View>
       </SectionCard>
 
-      {/* ── Notifications ── */}
       <SectionCard>
         <SectionTitle text="Notifications" />
         <View style={s.settingRow}>
@@ -413,68 +262,36 @@ function SettingsTab() {
             <Text style={[s.settingLabel, { color: colors.text }]}>Enable notifications</Text>
             <Text style={[s.settingSubLabel, { color: colors.textFaint }]}>Reminder alerts from the Meds tab</Text>
           </View>
-          <Switch
-            value={settings.notificationsEnabled}
-            onValueChange={(v) => setSettings({ notificationsEnabled: v })}
-            trackColor={{ false: '#ccc', true: RED }}
-            thumbColor="#fff"
-          />
+          <Switch value={settings.notificationsEnabled} onValueChange={(v) => setSettings({ notificationsEnabled: v })} trackColor={{ false: '#ccc', true: RED }} thumbColor="#fff" />
         </View>
       </SectionCard>
 
-      {/* ── Data ── */}
       <SectionCard>
         <SectionTitle text="Data" />
-        <TouchableOpacity style={s.dangerBtn} onPress={handleClearData} activeOpacity={0.75}>
+        <PressBtn style={[s.dangerBtn, s.dangerBtnShadow]} onPress={handleClearData} activeOpacity={0.75}>
           <Text style={s.dangerBtnText}>🗑 Clear all data</Text>
-        </TouchableOpacity>
+        </PressBtn>
         <Text style={[s.dangerHint, { color: colors.textFaint }]}>Deletes glucose history and insulin log. Cannot be undone.</Text>
       </SectionCard>
 
-      {/* ── About ── */}
       <SectionCard>
         <SectionTitle text="About" />
-        <View style={s.aboutRow}>
-          <Text style={[s.aboutLabel, { color: colors.textMuted }]}>App version</Text>
-          <Text style={[s.aboutValue, { color: colors.text }]}>2.0.0</Text>
-        </View>
+        <View style={s.aboutRow}><Text style={[s.aboutLabel, { color: colors.textMuted }]}>App version</Text><Text style={[s.aboutValue, { color: colors.text }]}>2.0.0</Text></View>
         <Divider />
-        <View style={s.aboutRow}>
-          <Text style={[s.aboutLabel, { color: colors.textMuted }]}>Built with</Text>
-          <Text style={[s.aboutValue, { color: colors.text }]}>Expo · React Native · Zustand</Text>
-        </View>
+        <View style={s.aboutRow}><Text style={[s.aboutLabel, { color: colors.textMuted }]}>Built with</Text><Text style={[s.aboutValue, { color: colors.text }]}>Expo · React Native · Zustand</Text></View>
         <Divider />
-        <TouchableOpacity
-          style={s.aboutLinkRow}
-          onPress={() => Alert.alert('Privacy Policy', 'Privacy policy not published yet.')}
-          activeOpacity={0.75}
-        >
-          <Text style={[s.aboutLink, { color: colors.text }]}>Privacy Policy</Text>
-          <Text style={[s.aboutChevron, { color: colors.border }]}>›</Text>
-        </TouchableOpacity>
-        <Divider />
-        <TouchableOpacity
-          style={s.aboutLinkRow}
-          onPress={() => Alert.alert('Terms of Use', 'Terms of use not published yet.')}
-          activeOpacity={0.75}
-        >
-          <Text style={[s.aboutLink, { color: colors.text }]}>Terms of Use</Text>
-          <Text style={[s.aboutChevron, { color: colors.border }]}>›</Text>
-        </TouchableOpacity>
-        <Divider />
-        <TouchableOpacity
-          style={s.aboutLinkRow}
-          onPress={() => Alert.alert('Feedback', 'Feedback feature coming soon.')}
-          activeOpacity={0.75}
-        >
-          <Text style={[s.aboutLink, { color: colors.text }]}>Send Feedback</Text>
-          <Text style={[s.aboutChevron, { color: colors.border }]}>›</Text>
-        </TouchableOpacity>
+        {['Privacy Policy', 'Terms of Use', 'Send Feedback'].map((item, i) => (
+          <View key={i}>
+            <TouchableOpacity style={s.aboutLinkRow} onPress={() => Alert.alert(item, `${item} not published yet.`)} activeOpacity={0.75}>
+              <Text style={[s.aboutLink, { color: colors.text }]}>{item}</Text>
+              <Text style={[s.aboutChevron, { color: colors.border }]}>›</Text>
+            </TouchableOpacity>
+            {i < 2 && <Divider />}
+          </View>
+        ))}
         <Divider />
         <View style={s.disclaimerCard}>
-          <Text style={[s.disclaimerText, { color: colors.textMuted }]}>
-            ⚠️ DiabEasy is a personal management aid and not a medical device. Always confirm treatment decisions with your healthcare provider.
-          </Text>
+          <Text style={[s.disclaimerText, { color: colors.textMuted }]}>⚠️ DiabEasy is a personal management aid and not a medical device. Always confirm treatment decisions with your healthcare provider.</Text>
         </View>
       </SectionCard>
     </ScrollView>
@@ -491,19 +308,15 @@ export default function ProfileScreen() {
     <View style={[s.root, { backgroundColor: colors.bg }]}>
       <Text style={[s.title, { color: colors.text }]}>Profile & Settings</Text>
 
-      <View style={[s.tabBar, { borderColor: colors.red }]}>
+      {/* Sub-tab bar with shadow */}
+      <View style={[s.tabBar, { borderColor: colors.red }, s.tabBarShadow]}>
         {(['profile', 'settings'] as ActiveTab[]).map((t) => {
           const active = activeTab === t;
           return (
-            <TouchableOpacity
-              key={t}
-              style={[s.tabBtn, { backgroundColor: active ? colors.red : colors.bg }, active && s.tabBtnActive]}
-              onPress={() => setActiveTab(t)}
-              activeOpacity={0.8}
-            >
-              <Text style={[s.tabBtnText, { color: active ? '#fff' : colors.red }, active && s.tabBtnTextActive]}>
-                {t === 'profile' ? 'Profile' : 'Settings'}
-              </Text>
+            <TouchableOpacity key={t}
+              style={[s.tabBtn, { backgroundColor: active ? colors.red : colors.bg }]}
+              onPress={() => setActiveTab(t)} activeOpacity={0.8}>
+              <Text style={[s.tabBtnText, { color: active ? '#fff' : colors.red }]}>{t === 'profile' ? 'Profile' : 'Settings'}</Text>
             </TouchableOpacity>
           );
         })}
@@ -516,105 +329,70 @@ export default function ProfileScreen() {
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
 const s = StyleSheet.create({
-  root:    { flex: 1, backgroundColor: '#ffffff' },
+  root:    { flex: 1 },
   content: { flex: 1, paddingHorizontal: 16, paddingTop: 12 },
+  title:   { fontSize: 18, fontWeight: '600', textAlign: 'center', paddingTop: 16, marginBottom: 12 },
 
-  title: {
-    fontSize: 18, fontWeight: '600', textAlign: 'center',
-    color: '#222222', paddingTop: 16, marginBottom: 12,
-  },
+  tabBar:    { flexDirection: 'row', marginHorizontal: 16, borderRadius: 8, borderWidth: 1.5, overflow: 'hidden', marginBottom: 4 },
+  tabBtn:    { flex: 1, paddingVertical: 8, alignItems: 'center' },
+  tabBtnText:{ fontSize: 14, fontWeight: '600' },
 
-  tabBar: {
-    flexDirection: 'row', marginHorizontal: 16,
-    borderRadius: 8, borderWidth: 1.5,
-    overflow: 'hidden', marginBottom: 4,
-  },
-  tabBtn:           { flex: 1, paddingVertical: 8, alignItems: 'center' },
-  tabBtnActive:     {},
-  tabBtnText:       { fontSize: 14, fontWeight: '600' },
-  tabBtnTextActive: { color: '#fff' },
+  sectionCard:  { borderRadius: 12, borderWidth: 1, padding: 14, marginBottom: 12 },
+  sectionTitle: { fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10 },
+  sectionHint:  { fontSize: 12, marginBottom: 12, lineHeight: 17 },
+  divider:      { height: 1, marginVertical: 8 },
+  fieldLabel:   { fontSize: 12, fontWeight: '600', marginBottom: 4, marginTop: 8 },
 
-  sectionCard: {
-    borderRadius: 12, borderWidth: 1, borderColor: '#e0e0e0',
-    backgroundColor: '#fafafa', padding: 14, marginBottom: 12,
-  },
-  sectionTitle: {
-    fontSize: 10, fontWeight: '700', color: '#666666',
-    textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10,
-  },
-  sectionHint: { fontSize: 12, color: '#666666', marginBottom: 12, lineHeight: 17 },
+  input: { borderWidth: 1.5, borderRadius: 6, paddingVertical: Platform.OS === 'ios' ? 9 : 7, paddingHorizontal: 12, fontSize: 14, marginBottom: 4 },
 
-  divider: { height: 1, backgroundColor: '#ececec', marginVertical: 8 },
+  authBtn:        { borderRadius: 8, paddingVertical: 12, alignItems: 'center', marginTop: 12 },
+  authBtnText:    { fontSize: 15, color: '#fff', fontWeight: '700', backgroundColor: 'transparent' },
+  authToggleRow:  { flexDirection: 'row', justifyContent: 'center', marginTop: 10 },
+  authToggleText: { fontSize: 13 },
+  authToggleLink: { fontSize: 13, fontWeight: '700' },
+  forgotLink:     { fontSize: 13, textDecorationLine: 'underline' },
 
-  fieldLabel: { fontSize: 12, color: '#666666', fontWeight: '600', marginBottom: 4, marginTop: 8 },
-
-  input: {
-    borderWidth: 1.5, borderColor: '#e0e0e0', borderRadius: 6,
-    paddingVertical: Platform.OS === 'ios' ? 9 : 7,
-    paddingHorizontal: 12, fontSize: 14, color: '#222222',
-    backgroundColor: '#ffffff', marginBottom: 4,
-  },
-  inputFocused: {},
-
-  // Auth
-  authBtn:     { borderRadius: 8, paddingVertical: 12, alignItems: 'center', marginTop: 12 },
-  authBtnText: { fontSize: 15, color: '#fff', fontWeight: '700' },
-  authToggleRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 10 },
-  authToggleText:{ fontSize: 13, color: '#666666' },
-  authToggleLink:{ fontSize: 13, fontWeight: '700' },
-  forgotLink:    { fontSize: 13, color: '#aaaaaa', textDecorationLine: 'underline' },
-
-  // Avatar
   avatarRow:   { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 4 },
   avatar:      { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
   avatarText:  { fontSize: 22, fontWeight: '800', color: '#fff' },
-  avatarName:  { fontSize: 15, fontWeight: '700', color: '#222222' },
-  avatarEmail: { fontSize: 13, color: '#666666', marginTop: 2 },
+  avatarName:  { fontSize: 15, fontWeight: '700' },
+  avatarEmail: { fontSize: 13, marginTop: 2 },
 
-  signOutBtn:     { borderRadius: 8, paddingVertical: 10, alignItems: 'center', borderWidth: 1.5, marginTop: 4 },
-  signOutBtnText: { fontSize: 14, fontWeight: '700' },
+  signOutBtn:     { borderRadius: 8, paddingVertical: 10, alignItems: 'center', borderWidth: 1.5, marginTop: 4, backgroundColor: 'transparent' },
+  signOutBtnText: { fontSize: 14, fontWeight: '700', backgroundColor: 'transparent' },
 
-  // Pills
   pillRow:       { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
-  pill:          { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 6, borderWidth: 1.5, borderColor: '#e0e0e0' },
-  pillActive:    {},
-  pillText:      { fontSize: 13, fontWeight: '600', color: '#666666' },
-  pillTextActive:{ color: '#fff' },
+  pill:          { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 6, borderWidth: 1.5, borderColor: '#e0e0e0', backgroundColor: 'transparent' },
+  pillText:      { fontSize: 13, fontWeight: '600', backgroundColor: 'transparent' },
+  pillTextActive:{ color: '#fff', backgroundColor: 'transparent' },
 
-  // Settings rows
   settingRow:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4 },
-  settingLabel:   { fontSize: 14, fontWeight: '600', color: '#222222' },
-  settingSubLabel:{ fontSize: 12, color: '#aaaaaa', marginTop: 2 },
+  settingLabel:   { fontSize: 14, fontWeight: '600' },
+  settingSubLabel:{ fontSize: 12, marginTop: 2 },
 
-  // Insulin params grid
-  paramGrid:        { flexDirection: 'row', gap: 8 },
-  paramItem:        { flex: 1 },
-  paramLabel:       { fontSize: 11, color: '#666666', marginBottom: 6, textAlign: 'center', lineHeight: 15 },
-  paramInput:       {
-    borderWidth: 1.5, borderColor: '#e0e0e0', borderRadius: 6,
-    paddingVertical: Platform.OS === 'ios' ? 7 : 5,
-    paddingHorizontal: 8, fontSize: 15, fontWeight: '700',
-    color: '#222222', textAlign: 'center', backgroundColor: '#ffffff',
-  },
-  paramInputFocused:{},
+  paramGrid:  { flexDirection: 'row', gap: 8 },
+  paramItem:  { flex: 1 },
+  paramLabel: { fontSize: 11, marginBottom: 6, textAlign: 'center', lineHeight: 15 },
+  paramInput: { borderWidth: 1.5, borderColor: '#e0e0e0', borderRadius: 6, paddingVertical: Platform.OS === 'ios' ? 7 : 5, paddingHorizontal: 8, fontSize: 15, fontWeight: '700', textAlign: 'center' },
 
-  // Danger
-  dangerBtn:     { borderRadius: 8, paddingVertical: 11, alignItems: 'center', borderWidth: 1.5, borderColor: '#e53935', marginBottom: 6 },
-  dangerBtnText: { fontSize: 14, color: '#e53935', fontWeight: '700' },
-  dangerHint:    { fontSize: 12, color: '#aaaaaa', textAlign: 'center' },
+  dangerBtn:     { borderRadius: 8, paddingVertical: 11, alignItems: 'center', borderWidth: 1.5, borderColor: '#e53935', marginBottom: 6, backgroundColor: 'transparent' },
+  dangerBtnText: { fontSize: 14, color: '#e53935', fontWeight: '700', backgroundColor: 'transparent' },
+  dangerHint:    { fontSize: 12, textAlign: 'center' },
 
-  // About
-  aboutRow:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 4 },
-  aboutLabel:    { fontSize: 13, color: '#666666' },
-  aboutValue:    { fontSize: 13, color: '#222222', fontWeight: '600' },
-  aboutLinkRow:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 },
-  aboutLink:     { fontSize: 14, color: '#222222' },
-  aboutChevron:  { fontSize: 18, color: '#e0e0e0' },
+  aboutRow:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 4 },
+  aboutLabel:   { fontSize: 13 },
+  aboutValue:   { fontSize: 13, fontWeight: '600' },
+  aboutLinkRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 },
+  aboutLink:    { fontSize: 14 },
+  aboutChevron: { fontSize: 18 },
 
-  // Disclaimer
-  disclaimerCard: { borderRadius: 8, backgroundColor: 'transparent', padding: 12, marginTop: 8 },
+  disclaimerCard: { borderRadius: 8, padding: 12, marginTop: 8 },
   disclaimerText: { fontSize: 12, lineHeight: 18 },
+
+  // ── Shadows ──────────────────────────────────────────────────────────────────
+  tabBarShadow:     { shadowColor: '#EC5557', shadowOffset: { width: 2, height: 2 }, shadowOpacity: 0.12, shadowRadius: 4, elevation: 4 },
+  primaryBtnShadow: { shadowColor: '#7a1010', shadowOffset: { width: 4, height: 4 }, shadowOpacity: 0.45, shadowRadius: 0, elevation: 4 },
+  outlineBtnShadow: { shadowColor: '#000', shadowOffset: { width: 1, height: 1 }, shadowOpacity: 0.06, shadowRadius: 2 },
+  dangerBtnShadow:  { shadowColor: '#e53935', shadowOffset: { width: 2, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 3 },
 });
