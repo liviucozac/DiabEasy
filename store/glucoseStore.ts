@@ -6,6 +6,8 @@
  */
 
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type Unit = 'mg/dL' | 'mmol/L';
 export type DiabetesType = 'Type 1' | 'Type 2' | 'LADA' | 'Other' | '';
@@ -126,7 +128,9 @@ const DEFAULT_SETTINGS: AppSettings = {
 
 // ─── Store ────────────────────────────────────────────────────────────────────
 
-export const useGlucoseStore = create<GlucoseStore>((set) => ({
+export const useGlucoseStore = create<GlucoseStore>()(
+  persist(
+    (set) => ({
   hasSeenOnboarding: false,
   setHasSeenOnboarding: (v) => set({ hasSeenOnboarding: v }),
 
@@ -168,4 +172,10 @@ export const useGlucoseStore = create<GlucoseStore>((set) => ({
   settings: DEFAULT_SETTINGS,
   setSettings: (partial) =>
     set((state) => ({ settings: { ...state.settings, ...partial } })),
-}));
+    }),
+    {
+      name: 'diabeasy-store',
+      storage: createJSONStorage(() => AsyncStorage),
+    }
+  )
+);
