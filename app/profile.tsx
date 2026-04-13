@@ -3,7 +3,8 @@ import {
   View, Text, TouchableOpacity, ScrollView,
   TextInput, StyleSheet, Platform, Alert, Switch,
 } from 'react-native';
-import { useGlucoseStore, DiabetesType, ThemeType } from '../store/glucoseStore';
+import { useGlucoseStore, DiabetesType, ThemeType, InsulinAnalogType } from '../store/glucoseStore';
+import { INSULIN_ANALOGS, getAnalogByType } from '../utils/insulinUtils';
 import { useTheme } from '../context/AppContext';
 import { PressBtn } from '../components/PressBtn';
 
@@ -148,7 +149,7 @@ function ProfileTab() {
             const active = profile.diabetesType === t;
             return (
               <TouchableOpacity key={t}
-                style={[s.pill, active ? s.primaryBtnShadow : null, { borderColor: active ? colors.red : colors.border, backgroundColor: active ? colors.red : 'transparent' }]}
+                style={[s.pill, active ? s.primaryBtnShadow : null, { borderColor: colors.red, backgroundColor: active ? colors.red : 'transparent' }]}
                 onPress={() => setProfile({ diabetesType: t })} activeOpacity={0.75}>
                 <Text style={[s.pillText, { color: active ? '#fff' : colors.textMuted }]}>{t}</Text>
               </TouchableOpacity>
@@ -174,6 +175,7 @@ function SettingsTab() {
   const [isfFocused,    setIsfFocused]    = useState(false);
   const [ratioFocused,  setRatioFocused]  = useState(false);
   const [targetFocused, setTargetFocused] = useState(false);
+  const [diaFocused,    setDiaFocused]    = useState(false);
 
   const THEMES: { label: string; value: ThemeType }[] = [
     { label: '☀️ Light', value: 'light' },
@@ -198,7 +200,7 @@ function SettingsTab() {
             const active = settings.theme === t.value;
             return (
               <TouchableOpacity key={t.value}
-                style={[s.pill, active ? s.primaryBtnShadow : null, { borderColor: active ? colors.red : colors.border, backgroundColor: active ? colors.red : 'transparent' }]}
+                style={[s.pill, active ? s.primaryBtnShadow : null, { borderColor: colors.red, backgroundColor: active ? colors.red : 'transparent' }]}
                 onPress={() => setSettings({ theme: t.value })} activeOpacity={0.75}>
                 <Text style={[s.pillText, { color: active ? '#fff' : colors.textMuted }]}>{t.label}</Text>
               </TouchableOpacity>
@@ -215,7 +217,7 @@ function SettingsTab() {
             const active = settings.glucoseUnit === u;
             return (
               <TouchableOpacity key={u}
-                style={[s.pill, active ? s.primaryBtnShadow : null, { borderColor: active ? colors.red : colors.border, backgroundColor: active ? colors.red : 'transparent' }]}
+                style={[s.pill, active ? s.primaryBtnShadow : null, { borderColor: colors.red, backgroundColor: active ? colors.red : 'transparent' }]}
                 onPress={() => setSettings({ glucoseUnit: u })} activeOpacity={0.75}>
                 <Text style={[s.pillText, { color: active ? '#fff' : colors.textMuted }]}>{u}</Text>
               </TouchableOpacity>
@@ -237,11 +239,33 @@ function SettingsTab() {
       <SectionCard>
         <SectionTitle text="Insulin Calculator Defaults" />
         <Text style={[s.sectionHint, { color: colors.textMuted }]}>These values are used by the Meds calculator. Ask your healthcare provider for your personal settings.</Text>
+
+        <FieldLabel text="Rapid-acting insulin type" />
+        <View style={s.pillRow}>
+          {INSULIN_ANALOGS.map((analog) => {
+            const active = settings.insulinAnalogType === analog.value;
+            return (
+              <TouchableOpacity key={analog.value}
+                style={[s.pill, active ? s.primaryBtnShadow : null, { borderColor: colors.red, backgroundColor: active ? colors.red : 'transparent' }]}
+                onPress={() => {
+                  setSettings({ insulinAnalogType: analog.value as InsulinAnalogType, dia: analog.defaultDia });
+                }}
+                activeOpacity={0.75}>
+                <Text style={[s.pillText, { color: active ? '#fff' : colors.textMuted }]}>{analog.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+        <Text style={[s.sectionHint, { color: colors.textFaint, marginTop: 2 }]}>
+          {getAnalogByType(settings.insulinAnalogType).sublabel}
+        </Text>
+
         <View style={s.paramGrid}>
           {[
             { label: 'Target glycemia\n(mg/dL)', value: String(settings.targetGlucose), focused: targetFocused, setFocused: setTargetFocused, onChange: (v: string) => setSettings({ targetGlucose: parseFloat(v) || 100 }) },
             { label: 'ISF\n(mg/dL per unit)',    value: String(settings.isf),           focused: isfFocused,    setFocused: setIsfFocused,    onChange: (v: string) => setSettings({ isf: parseFloat(v) || 50 }) },
             { label: 'Carb ratio\n(g per unit)', value: String(settings.carbRatio),     focused: ratioFocused,  setFocused: setRatioFocused,  onChange: (v: string) => setSettings({ carbRatio: parseFloat(v) || 10 }) },
+            { label: 'DIA\n(hours)',              value: String(settings.dia),           focused: diaFocused,    setFocused: setDiaFocused,    onChange: (v: string) => setSettings({ dia: parseFloat(v) || 5 }) },
           ].map((param, i) => (
             <View key={i} style={s.paramItem}>
               <Text style={[s.paramLabel, { color: colors.textMuted }]}>{param.label}</Text>

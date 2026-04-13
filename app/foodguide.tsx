@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useGlucoseStore } from '../store/glucoseStore';
+import { calcCorrectionDose, getAnalogByType } from '../utils/insulinUtils';
 import { useTheme } from '../context/AppContext';
 import { PressBtn } from '../components/PressBtn';
 
@@ -251,7 +252,7 @@ function NutrientGrid({ totals }: { totals: NutrientTotals }) {
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function FoodGuideScreen() {
-  const { glucoseValue, unit } = useGlucoseStore();
+  const { glucoseValue, unit, settings, setTotalCarbs } = useGlucoseStore();
   const { colors, isDark } = useTheme();
   const router = useRouter();
 
@@ -310,6 +311,7 @@ export default function FoodGuideScreen() {
       totals, estimatedGlycemia: postMeal?.value ?? null,
       currentGlucose: glucoseValue, unit: unit ?? 'mg/dL',
     }, ...prev]);
+    setTotalCarbs(totals.carbs);
     setCurrentMeal([]);
     setActiveTab('history');
   };
@@ -351,15 +353,17 @@ export default function FoodGuideScreen() {
           {(() => {
             const mgdl = unit === 'mmol/L' ? glucoseValue! * 18 : glucoseValue!;
             if (mgdl <= 150) return null;
-            const dose   = mgdl <= 199 ? 2 : mgdl <= 250 ? 3 : mgdl <= 300 ? 4 : null;
-            const mmolEq = (mgdl / 18).toFixed(1);
+            const mmolEq  = (mgdl / 18).toFixed(1);
+            const rawDose = calcCorrectionDose(mgdl, settings.targetGlucose, settings.isf);
+            const dose    = rawDose > 0 ? Math.round(rawDose) : null;
+            const analog  = getAnalogByType(settings.insulinAnalogType);
             return (
               <View style={[s.highWarningCard, { backgroundColor: colors.highBg, borderColor: colors.high }]}>
                 <Text style={[s.highWarningTitle, { color: colors.high }]}>⚠️ Eating not recommended</Text>
                 <Text style={[s.highWarningBody, { color: colors.text }]}>
                   Your blood sugar is high ({mgdl} mg/dL · {mmolEq} mmol/L).{' '}
-                  {dose !== null
-                    ? <>Take <Text style={[s.highWarningBold, { color: colors.high }]}>{dose} units of insulin</Text> before eating.</>
+                  {dose !== null && dose > 0
+                    ? <>Take <Text style={[s.highWarningBold, { color: colors.high }]}>{dose} unit{dose !== 1 ? 's' : ''} of {analog.label.toLowerCase()} insulin</Text> before eating.</>
                     : <>Your level is very high — <Text style={[s.highWarningBold, { color: colors.high }]}>consult your doctor</Text> before eating.</>
                   }
                 </Text>

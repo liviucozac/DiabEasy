@@ -2,14 +2,12 @@ import React, { useState, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   ScrollView, Modal, StyleSheet, KeyboardAvoidingView,
-  Platform, Alert, Animated,
+  Platform, Animated,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useGlucoseStore } from '../store/glucoseStore';
-import type { GlucoseEntry } from '../store/glucoseStore';
 import { useTheme } from '../context/AppContext';
 import { PressBtn } from '../components/PressBtn';
-import { Shadow } from 'react-native-shadow-2';
 import { ShadowBtn } from '../components/ShadowBtn';
 
 
@@ -206,7 +204,7 @@ const FASTING_OPTIONS: { label: string; value: FastingType }[] = [
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function HomeScreen() {
-  const { addEntry, setGlucoseValue: setGlobalGlucose, glucoseValue: globalGlucoseValue, unit: globalUnit, setHasSeenOnboarding } = useGlucoseStore();
+  const { addEntry, setGlucoseValue: setGlobalGlucose, unit: globalUnit, setHasSeenOnboarding } = useGlucoseStore();
   const { colors, isDark } = useTheme();
 
   const [unit, setUnit]                     = useState<Unit>(globalUnit ?? 'mg/dL');
@@ -214,7 +212,7 @@ export default function HomeScreen() {
   const [inputFocused, setInputFocused]     = useState(false);
   const [fasting, setFasting]               = useState<FastingType>('');
   const [symptoms, setSymptoms]             = useState('');
-  const [glucoseValue, setGlucoseValue]     = useState<number | null>(globalGlucoseValue ?? null);
+  const [glucoseValue, setGlucoseValue]     = useState<number | null>(null);
   const [showHypoPopup, setShowHypoPopup]   = useState(false);
   const [showHyperPopup, setShowHyperPopup] = useState(false);
 
@@ -437,7 +435,7 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   safeArea:  { flex: 1 },
-  container: { alignItems: 'center', padding: 16, paddingBottom: 32 },
+  container: { alignItems: 'center', padding: 16, paddingBottom: 28 },
   appDescription: { textAlign: 'center', fontSize: 14, lineHeight: 20, marginBottom: 2 },
   highlight:      { fontWeight: '600' },
   instruction:    { textAlign: 'center', fontSize: 14, lineHeight: 20, marginBottom: 6 },

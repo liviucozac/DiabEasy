@@ -28,6 +28,14 @@
 "plugins": [
   "expo-router",
   [
+    "expo-notifications",
+    {
+      "icon": "./assets/images/icon.png",
+      "color": "#EC5557",
+      "sounds": []
+    }
+  ],
+  [
     "expo-splash-screen",
     {
       "image": "./assets/images/splash-icon.png",

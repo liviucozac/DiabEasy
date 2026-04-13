@@ -2,7 +2,7 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import {
   View, Text, ScrollView, TextInput,
-  TouchableOpacity, StyleSheet, Platform, Dimensions,
+  TouchableOpacity, StyleSheet, Platform, Dimensions, PanResponder,
 } from 'react-native';
 import { EmptyState } from '../components/EmptyState';
 import { PressBtn } from '../components/PressBtn';
@@ -10,8 +10,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useGlucoseStore, GlucoseEntry } from '../store/glucoseStore';
 import { useTheme } from '../context/AppContext';
 import Svg, { Polyline, Line, Text as SvgText, Circle, G, Path } from 'react-native-svg';
-import React, { useState, useMemo } from 'react';
-
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 
 type HistoryEntry = GlucoseEntry;
 
@@ -26,8 +25,6 @@ const getColorClass = (value: number, unit: string): 'low' | 'normal' | 'high' =
     return 'high';
   }
 };
-
-// ─── Line Chart (react-native-svg) ───────────────────────────────────────────
 
 function LineChart({ data, colors }: { data: HistoryEntry[]; colors: any }) {
   const W = Dimensions.get('window').width - 64;
@@ -50,10 +47,8 @@ function LineChart({ data, colors }: { data: HistoryEntry[]; colors: any }) {
   }));
 
   const polyPoints = pts.map(p => `${p.x},${p.y}`).join(' ');
-
   const yTicks = 4;
   const yTickVals = Array.from({ length: yTicks }, (_, i) => minV + (range / (yTicks - 1)) * i);
-
   const xLabelCount   = Math.min(5, data.length);
   const xLabelIndices = Array.from({ length: xLabelCount }, (_, i) =>
     Math.round((i / (xLabelCount - 1)) * (data.length - 1))
@@ -67,8 +62,7 @@ function LineChart({ data, colors }: { data: HistoryEntry[]; colors: any }) {
           <G key={i}>
             <Line x1={PAD.left} y1={y} x2={W - PAD.right} y2={y}
               stroke={colors.border} strokeWidth={1} strokeDasharray="3,3" />
-            <SvgText x={PAD.left - 6} y={y + 4} fontSize={9}
-              fill={colors.textMuted} textAnchor="end">
+            <SvgText x={PAD.left - 6} y={y + 4} fontSize={9} fill={colors.textMuted} textAnchor="end">
               {Math.round(val)}
             </SvgText>
           </G>
@@ -93,8 +87,6 @@ function LineChart({ data, colors }: { data: HistoryEntry[]; colors: any }) {
     </Svg>
   );
 }
-
-// ─── Pie Chart (react-native-svg) ────────────────────────────────────────────
 
 function PieChart({ normal, high, low, colors }: { normal: number; high: number; low: number; colors: any }) {
   const total = normal + high + low;
@@ -160,8 +152,6 @@ function PieChart({ normal, high, low, colors }: { normal: number; high: number;
   );
 }
 
-// ─── Main Screen ──────────────────────────────────────────────────────────────
-
 export default function HistoryScreen() {
   const { history, removeEntry } = useGlucoseStore();
   const { colors, isDark } = useTheme();
@@ -174,6 +164,54 @@ export default function HistoryScreen() {
   const [showFromPicker, setShowFromPicker] = useState(false);
   const [showToPicker,   setShowToPicker]   = useState(false);
   const [filtersApplied, setFiltersApplied] = useState(false);
+  const [chartWindow,    setChartWindow]    = useState<7 | 14 | 20 | 'all'>(20);
+  const [showWeekly,     setShowWeekly]     = useState(false);
+
+  // ── Readings list custom red scrollbar ──────────────────────────────────────
+  const readingsScrollRef       = useRef<ScrollView>(null);
+  const readingsScrollYRef      = useRef(0);
+  const readingsContentHRef     = useRef(0);
+  const readingsContainerHRef   = useRef(320);
+  const [readingsScrollY,    setReadingsScrollY]    = useState(0);
+  const [readingsContentH,   setReadingsContentH]   = useState(0);
+  const [readingsContainerH, setReadingsContainerH] = useState(320);
+
+  const rThumbHRef       = useRef(60);
+  const rMaxScrollYRef   = useRef(0);
+  const thumbStartScrRef = useRef(0);
+
+  const rThumbH   = readingsContentH > 0
+    ? Math.max(28, (readingsContainerH / readingsContentH) * readingsContainerH)
+    : readingsContainerH;
+  const rMaxScrY  = Math.max(0, readingsContentH - readingsContainerH);
+  const rThumbTop = rMaxScrY > 0
+    ? (readingsScrollY / rMaxScrY) * (readingsContainerH - rThumbH)
+    : 0;
+
+  useEffect(() => { rThumbHRef.current     = rThumbH;   }, [rThumbH]);
+  useEffect(() => { rMaxScrollYRef.current = rMaxScrY;  }, [rMaxScrY]);
+
+  const thumbPan = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder:  () => true,
+      onPanResponderGrant: () => {
+        thumbStartScrRef.current = readingsScrollYRef.current;
+      },
+      onPanResponderMove: (_, { dy }) => {
+        const cH       = readingsContainerHRef.current;
+        const tH       = rThumbHRef.current;
+        const maxTrack = cH - tH;
+        if (maxTrack <= 0) return;
+        const newY = Math.max(0, Math.min(
+          rMaxScrollYRef.current,
+          thumbStartScrRef.current + (dy / maxTrack) * rMaxScrollYRef.current,
+        ));
+        readingsScrollRef.current?.scrollTo({ y: newY, animated: false });
+      },
+    })
+  ).current;
+  // ────────────────────────────────────────────────────────────────────────────
 
   const clearFilters = () => {
     setShowFromPicker(false); setShowToPicker(false);
@@ -182,7 +220,7 @@ export default function HistoryScreen() {
     setUnitFilter(''); setFiltersApplied(false);
   };
 
-  const filteredHistory: HistoryEntry[] = !filtersApplied
+  const filteredHistory: HistoryEntry[] = useMemo(() => !filtersApplied
     ? (history as HistoryEntry[])
     : (history as HistoryEntry[]).filter((entry) => {
         if (unitFilter && entry.unit !== unitFilter) return false;
@@ -195,12 +233,57 @@ export default function HistoryScreen() {
         if (filterMin && entry.value < parseFloat(filterMin)) return false;
         if (filterMax && entry.value > parseFloat(filterMax)) return false;
         return true;
-      });
+      }), [history, filtersApplied, unitFilter, filterDateFrom, filterDateTo, filterMin, filterMax]);
 
-  const chartData = useMemo(() => [...filteredHistory].reverse().slice(-20), [filteredHistory]);
+  const chartData = useMemo(() => {
+    const reversed = [...filteredHistory].reverse();
+    if (chartWindow === 'all') return reversed;
+    return reversed.slice(-chartWindow);
+  }, [filteredHistory, chartWindow]);
+
   const pieNormal = filteredHistory.filter(e => e.interpretation === 'Normal').length;
   const pieHigh   = filteredHistory.filter(e => e.interpretation === 'High').length;
   const pieLow    = filteredHistory.filter(e => e.interpretation === 'Low').length;
+  const totalReadings = filteredHistory.length;
+
+  const avgGlucoseMgDl = useMemo(() => {
+    if (totalReadings === 0) return null;
+    return filteredHistory.reduce((s, e) => {
+      const mgdl = e.unit === 'mmol/L' ? e.value * 18 : e.value;
+      return s + mgdl;
+    }, 0) / totalReadings;
+  }, [filteredHistory, totalReadings]);
+
+  const tirPercent = totalReadings > 0
+    ? Math.round((pieNormal / totalReadings) * 100)
+    : null;
+
+  const eHbA1c = avgGlucoseMgDl !== null
+    ? ((avgGlucoseMgDl + 46.7) / 28.7).toFixed(1)
+    : null;
+
+  const weeklyAverages = useMemo(() => {
+    if (filteredHistory.length === 0) return [];
+    const weeks: Record<string, number[]> = {};
+    filteredHistory.forEach(e => {
+      const [d, m, y] = e.timestamp.split(' ')[0].split('/');
+      const date = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+      const weekStart = new Date(date);
+      weekStart.setDate(date.getDate() - date.getDay());
+      const key = weekStart.toISOString().split('T')[0];
+      const mgdl = e.unit === 'mmol/L' ? e.value * 18 : e.value;
+      if (!weeks[key]) weeks[key] = [];
+      weeks[key].push(mgdl);
+    });
+    return Object.entries(weeks)
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .slice(0, 8)
+      .map(([weekStart, values]) => ({
+        weekStart,
+        avg: Math.round(values.reduce((s, v) => s + v, 0) / values.length),
+        count: values.length,
+      }));
+  }, [filteredHistory]);
 
   const UnitPill = ({ label, value }: { label: string; value: string }) => {
     const active = unitFilter === value;
@@ -234,7 +317,7 @@ export default function HistoryScreen() {
             <Text style={[styles.deleteBtn, { color: colors.textMuted }]}>Delete</Text>
           </TouchableOpacity>
         </View>
-        {!!entry.fasting  && <Text style={[styles.fastingLabel, { color: colors.textMuted }]}>– {entry.fasting}</Text>}
+        {!!entry.fasting  && <Text style={[styles.fastingLabel, { color: colors.textMuted }]}>- {entry.fasting}</Text>}
         {!!entry.symptoms && <Text style={[styles.notes, { color: colors.textMuted }]}>Notes: {entry.symptoms}</Text>}
       </View>
     );
@@ -254,30 +337,25 @@ export default function HistoryScreen() {
       if (event.type === 'glucose') {
         const e = event.data;
         const color = e.interpretation === 'Low' ? '#e53935' : e.interpretation === 'High' ? '#ef6c00' : '#2e7d32';
-        return `<tr style="background-color: ${bg}"><td>${e.timestamp.split(' ')[0]}</td><td>${e.timestamp.split(' ')[1]}</td>
-          <td style="font-weight:600">${e.value} ${e.unit}</td><td style="color:${color};font-weight:600">${e.interpretation}</td>
-          <td>${e.fasting || '—'}</td><td>${e.symptoms || '—'}</td><td style="color:#1565c0">—</td><td>—</td></tr>`;
+        return `<tr style="background-color: ${bg}"><td>${e.timestamp.split(' ')[0]}</td><td>${e.timestamp.split(' ')[1]}</td><td style="font-weight:600">${e.value} ${e.unit}</td><td style="color:${color};font-weight:600">${e.interpretation}</td><td>${e.fasting || '-'}</td><td>${e.symptoms || '-'}</td><td style="color:#1565c0">-</td><td>-</td></tr>`;
       } else {
         const e = event.data;
-        return `<tr style="background-color: ${bg}"><td>—</td><td>${e.time}</td>
-          <td style="color:#1565c0">—</td><td style="color:#1565c0">—</td>
-          <td>—</td><td>—</td><td style="color:#1565c0;font-weight:600">${e.type}</td><td style="color:#1565c0;font-weight:600">${e.units}u</td></tr>`;
+        return `<tr style="background-color: ${bg}"><td>-</td><td>${e.time}</td><td style="color:#1565c0">-</td><td style="color:#1565c0">-</td><td>-</td><td>-</td><td style="color:#1565c0;font-weight:600">${e.type}</td><td style="color:#1565c0;font-weight:600">${e.units}u</td></tr>`;
       }
     }).join('');
 
-    const avgGlucose   = filteredHistory.length > 0 ? (filteredHistory.reduce((s, e) => s + e.value, 0) / filteredHistory.length).toFixed(1) : '—';
+    const avgGlucose   = filteredHistory.length > 0 ? (filteredHistory.reduce((s, e) => s + e.value, 0) / filteredHistory.length).toFixed(1) : '-';
     const inRange      = filteredHistory.filter(e => e.interpretation === 'Normal').length;
     const lows         = filteredHistory.filter(e => e.interpretation === 'Low').length;
     const highs        = filteredHistory.filter(e => e.interpretation === 'High').length;
     const totalInsulin = insulinEntries.reduce((s, e) => s + e.units, 0);
-    const dateFrom     = filterDateFrom || (filteredHistory.length > 0 ? [...filteredHistory].reverse()[0].timestamp.split(' ')[0] : '—');
-    const dateTo       = filterDateTo   || (filteredHistory.length > 0 ? filteredHistory[0].timestamp.split(' ')[0] : '—');
+    const dateFrom     = filterDateFrom || (filteredHistory.length > 0 ? [...filteredHistory].reverse()[0].timestamp.split(' ')[0] : '-');
+    const dateTo       = filterDateTo   || (filteredHistory.length > 0 ? filteredHistory[0].timestamp.split(' ')[0] : '-');
 
-    // ── SVG Line Chart ──────────────────────────────────────────────────────────
     const chartEntries = [...filteredHistory].reverse().slice(-20);
     const svgLineChart = (() => {
       if (chartEntries.length < 2) return '';
-      const W = 700, H = 160, padL = 48, padR = 16, padT = 14, padB = 36;
+      const W = 620, H = 160, padL = 48, padR = 16, padT = 14, padB = 36;
       const vals = chartEntries.map(e => e.value);
       const minV = Math.min(...vals), maxV = Math.max(...vals);
       const range = maxV - minV || 1;
@@ -295,19 +373,11 @@ export default function HistoryScreen() {
         return `<text x="${toX(idx).toFixed(1)}" y="${H - 4}" text-anchor="middle" font-size="8" fill="#888">${label}</text>`;
       }).join('');
       const yTicks = [minV, (minV + maxV) / 2, maxV].map(v =>
-        `<text x="${padL - 6}" y="${toY(v).toFixed(1)}" text-anchor="end" dominant-baseline="middle" font-size="8" fill="#888">${v.toFixed(0)}</text>
-         <line x1="${padL}" y1="${toY(v).toFixed(1)}" x2="${W - padR}" y2="${toY(v).toFixed(1)}" stroke="#eee" stroke-width="1"/>`
+        `<text x="${padL - 6}" y="${toY(v).toFixed(1)}" text-anchor="end" dominant-baseline="middle" font-size="8" fill="#888">${v.toFixed(0)}</text><line x1="${padL}" y1="${toY(v).toFixed(1)}" x2="${W - padR}" y2="${toY(v).toFixed(1)}" stroke="#eee" stroke-width="1"/>`
       ).join('');
-      return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
-        ${yTicks}
-        <polyline points="${points}" fill="none" stroke="#ec5557" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
-        ${dots}${xLabels}
-        <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H - padB}" stroke="#ddd" stroke-width="1"/>
-        <line x1="${padL}" y1="${H - padB}" x2="${W - padR}" y2="${H - padB}" stroke="#ddd" stroke-width="1"/>
-      </svg>`;
+      return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">${yTicks}<polyline points="${points}" fill="none" stroke="#ec5557" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>${dots}${xLabels}<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H - padB}" stroke="#ddd" stroke-width="1"/><line x1="${padL}" y1="${H - padB}" x2="${W - padR}" y2="${H - padB}" stroke="#ddd" stroke-width="1"/></svg>`;
     })();
 
-    // ── SVG Donut Pie Chart ─────────────────────────────────────────────────────
     const svgPieChart = (() => {
       const slices = [
         { label: 'Normal', count: inRange, color: '#2e7d32' },
@@ -331,43 +401,12 @@ export default function HistoryScreen() {
         return `<path d="${d}" fill="${s.color}" opacity="0.9"/>`;
       }).join('');
       const legend = slices.map((s, i) =>
-        `<rect x="215" y="${20 + i * 24}" width="12" height="12" fill="${s.color}" rx="2"/>
-         <text x="232" y="${31 + i * 24}" font-size="11" fill="#444">${s.label}: ${s.count} (${((s.count/total)*100).toFixed(0)}%)</text>`
+        `<rect x="215" y="${20 + i * 24}" width="12" height="12" fill="${s.color}" rx="2"/><text x="232" y="${31 + i * 24}" font-size="11" fill="#444">${s.label}: ${s.count} (${((s.count/total)*100).toFixed(0)}%)</text>`
       ).join('');
-      return `<svg width="380" height="200" xmlns="http://www.w3.org/2000/svg">
-        ${paths}
-        <circle cx="${cx}" cy="${cy}" r="${innerR}" fill="#fff"/>
-        <text x="${cx}" y="${cy - 6}" text-anchor="middle" font-size="18" font-weight="900" fill="#222">${total}</text>
-        <text x="${cx}" y="${cy + 14}" text-anchor="middle" font-size="9" fill="#888">readings</text>
-        ${legend}
-      </svg>`;
+      return `<svg width="380" height="200" xmlns="http://www.w3.org/2000/svg">${paths}<circle cx="${cx}" cy="${cy}" r="${innerR}" fill="#fff"/><text x="${cx}" y="${cy - 6}" text-anchor="middle" font-size="18" font-weight="900" fill="#222">${total}</text><text x="${cx}" y="${cy + 14}" text-anchor="middle" font-size="9" fill="#888">readings</text>${legend}</svg>`;
     })();
 
-    const html = `<html><head><style>
-      @page{size:A4 landscape;margin:16px 20px}body{font-family:Arial,sans-serif;color:#222;font-size:11px}
-      h1{color:#ec5557;font-size:20px;margin-bottom:2px}h2{color:#444;font-size:13px;font-weight:600;margin:16px 0 6px;border-bottom:2px solid #ec5557;padding-bottom:3px}
-      table{width:100%;border-collapse:collapse;font-size:10px}th{background:#ec5557;color:#fff;padding:5px 7px;text-align:left}td{padding:3px 7px;border-bottom:1px solid #eee}
-      .sb{border:1px solid #e0e0e0;border-radius:6px;padding:6px 12px;text-align:center;min-width:70px}.sn{font-size:18px;font-weight:bold;color:#ec5557}.sl{font-size:9px;color:#666}
-      .footer{margin-top:20px;font-size:9px;color:#aaa;text-align:center;border-top:1px solid #eee;padding-top:8px}
-    </style></head><body>
-      <h1>🩸 DiabEasy — Glucose Report</h1>
-      <div style="color:#888;font-size:10px;margin-bottom:4px">Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-      <div style="font-size:11px;color:#444;margin-bottom:14px">${profile?.name ? `<strong>Patient:</strong> ${profile.name} &nbsp;|&nbsp;` : ''}<strong>Period:</strong> ${dateFrom} — ${dateTo}</div>
-      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px">
-        <div class="sb"><div class="sn">${filteredHistory.length}</div><div class="sl">Total Readings</div></div>
-        <div class="sb"><div class="sn" style="color:#2e7d32">${avgGlucose}</div><div class="sl">Average</div></div>
-        <div class="sb"><div class="sn" style="color:#2e7d32">${inRange}</div><div class="sl">In Range</div></div>
-        <div class="sb"><div class="sn" style="color:#e53935">${lows}</div><div class="sl">Lows</div></div>
-        <div class="sb"><div class="sn" style="color:#ef6c00">${highs}</div><div class="sl">Highs</div></div>
-        <div class="sb"><div class="sn" style="color:#1565c0">${totalInsulin}u</div><div class="sl">Total Insulin</div></div>
-      </div>
-      ${svgLineChart ? `<h2>Glucose Trend</h2>${svgLineChart}` : ''}
-      ${svgPieChart ? `<h2>Readings Breakdown</h2>${svgPieChart}` : ''}
-      <h2>Health Log</h2>
-      <table><thead><tr><th>Date</th><th>Time</th><th>Glucose</th><th>Status</th><th>Reading Type</th><th>Symptoms & Notes</th><th>Insulin Type</th><th>Insulin Dose</th></tr></thead>
-      <tbody>${rows.length > 0 ? rows : '<tr><td colspan="8" style="text-align:center;color:#aaa;padding:10px;font-style:italic">No data recorded</td></tr>'}</tbody></table>
-      <div class="footer">DiabEasy is a personal management aid and not a medical device. Always confirm treatment decisions with your healthcare provider.</div>
-    </body></html>`;
+    const html = `<html><head><style>@page{size:A4 portrait;margin:20px 24px}body{font-family:Arial,sans-serif;color:#222;font-size:11px}h1{color:#ec5557;font-size:20px;margin-bottom:2px}h2{color:#444;font-size:13px;font-weight:600;margin:16px 0 6px;border-bottom:2px solid #ec5557;padding-bottom:3px}table{width:100%;border-collapse:collapse;font-size:9px}th{background:#ec5557;color:#fff;padding:4px 5px;text-align:left;font-size:9px}td{padding:3px 5px;border-bottom:1px solid #eee}.sb{border:1px solid #e0e0e0;border-radius:6px;padding:5px 8px;text-align:center;min-width:62px}.sn{font-size:16px;font-weight:bold;color:#ec5557}.sl{font-size:8px;color:#666}.footer{margin-top:20px;font-size:9px;color:#aaa;text-align:center;border-top:1px solid #eee;padding-top:8px}</style></head><body><h1>DiabEasy - Glucose Report</h1><div style="color:#888;font-size:10px;margin-bottom:4px">Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div><div style="font-size:11px;color:#444;margin-bottom:14px">${profile?.name ? `<strong>Patient:</strong> ${profile.name} &nbsp;|&nbsp;` : ''}<strong>Period:</strong> ${dateFrom} - ${dateTo}</div><div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px"><div class="sb"><div class="sn">${filteredHistory.length}</div><div class="sl">Total Readings</div></div><div class="sb"><div class="sn" style="color:#2e7d32">${avgGlucose}</div><div class="sl">Average</div></div><div class="sb"><div class="sn" style="color:#2e7d32">${inRange}</div><div class="sl">In Range</div></div><div class="sb"><div class="sn" style="color:#e53935">${lows}</div><div class="sl">Lows</div></div><div class="sb"><div class="sn" style="color:#ef6c00">${highs}</div><div class="sl">Highs</div></div><div class="sb"><div class="sn" style="color:#1565c0">${totalInsulin}u</div><div class="sl">Total Insulin</div></div><div class="sb"><div class="sn" style="color:#2e7d32">${tirPercent ?? '-'}%</div><div class="sl">Time in Range</div></div><div class="sb"><div class="sn" style="color:#1565c0">${eHbA1c ?? '-'}%</div><div class="sl">Est. HbA1c</div></div></div>${svgLineChart ? `<h2>Glucose Trend</h2>${svgLineChart}` : ''}${svgPieChart ? `<h2>Readings Breakdown</h2>${svgPieChart}` : ''}<h2>Health Log</h2><table><thead><tr><th>Date</th><th>Time</th><th>Glucose</th><th>Status</th><th>Reading Type</th><th>Notes</th><th>Insulin Type</th><th>Insulin Dose</th></tr></thead><tbody>${rows.length > 0 ? rows : '<tr><td colspan="8" style="text-align:center;color:#aaa;padding:10px;font-style:italic">No data recorded</td></tr>'}</tbody></table><div class="footer">DiabEasy is a personal management aid and not a medical device. Always confirm treatment decisions with your healthcare provider.</div></body></html>`;
 
     try {
       const { uri } = await Print.printToFileAsync({ html });
@@ -441,7 +480,7 @@ export default function HistoryScreen() {
         onPress={exportPDF}
         style={[styles.clearBtn, { borderColor: colors.red, backgroundColor: colors.red }, styles.primaryBtnShadow]}
       >
-        <Text style={[styles.clearBtnText, { color: '#fff' }]}>📄 Export PDF Report</Text>
+        <Text style={[styles.clearBtnText, { color: '#fff' }]}>Export PDF Report</Text>
       </PressBtn>
 
       <View style={[styles.divider, { backgroundColor: colors.border }]} />
@@ -451,10 +490,54 @@ export default function HistoryScreen() {
       ) : filteredHistory.length === 0 ? (
         <EmptyState icon="🔍" title="No matches" subtitle="No entries match your current filter criteria." />
       ) : (
-        [...filteredHistory].reverse().map((entry, index) => renderEntry(entry, index))
+        <View style={{ maxHeight: 200, position: 'relative' }}>
+          <ScrollView
+            ref={readingsScrollRef}
+            style={{ marginRight: rMaxScrY > 0 ? 12 : 0 }}
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled={true}
+            scrollEventThrottle={16}
+            onScroll={(e) => {
+              const y = e.nativeEvent.contentOffset.y;
+              readingsScrollYRef.current = y;
+              setReadingsScrollY(y);
+            }}
+            onContentSizeChange={(_, h) => {
+              readingsContentHRef.current = h;
+              setReadingsContentH(h);
+            }}
+            onLayout={(e) => {
+              const h = e.nativeEvent.layout.height;
+              readingsContainerHRef.current = h;
+              setReadingsContainerH(h);
+            }}
+          >
+            {filteredHistory.map((entry, index) => renderEntry(entry, index))}
+          </ScrollView>
+
+          {rMaxScrY > 0 && (
+            <View style={{ position: 'absolute', right: 0, top: 0, width: 8, height: readingsContainerH }}>
+              {/* Track */}
+              <View style={{
+                position: 'absolute', right: 2, top: 0,
+                width: 4, height: readingsContainerH,
+                backgroundColor: colors.border, borderRadius: 2, opacity: 0.4,
+              }} />
+              {/* Thumb */}
+              <View
+                {...thumbPan.panHandlers}
+                style={{
+                  position: 'absolute', right: 0,
+                  top: rThumbTop, width: 8, height: rThumbH,
+                  backgroundColor: colors.red, borderRadius: 4,
+                }}
+              />
+            </View>
+          )}
+        </View>
       )}
 
-      {filteredHistory.length >= 2 && (
+      {totalReadings >= 2 && (
         <View style={[styles.chartCard, {
           backgroundColor: colors.bgCard,
           borderColor: colors.border,
@@ -464,8 +547,58 @@ export default function HistoryScreen() {
           shadowRadius: 18,
           elevation: isDark ? 6 : 5,
         }]}>
-          <Text style={[styles.chartTitle, { color: colors.textMuted }]}>GLUCOSE OVER TIME</Text>
-          <Text style={[styles.chartSub, { color: colors.textFaint }]}>Last {chartData.length} reading{chartData.length !== 1 ? 's' : ''}</Text>
+
+          {totalReadings >= 3 && (
+            <>
+              <Text style={[styles.chartTitle, { color: colors.textMuted }]}>KEY METRICS</Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 12 }}>
+                <View style={{ alignItems: 'center' }}>
+                  <Text style={{ fontSize: 16, fontWeight: '900', color: tirPercent !== null && tirPercent >= 70 ? colors.normal : tirPercent !== null && tirPercent >= 50 ? colors.high : colors.low }}>
+                    {tirPercent ?? '-'}%
+                  </Text>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text, marginTop: 2 }}>Time in Range</Text>
+                  <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 1 }}>Target: 70%+</Text>
+                </View>
+                <View style={{ width: 1, backgroundColor: colors.border }} />
+                <View style={{ alignItems: 'center' }}>
+                  <Text style={{ fontSize: 16, fontWeight: '900', color: eHbA1c !== null && parseFloat(eHbA1c) <= 7 ? colors.normal : eHbA1c !== null && parseFloat(eHbA1c) <= 8 ? colors.high : colors.low }}>
+                    {eHbA1c ?? '-'}%
+                  </Text>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text, marginTop: 2 }}>Est. HbA1c</Text>
+                  <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 1 }}>Target: below 7%</Text>
+                </View>
+              </View>
+              <Text style={{ fontSize: 10, color: colors.textFaint, textAlign: 'center', paddingBottom: 8 }}>
+                Based on {totalReadings} readings. Estimates only - confirm with a lab test.
+              </Text>
+              <View style={[styles.chartDivider, { backgroundColor: colors.border }]} />
+            </>
+          )}
+
+          <Text style={[styles.chartTitle, { color: colors.textMuted, marginTop: 8 }]}>GLUCOSE OVER TIME</Text>
+
+          <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 8, marginVertical: 8 }}>
+            {([7, 14, 20, 'all'] as const).map((w) => (
+              <TouchableOpacity
+                key={String(w)}
+                onPress={() => setChartWindow(w)}
+                style={{
+                  paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6,
+                  borderWidth: 1.5, borderColor: colors.red,
+                  backgroundColor: chartWindow === w ? colors.red : 'transparent',
+                }}
+                activeOpacity={0.75}
+              >
+                <Text style={{ fontSize: 11, fontWeight: '600', color: chartWindow === w ? '#fff' : colors.red }}>
+                  {w === 'all' ? 'All' : `Last ${w}`}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <Text style={[styles.chartSub, { color: colors.textFaint }]}>
+            Showing {chartData.length} reading{chartData.length !== 1 ? 's' : ''}
+          </Text>
           <View style={{ alignItems: 'center', marginVertical: 8 }}>
             <LineChart data={chartData} colors={colors} />
           </View>
@@ -477,11 +610,54 @@ export default function HistoryScreen() {
               </View>
             ))}
           </View>
+
           <View style={[styles.chartDivider, { backgroundColor: colors.border }]} />
+
           <Text style={[styles.chartTitle, { color: colors.textMuted, marginTop: 8 }]}>READINGS BREAKDOWN</Text>
           <View style={{ alignItems: 'center', marginVertical: 8 }}>
             <PieChart normal={pieNormal} high={pieHigh} low={pieLow} colors={colors} />
           </View>
+
+          <View style={[styles.chartDivider, { backgroundColor: colors.border }]} />
+
+          <TouchableOpacity
+            style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}
+            onPress={() => setShowWeekly(v => !v)}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.chartTitle, { color: colors.textMuted }]}>WEEKLY AVERAGES</Text>
+            <Text style={{ fontSize: 12, color: colors.textMuted }}>{showWeekly ? 'collapse' : 'expand'}</Text>
+          </TouchableOpacity>
+
+          {showWeekly && (
+            <View style={{ marginTop: 8 }}>
+              {weeklyAverages.length === 0 ? (
+                <Text style={{ fontSize: 12, color: colors.textMuted, textAlign: 'center', paddingVertical: 8 }}>
+                  Not enough data.
+                </Text>
+              ) : (
+                weeklyAverages.map((week, i) => {
+                  const color = week.avg < 75 ? colors.low : week.avg <= 150 ? colors.normal : colors.high;
+                  const label = week.avg < 75 ? 'Low' : week.avg <= 150 ? 'Normal' : 'High';
+                  return (
+                    <View key={i} style={{
+                      flexDirection: 'row', justifyContent: 'space-between',
+                      alignItems: 'center', paddingVertical: 8,
+                      borderTopWidth: i > 0 ? 1 : 0, borderTopColor: colors.border,
+                    }}>
+                      <Text style={{ fontSize: 12, color: colors.textMuted }}>
+                        Week of {week.weekStart.substring(5).replace('-', '/')}
+                      </Text>
+                      <Text style={{ fontSize: 12, color: colors.textMuted }}>{week.count} readings</Text>
+                      <Text style={{ fontSize: 13, fontWeight: '700', color }}>{week.avg} mg/dL</Text>
+                      <Text style={{ fontSize: 11, fontWeight: '600', color }}>{label}</Text>
+                    </View>
+                  );
+                })
+              )}
+            </View>
+          )}
+
         </View>
       )}
     </ScrollView>
@@ -507,13 +683,13 @@ const styles = StyleSheet.create({
   clearBtn:         { alignSelf: 'center', paddingHorizontal: 20, paddingVertical: 8, borderRadius: 6, borderWidth: 1.5, marginBottom: 16 },
   clearBtnText:     { fontSize: 14, fontWeight: '500' },
   divider:          { height: 1, marginBottom: 16 },
-  historyItem:      { borderRadius: 6, paddingHorizontal: 14, paddingVertical: 1, marginBottom: 6, borderWidth: 1, overflow: 'hidden', borderBottomWidth: 3 },
-  entryRow:         { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 4 },
+  historyItem:      { borderRadius: 6, paddingHorizontal: 14, paddingVertical: 6, marginBottom: 6, borderWidth: 1, overflow: 'hidden', borderBottomWidth: 3 },
+  entryRow:         { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
   entryDate:        { fontSize: 13, fontWeight: '600' },
   entryTime:        { fontSize: 13 },
   entryValue:       { fontSize: 14, fontWeight: '700' },
   entryBadge:       { fontSize: 13, fontWeight: '600', marginLeft: 'auto' },
-  fastingLabel:     { fontSize: 12, marginTop: 2 },
+  fastingLabel:     { fontSize: 12, marginTop: 4 },
   notes:            { fontSize: 12, marginTop: 4, fontStyle: 'italic' },
   deleteBtn:        { fontSize: 13, fontWeight: '600', paddingHorizontal: 6 },
   chartCard:        { borderRadius: 12, borderWidth: 1, padding: 16, marginTop: 16, marginBottom: 16, overflow: 'hidden' },
@@ -524,7 +700,6 @@ const styles = StyleSheet.create({
   lineLegendItem:   { flexDirection: 'row', alignItems: 'center', gap: 5 },
   lineLegendDot:    { width: 8, height: 8, borderRadius: 4 },
   lineLegendText:   { fontSize: 11 },
-
   primaryBtnShadow: { shadowColor: '#7a1010', shadowOffset: { width: 4, height: 4 }, shadowOpacity: 0.45, shadowRadius: 0, elevation: 4 },
   outlineBtnShadow: { shadowColor: '#000', shadowOffset: { width: 1, height: 1 }, shadowOpacity: 0.06, shadowRadius: 2 },
 });

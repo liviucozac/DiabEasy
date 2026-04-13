@@ -9,9 +9,11 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export type Unit = 'mg/dL' | 'mmol/L';
-export type DiabetesType = 'Type 1' | 'Type 2' | 'LADA' | 'Other' | '';
-export type ThemeType = 'light' | 'dark' | 'system';
+export type Unit             = 'mg/dL' | 'mmol/L';
+export type DiabetesType     = 'Type 1' | 'Type 2' | 'LADA' | 'Other' | '';
+export type ThemeType        = 'light' | 'dark' | 'system';
+export type InsulinAnalogType    = 'standard' | 'ultra-rapid' | 'inhaled';
+export type LongActingInsulinType = 'glargine-u100' | 'glargine-u300' | 'detemir' | 'degludec' | 'nph';
 
 export interface GlucoseEntry {
   value: number;
@@ -23,9 +25,10 @@ export interface GlucoseEntry {
 }
 
 export interface InsulinEntry {
-  units: number;
-  time: string;
-  type: 'Rapid-acting' | 'Long-acting';
+  units:      number;
+  time:       string;            // "HH:MM" for display
+  type:       'Rapid-acting' | 'Long-acting';
+  timestamp?: string;            // ISO 8601 — set on new entries, used for IOB
 }
 
 export interface Reminder {
@@ -54,12 +57,15 @@ export interface UserProfile {
 export interface AppSettings {
   theme: ThemeType;
   glucoseUnit: Unit;
-  language: string;          // e.g. 'en', 'it', 'ro' — placeholder for i18n
+  language: string;
   notificationsEnabled: boolean;
-  // Insulin calculator defaults
-  isf: number;               // Insulin Sensitivity Factor (mg/dL per unit)
-  carbRatio: number;         // Grams of carbs per unit of insulin
-  targetGlucose: number;     // Target glucose in mg/dL
+  isf: number;
+  carbRatio: number;
+  targetGlucose: number;
+  insulinAnalogType: InsulinAnalogType;
+  dia: number;
+  longActingInsulinType: LongActingInsulinType;
+  emergencyNumber: string;  // ← add it here
 }
 
 // ─── Store interface ──────────────────────────────────────────────────────────
@@ -124,6 +130,11 @@ const DEFAULT_SETTINGS: AppSettings = {
   isf: 50,
   carbRatio: 10,
   targetGlucose: 100,
+  insulinAnalogType:    'standard'      as InsulinAnalogType,
+  dia:                  5,
+  longActingInsulinType: 'glargine-u100' as LongActingInsulinType,
+    emergencyNumber: '112',
+
 };
 
 // ─── Store ────────────────────────────────────────────────────────────────────

@@ -6,6 +6,21 @@ import { useGlucoseStore } from '../store/glucoseStore';
 import OnboardingScreen from './onboarding';
 import { useRef, useEffect } from 'react';
 import { UIManager, Platform } from 'react-native';
+import * as Notifications from 'expo-notifications';
+import {
+  registerForNotifications,
+  rescheduleAllReminders,
+  cancelAllReminderNotifications,
+} from '../utils/notificationUtils';
+
+// Show notifications as banners even when the app is in the foreground
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 if (Platform.OS === 'android') {
   UIManager.setLayoutAnimationEnabledExperimental?.(true);
@@ -109,7 +124,28 @@ function TabsLayout() {
 }
 
 function RootContent() {
-  const { hasSeenOnboarding } = useGlucoseStore();
+  const { hasSeenOnboarding, reminders, settings } = useGlucoseStore();
+  const permGranted = useRef(false);
+
+  // Request permissions and schedule all active reminders on first mount
+  useEffect(() => {
+    registerForNotifications().then((granted) => {
+      permGranted.current = granted;
+      if (granted && settings.notificationsEnabled) {
+        rescheduleAllReminders(reminders, settings);
+      }
+    });
+  }, []);
+
+  // React to the notificationsEnabled toggle in Profile → Settings
+  useEffect(() => {
+    if (!settings.notificationsEnabled) {
+      cancelAllReminderNotifications();
+    } else if (permGranted.current) {
+      rescheduleAllReminders(reminders, settings);
+    }
+  }, [settings.notificationsEnabled]);
+
   if (!hasSeenOnboarding) return <OnboardingScreen />;
   return <TabsLayout />;
 }

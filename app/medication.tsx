@@ -4,6 +4,9 @@ import {
   TextInput, StyleSheet, Platform, Alert,
 } from 'react-native';
 import { useGlucoseStore, InsulinEntry, Reminder } from '../store/glucoseStore';
+import { calculateIOB, calcCorrectionDose, getAnalogByType, getLongActingByType, INSULIN_ANALOGS, LONG_ACTING_INSULINS } from '../utils/insulinUtils';
+import { scheduleReminder, cancelReminder } from '../utils/notificationUtils';
+import type { InsulinAnalogType, LongActingInsulinType } from '../store/glucoseStore';
 import { useTheme } from '../context/AppContext';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { PressBtn } from '../components/PressBtn';
@@ -58,10 +61,71 @@ function InfoRow({ label, value, valueColor }: { label: string; value: string; v
   );
 }
 
+// ─── Insulin Dropdown ─────────────────────────────────────────────────────────
+
+function InsulinDropdown<T extends string>({
+  label, selected, options, onSelect,
+}: {
+  label:    string;
+  selected: T;
+  options:  { value: T; label: string; sublabel: string; duration?: string }[];
+  onSelect: (v: T) => void;
+}) {
+  const { colors } = useTheme();
+  const [open, setOpen] = useState(false);
+  const current = options.find(o => o.value === selected) ?? options[0];
+
+  return (
+    <View style={{ marginBottom: 10 }}>
+      <Text style={[s.fieldLabel, { color: colors.textMuted }]}>{label}</Text>
+
+      {/* Trigger button — same pill style as the rest of the tab */}
+      <TouchableOpacity
+        style={[s.dropdownTrigger, { borderColor: colors.red, backgroundColor: colors.bgCard }]}
+        onPress={() => setOpen(v => !v)}
+        activeOpacity={0.75}
+      >
+        <View style={{ flex: 1 }}>
+          <Text style={[s.dropdownTriggerText, { color: colors.text }]}>{current.label}</Text>
+          <Text style={[s.dropdownTriggerSub,  { color: colors.textMuted }]}>{current.sublabel}{current.duration ? `  ·  ${current.duration}` : ''}</Text>
+        </View>
+        <Text style={[s.dropdownChevron, { color: colors.red }]}>{open ? '▲' : '▼'}</Text>
+      </TouchableOpacity>
+
+      {/* Options list */}
+      {open && (
+        <View style={[s.dropdownList, { borderColor: colors.border, backgroundColor: colors.bgCard }]}>
+          {options.map((opt, i) => {
+            const active = opt.value === selected;
+            return (
+              <TouchableOpacity
+                key={opt.value}
+                style={[
+                  s.dropdownItem,
+                  i < options.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border },
+                  active && { backgroundColor: colors.lowBg },
+                ]}
+                onPress={() => { onSelect(opt.value); setOpen(false); }}
+                activeOpacity={0.75}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={[s.dropdownItemText, { color: active ? colors.red : colors.text }]}>{opt.label}</Text>
+                  <Text style={[s.dropdownItemSub,  { color: colors.textMuted }]}>{opt.sublabel}{opt.duration ? `  ·  ${opt.duration}` : ''}</Text>
+                </View>
+                {active && <Text style={{ color: colors.red, fontWeight: '700', fontSize: 14 }}>✓</Text>}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      )}
+    </View>
+  );
+}
+
 // ─── Calculator Tab ───────────────────────────────────────────────────────────
 
 function CalculatorTab() {
-  const { glucoseValue, unit, totalCarbs, settings } = useGlucoseStore();
+  const { glucoseValue, unit, totalCarbs, settings, insulinEntries, setSettings } = useGlucoseStore();
   const { colors } = useTheme();
 
   const ISF        = settings.isf;
@@ -72,10 +136,16 @@ function CalculatorTab() {
   const result = useMemo(() => {
     if (currentMgDl === null) return null;
     const meal       = totalCarbs / CARB_RATIO;
-    const correction = (currentMgDl - targetMgDl) / ISF;
-    const total      = Math.max(meal + correction, 0);
-    return { meal: Math.round(meal), correction: Math.round(correction), total: Math.round(total) };
-  }, [currentMgDl, targetMgDl, totalCarbs, ISF, CARB_RATIO]);
+    const correction = calcCorrectionDose(currentMgDl, targetMgDl, ISF);
+    const iob        = calculateIOB(insulinEntries, settings.insulinAnalogType, settings.dia);
+    const total      = Math.max(meal + correction - iob, 0);
+    return {
+      meal:       Math.round(meal),
+      correction: Math.round(correction),
+      iob:        Math.round(iob * 10) / 10,   // one decimal
+      total:      Math.round(total),
+    };
+  }, [currentMgDl, targetMgDl, totalCarbs, ISF, CARB_RATIO, insulinEntries, settings.insulinAnalogType, settings.dia]);
 
   const glucoseColor =
     currentMgDl === null  ? '#888'
@@ -108,7 +178,28 @@ function CalculatorTab() {
             <Text style={[s.paramReadValue, { color: colors.text }]}>1:{settings.carbRatio}</Text>
             <Text style={[s.paramReadLabel, { color: colors.textMuted }]}>Carb{'\n'}ratio</Text>
           </View>
+          <View style={[s.paramReadItem, s.paramReadBorder]}>
+            <Text style={[s.paramReadValue, { color: colors.text }]}>{settings.dia}h</Text>
+            <Text style={[s.paramReadLabel, { color: colors.textMuted }]}>{getAnalogByType(settings.insulinAnalogType).label}{'\n'}DIA</Text>
+          </View>
         </View>
+      </SectionCard>
+
+      <SectionCard>
+        <SectionTitle text="Your Insulin" />
+        <Text style={[s.paramHint, { color: colors.textMuted }]}>Select once — used across the calculator, log, and reminders. Change anytime in Profile → Settings.</Text>
+        <InsulinDropdown<InsulinAnalogType>
+          label="Rapid-acting insulin"
+          selected={settings.insulinAnalogType}
+          options={INSULIN_ANALOGS}
+          onSelect={(v) => setSettings({ insulinAnalogType: v, dia: INSULIN_ANALOGS.find(a => a.value === v)?.defaultDia ?? settings.dia })}
+        />
+        <InsulinDropdown<LongActingInsulinType>
+          label="Long-acting (basal) insulin"
+          selected={settings.longActingInsulinType}
+          options={LONG_ACTING_INSULINS}
+          onSelect={(v) => setSettings({ longActingInsulinType: v })}
+        />
       </SectionCard>
 
       {glucoseValue === null ? (
@@ -140,23 +231,38 @@ function CalculatorTab() {
               <Text style={[s.doseUnit, { color: colors.textFaint }]}>units</Text>
             </View>
             <View style={[s.doseItem, s.doseItemBorder]}>
+              <Text style={[s.doseNumber, { color: result && result.iob > 0 ? colors.normal : colors.text }]}>
+                {result ? `-${result.iob}` : '—'}
+              </Text>
+              <Text style={[s.doseLabel, { color: colors.textMuted }]}>IOB</Text>
+              <Text style={[s.doseUnit, { color: colors.textFaint }]}>units</Text>
+            </View>
+            <View style={[s.doseItem, s.doseItemBorder]}>
               <Text style={[s.doseNumber, s.doseTotalNumber, { color: colors.red }]}>{result?.total ?? '—'}</Text>
               <Text style={[s.doseLabel, { color: colors.textMuted }]}>Total</Text>
               <Text style={[s.doseUnit, { color: colors.textFaint }]}>units</Text>
             </View>
           </View>
+          {result && result.iob > 0 && (
+            <View style={[s.warningBanner, { borderColor: colors.normal, backgroundColor: colors.normalBg, marginBottom: 10 }]}>
+              <Text style={[s.warningText, { color: colors.normal }]}>
+                💉 {result.iob}u still active from a recent dose (IOB). Subtracted from total.
+              </Text>
+            </View>
+          )}
           {currentMgDl !== null && currentMgDl < 75 && (
             <View style={[s.warningBanner, { borderColor: '#e53935', backgroundColor: colors.lowBg }]}>
               <Text style={[s.warningText, { color: colors.low }]}>⚠️ Blood sugar is low. Treat hypoglycemia before taking any insulin.</Text>
             </View>
           )}
-          {currentMgDl !== null && currentMgDl > 175 && (() => {
-            const dose = currentMgDl <= 200 ? 2 : currentMgDl <= 250 ? 3 : 4;
+          {currentMgDl !== null && currentMgDl > settings.targetGlucose && (() => {
+            const rawDose = Math.max(0, Math.round(calcCorrectionDose(currentMgDl, settings.targetGlucose, settings.isf)));
+            if (rawDose === 0) return null;
             return (
               <View style={[s.warningBanner, { borderColor: '#ef6c00', backgroundColor: colors.highBg }]}>
                 <Text style={[s.warningText, { color: colors.high }]}>
-                  💉 High blood sugar — take <Text style={{ fontWeight: '800' }}>{dose} units of short-acting insulin</Text>
-                  {currentMgDl > 250 ? ' and consider delaying food until levels improve.' : '.'}
+                  💉 High blood sugar — correction dose: <Text style={{ fontWeight: '800' }}>{rawDose} unit{rawDose !== 1 ? 's' : ''} of {getAnalogByType(settings.insulinAnalogType).label.toLowerCase()} insulin</Text>
+                  {currentMgDl > 250 ? ' — consider delaying food until levels improve.' : '.'}
                 </Text>
               </View>
             );
@@ -192,7 +298,7 @@ function CalculatorTab() {
 // ─── Log Tab ──────────────────────────────────────────────────────────────────
 
 function LogTab() {
-  const { insulinEntries, addInsulinEntry, clearInsulinLog } = useGlucoseStore();
+  const { insulinEntries, addInsulinEntry, clearInsulinLog, settings, glucoseValue, unit } = useGlucoseStore();
   const { colors } = useTheme();
 
   const [insulinType,    setInsulinType]    = useState<InsulinType>('Rapid-acting');
@@ -202,9 +308,25 @@ function LogTab() {
 
   const formatTime = (d: Date) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
 
+  const glucoseWarning = (() => {
+    if (glucoseValue === null) return null;
+    const mgDl = toMgDl(glucoseValue, unit ?? 'mg/dL');
+    if (mgDl < 75) {
+      return { kind: 'low' as const, mgDl };
+    }
+    if (mgDl > 150) {
+      const correction = calcCorrectionDose(mgDl, settings.targetGlucose, settings.isf);
+      const iob        = calculateIOB(insulinEntries, settings.insulinAnalogType, settings.dia);
+      const net        = Math.max(0, correction - iob);
+      const analog     = getAnalogByType(settings.insulinAnalogType).label;
+      return { kind: 'high' as const, mgDl, net, iob, analog };
+    }
+    return null;
+  })();
+
   const handleAdd = () => {
     if (units <= 0) { Alert.alert('Missing info', 'Please set at least 1 unit.'); return; }
-    addInsulinEntry({ units, time: formatTime(timeDate), type: insulinType });
+    addInsulinEntry({ units, time: formatTime(timeDate), type: insulinType, timestamp: new Date().toISOString() });
     setUnits(0); setTimeDate(new Date());
   };
 
@@ -217,6 +339,34 @@ function LogTab() {
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 32 }}>
+
+      {glucoseWarning?.kind === 'low' && (
+        <View style={[s.infoCard, { backgroundColor: colors.lowBg, borderColor: colors.low, marginBottom: 4 }]}>
+          <Text style={[s.infoCardTitle, { color: colors.low }]}>⚠️ Blood sugar too low — do not inject insulin</Text>
+          <Text style={[s.infoCardBody, { color: colors.textMuted }]}>
+            Your current reading is {glucoseValue} {unit}. Injecting insulin now is dangerous.{'\n'}
+            Eat 15–20 g of fast-acting carbs (juice, glucose tabs), wait 15 minutes, then recheck before considering any dose.
+          </Text>
+        </View>
+      )}
+
+      {glucoseWarning?.kind === 'high' && (
+        <View style={[s.infoCard, { backgroundColor: colors.highBg, borderColor: colors.high, marginBottom: 4 }]}>
+          <Text style={[s.infoCardTitle, { color: colors.high }]}>📊 Blood sugar elevated — correction suggested</Text>
+          <Text style={[s.infoCardBody, { color: colors.textMuted }]}>
+            Current: {glucoseValue} {unit}. A correction dose of{' '}
+            <Text style={{ fontWeight: '700', color: colors.high }}>{glucoseWarning.net.toFixed(1)} u</Text>
+            {' '}of {glucoseWarning.analog.toLowerCase()} insulin is suggested based on your ISF and target.
+            {glucoseWarning.iob > 0
+              ? ` (${glucoseWarning.iob.toFixed(1)} u IOB already subtracted.)`
+              : ''}
+          </Text>
+          <Text style={[s.infoCardBody, { color: colors.textFaint, marginTop: 4, fontStyle: 'italic' }]}>
+            Always confirm doses with your healthcare provider.
+          </Text>
+        </View>
+      )}
+
       <SectionCard>
         <SectionTitle text="New Entry" />
         <Text style={[s.fieldLabel, { color: colors.textMuted }]}>Insulin type</Text>
@@ -286,15 +436,20 @@ function LogTab() {
             </View>
           </>
         ) : (
-          [...insulinEntries].reverse().map((entry, idx) => (
-            <View key={idx} style={[s.logRow, idx < insulinEntries.length - 1 && s.logRowBorder, { backgroundColor: colors.bgCard }]}>
-              <View style={s.logLeft}>
-                <Text style={[s.logType, { color: colors.text }]}>{entry.type}</Text>
-                <Text style={[s.logTime, { color: colors.textMuted }]}>at {entry.time}</Text>
+          [...insulinEntries].reverse().map((entry, idx) => {
+            const brandName = entry.type === 'Rapid-acting'
+              ? getAnalogByType(settings.insulinAnalogType).sublabel
+              : getLongActingByType(settings.longActingInsulinType).sublabel;
+            return (
+              <View key={idx} style={[s.logRow, idx < insulinEntries.length - 1 && s.logRowBorder, { backgroundColor: colors.bgCard }]}>
+                <View style={s.logLeft}>
+                  <Text style={[s.logType, { color: colors.text }]}>{entry.type}</Text>
+                  <Text style={[s.logTime, { color: colors.textMuted }]}>{brandName}  ·  at {entry.time}</Text>
+                </View>
+                <Text style={[s.logUnits, { color: colors.red }]}>{entry.units}u</Text>
               </View>
-              <Text style={[s.logUnits, { color: colors.red }]}>{entry.units}u</Text>
-            </View>
-          ))
+            );
+          })
         )}
       </SectionCard>
     </ScrollView>
@@ -388,7 +543,7 @@ function timeStringToDate(time: string): Date {
 
 function RemindersTab() {
   const { colors } = useTheme();
-  const { reminders, addReminder, updateReminder, deleteReminder } = useGlucoseStore();
+  const { reminders, addReminder, updateReminder, deleteReminder, settings } = useGlucoseStore();
 
   const [showAddForm,  setShowAddForm]  = useState(false);
   const [editingId,    setEditingId]    = useState<string | null>(null);
@@ -409,7 +564,9 @@ function RemindersTab() {
 
   const handleAdd = () => {
     if (!addLabel.trim()) { Alert.alert('Missing info', 'Please fill in a label.'); return; }
-    addReminder({ id: Date.now().toString(), label: addLabel.trim(), time: formatTime(addTimeDate), type: addType, units: addUnits, active: true });
+    const newReminder = { id: Date.now().toString(), label: addLabel.trim(), time: formatTime(addTimeDate), type: addType, units: addUnits, active: true };
+    addReminder(newReminder);
+    if (settings.notificationsEnabled) scheduleReminder(newReminder, settings);
     setAddLabel(''); setAddTimeDate(new Date()); setAddType('Rapid-acting'); setAddUnits(1);
     setShowAddForm(false);
   };
@@ -424,14 +581,24 @@ function RemindersTab() {
 
   const handleSaveEdit = () => {
     if (!editLabel.trim()) { Alert.alert('Missing info', 'Please fill in a label.'); return; }
-    updateReminder(editingId!, { label: editLabel.trim(), time: formatTime(editTimeDate), type: editType, units: editUnits });
+    const updated = { label: editLabel.trim(), time: formatTime(editTimeDate), type: editType, units: editUnits };
+    updateReminder(editingId!, updated);
+    if (settings.notificationsEnabled) {
+      cancelReminder(editingId!);
+      const existing = reminders.find(r => r.id === editingId);
+      if (existing?.active) scheduleReminder({ ...existing, ...updated }, settings);
+    }
     setEditingId(null);
   };
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 32 }}>
-      <View style={[s.noteCard, { backgroundColor: colors.normalBg, borderColor: colors.border }]}>
-        <Text style={s.noteText}>💡 Reminders are saved in-app only. For system notifications, enable them in your device settings.</Text>
+      <View style={[s.noteCard, { backgroundColor: settings.notificationsEnabled ? colors.normalBg : colors.highBg, borderColor: colors.border }]}>
+        <Text style={s.noteText}>
+          {settings.notificationsEnabled
+            ? '🔔 System notifications are active. Reminders will fire even when the app is closed.'
+            : '🔕 Notifications are off. Enable them in Profile → Settings to receive reminders.'}
+        </Text>
       </View>
 
       {reminders.length === 0 && !showAddForm ? (
@@ -457,18 +624,29 @@ function RemindersTab() {
             <View key={r.id} style={[s.reminderCard, !r.active && s.reminderCardInactive, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
               <View style={s.reminderLeft}>
                 <Text style={[s.reminderLabel, { color: colors.text }, !r.active && s.reminderLabelInactive]}>{r.label}</Text>
-                <Text style={[s.reminderSub, { color: colors.textMuted }]}>{r.time} · {r.type} · {r.units}u</Text>
+                <Text style={[s.reminderSub, { color: colors.textMuted }]}>
+                  {r.time} · {r.type === 'Rapid-acting'
+                    ? getAnalogByType(settings.insulinAnalogType).sublabel
+                    : getLongActingByType(settings.longActingInsulinType).sublabel} · {r.units}u
+                </Text>
               </View>
               <View style={s.reminderActions}>
                 <TouchableOpacity
                   style={[s.toggleBtn, r.active && { borderColor: colors.red, backgroundColor: 'transparent' }]}
-                  onPress={() => updateReminder(r.id, { active: !r.active })} activeOpacity={0.75}>
+                  onPress={() => {
+                    const nowActive = !r.active;
+                    updateReminder(r.id, { active: nowActive });
+                    if (settings.notificationsEnabled) {
+                      if (nowActive) scheduleReminder({ ...r, active: true }, settings);
+                      else cancelReminder(r.id);
+                    }
+                  }} activeOpacity={0.75}>
                   <Text style={[s.toggleBtnText, r.active && { color: colors.red }]}>{r.active ? 'On' : 'Off'}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={s.editBtn} onPress={() => startEdit(r)} activeOpacity={0.75}>
                   <Text style={[s.editBtnText, { color: colors.red }]}>Edit</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={s.deleteBtn} onPress={() => deleteReminder(r.id)} activeOpacity={0.75}>
+                <TouchableOpacity style={s.deleteBtn} onPress={() => { cancelReminder(r.id); deleteReminder(r.id); }} activeOpacity={0.75}>
                   <Text style={s.deleteBtnText}>✕</Text>
                 </TouchableOpacity>
               </View>
@@ -498,20 +676,9 @@ function RemindersTab() {
 
       {!showAddForm && editingId === null && (
         <View style={[s.infoCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-          <Text style={[s.infoCardTitle, { color: colors.text }]}>🔔 Enable system notifications</Text>
-          <Text style={[s.infoCardBody, { color: colors.textMuted }]}>DiabEasy reminders are stored in-app only. To receive actual notifications on your device:</Text>
-          {[{ icon: '📱', label: 'Android', body: 'Settings → Apps → DiabEasy → Notifications → Allow all' },
-            { icon: '🍎', label: 'iOS',     body: 'Settings → DiabEasy → Notifications → Allow Notifications' },
-          ].map((item, i) => (
-            <View key={i} style={s.infoCardRow}>
-              <Text style={s.infoCardBullet}>{item.icon}</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={[s.infoCardLabel, { color: colors.text }]}>{item.label}</Text>
-                <Text style={[s.infoCardBody, { color: colors.textMuted }]}>{item.body}</Text>
-              </View>
-            </View>
-          ))}
-          <Text style={[s.infoCardBody, { marginTop: 8, color: colors.textFaint, fontStyle: 'italic' }]}>Push notification support will be added in a future update.</Text>
+          <Text style={[s.infoCardTitle, { color: colors.text }]}>ℹ️ How reminders work</Text>
+          <Text style={[s.infoCardBody, { color: colors.textMuted }]}>Reminders fire as system notifications at the scheduled time, even when DiabEasy is closed. Make sure notifications are allowed for DiabEasy in your device settings.</Text>
+          <Text style={[s.infoCardBody, { marginTop: 6, color: colors.textMuted }]}>You can turn all reminders on or off in <Text style={{ fontWeight: '700' }}>Profile → Settings → Notifications</Text>.</Text>
         </View>
       )}
     </ScrollView>
@@ -674,4 +841,13 @@ const s = StyleSheet.create({
   tabBarShadow:     { shadowColor: '#EC5557', shadowOffset: { width: 2, height: 2 }, shadowOpacity: 0.12, shadowRadius: 4, elevation: 4 },
   primaryBtnShadow: { shadowColor: '#7a1010', shadowOffset: { width: 4, height: 4 }, shadowOpacity: 0.45, shadowRadius: 0, elevation: 4 },
   outlineBtnShadow: { shadowColor: '#000', shadowOffset: { width: 1, height: 1 }, shadowOpacity: 0.06, shadowRadius: 2 },
+
+  dropdownTrigger:     { flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 2 },
+  dropdownTriggerText: { fontSize: 14, fontWeight: '700' },
+  dropdownTriggerSub:  { fontSize: 11, marginTop: 2 },
+  dropdownChevron:     { fontSize: 12, fontWeight: '700', marginLeft: 8 },
+  dropdownList:        { borderWidth: 1, borderRadius: 8, overflow: 'hidden', marginBottom: 4 },
+  dropdownItem:        { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10 },
+  dropdownItemText:    { fontSize: 14, fontWeight: '600' },
+  dropdownItemSub:     { fontSize: 11, marginTop: 2 },
 });
