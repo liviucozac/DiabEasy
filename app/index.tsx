@@ -39,6 +39,12 @@ function getInterpretation(value: number, unit: Unit): string {
   }
 }
 
+function statusIcon(interpretation: string): string {
+  if (interpretation === 'Low')    return '↓';
+  if (interpretation === 'High')   return '↑';
+  return '✓';
+}
+
 function formatTimestamp(): string {
   const now  = new Date();
   const dd   = String(now.getDate()).padStart(2, '0');
@@ -90,11 +96,11 @@ function QuickStats({ unit }: { unit: string }) {
         </View>
         <View style={[styles.statItem, { borderLeftColor: colors.border, borderLeftWidth: 1 }]}>
           <Text style={[styles.statNumber, { color: highs > 0 ? colors.high : colors.text }]}>{highs}</Text>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Highs</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>↑ Highs</Text>
         </View>
         <View style={[styles.statItem, { borderLeftColor: colors.border, borderLeftWidth: 1 }]}>
           <Text style={[styles.statNumber, { color: lows > 0 ? colors.low : colors.text }]}>{lows}</Text>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Lows</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>↓ Lows</Text>
         </View>
       </View>
       {count === 0 && <Text style={[styles.statsEmpty, { color: colors.textFaint }]}>No readings logged today yet.</Text>}
@@ -376,7 +382,7 @@ export default function HomeScreen() {
             <Animated.View style={[styles.resultContainer, { transform: [{ scale: resultScale }] }]}>
               <Text style={[styles.resultValue, { color: resultColor }]}>{glucoseValue} {unit}</Text>
               <Text style={[styles.resultInterpretation, { color: resultColor }]}>
-                {getInterpretation(glucoseValue, unit)}
+                {statusIcon(getInterpretation(glucoseValue, unit))} {getInterpretation(glucoseValue, unit)}
               </Text>
               {cls !== 'normal' && (
                 <PressBtn

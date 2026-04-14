@@ -65,7 +65,8 @@ export interface AppSettings {
   insulinAnalogType: InsulinAnalogType;
   dia: number;
   longActingInsulinType: LongActingInsulinType;
-  emergencyNumber: string;  // ← add it here
+  emergencyNumber: string;
+  insulinParamsSet: boolean;  // true once user has explicitly saved ISF/carbRatio/target
 }
 
 // ─── Store interface ──────────────────────────────────────────────────────────
@@ -134,7 +135,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   dia:                  5,
   longActingInsulinType: 'glargine-u100' as LongActingInsulinType,
     emergencyNumber: '112',
-
+  insulinParamsSet: false,
 };
 
 // ─── Store ────────────────────────────────────────────────────────────────────

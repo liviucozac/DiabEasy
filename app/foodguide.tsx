@@ -318,7 +318,7 @@ export default function FoodGuideScreen() {
 
   const ACTION_OPTIONS = [
     { label: 'Lower',    value: 'lower'    as FoodAction, color: colors.normal },
-    { label: 'Maintain', value: 'maintain' as FoodAction, color: colors.high },
+    { label: 'Maintain', value: 'maintain' as FoodAction, color: colors.textMuted },
     { label: 'Raise',    value: 'raise'    as FoodAction, color: colors.red },
   ];
 

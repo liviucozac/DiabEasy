@@ -14,6 +14,9 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 
 type HistoryEntry = GlucoseEntry;
 
+const statusIcon = (interpretation: string): string =>
+  interpretation === 'Low' ? '↓' : interpretation === 'High' ? '↑' : '✓';
+
 const getColorClass = (value: number, unit: string): 'low' | 'normal' | 'high' => {
   if (unit === 'mg/dL') {
     if (value < 75)   return 'low';
@@ -312,7 +315,7 @@ export default function HistoryScreen() {
           <Text style={[styles.entryDate,  { color: colors.text }]}>{date}</Text>
           <Text style={[styles.entryTime,  { color: colors.textMuted }]}>{time}</Text>
           <Text style={[styles.entryValue, { color: colors.text }]}>{entry.value} {entry.unit}</Text>
-          <Text style={[styles.entryBadge, { color: barColor }]}>{entry.interpretation}</Text>
+          <Text style={[styles.entryBadge, { color: barColor }]}>{statusIcon(entry.interpretation)} {entry.interpretation}</Text>
           <TouchableOpacity onPress={() => { const realIndex = history.indexOf(entry); removeEntry(realIndex); }} activeOpacity={0.7}>
             <Text style={[styles.deleteBtn, { color: colors.textMuted }]}>Delete</Text>
           </TouchableOpacity>

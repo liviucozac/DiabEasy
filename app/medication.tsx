@@ -10,6 +10,7 @@ import type { InsulinAnalogType, LongActingInsulinType } from '../store/glucoseS
 import { useTheme } from '../context/AppContext';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { PressBtn } from '../components/PressBtn';
+import { ParamTrainingModal } from '../components/ParamTrainingModal';
 
 const RED = '#EC5557';
 
@@ -127,6 +128,7 @@ function InsulinDropdown<T extends string>({
 function CalculatorTab() {
   const { glucoseValue, unit, totalCarbs, settings, insulinEntries, setSettings } = useGlucoseStore();
   const { colors } = useTheme();
+  const [showTraining, setShowTraining] = useState(false);
 
   const ISF        = settings.isf;
   const CARB_RATIO = settings.carbRatio;
@@ -183,6 +185,16 @@ function CalculatorTab() {
             <Text style={[s.paramReadLabel, { color: colors.textMuted }]}>{getAnalogByType(settings.insulinAnalogType).label}{'\n'}DIA</Text>
           </View>
         </View>
+
+        <TouchableOpacity
+          style={[s.trainingBtn, { borderColor: RED }]}
+          onPress={() => setShowTraining(true)}
+          activeOpacity={0.75}
+        >
+          <Text style={[s.trainingBtnText, { color: RED }]}>🎓 What do ISF, carb ratio, and DIA mean?</Text>
+        </TouchableOpacity>
+
+        <ParamTrainingModal visible={showTraining} onClose={() => setShowTraining(false)} />
       </SectionCard>
 
       <SectionCard>
@@ -202,7 +214,17 @@ function CalculatorTab() {
         />
       </SectionCard>
 
-      {glucoseValue === null ? (
+      {!settings.insulinParamsSet ? (
+        <View style={[s.emptyCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+          <Text style={s.emptyIcon}>🔒</Text>
+          <Text style={[s.emptyTitle, { color: colors.text }]}>Parameters not set</Text>
+          <Text style={[s.emptyText, { color: colors.textMuted }]}>
+            Set your ISF, carb ratio, and target glucose in{' '}
+            <Text style={{ fontWeight: '700', color: colors.red }}>Profile → Settings → Insulin Calculator Defaults</Text>
+            {' '}to unlock the dose calculator.
+          </Text>
+        </View>
+      ) : glucoseValue === null ? (
         <View style={[s.emptyCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
           <Text style={s.emptyIcon}>🩸</Text>
           <Text style={[s.emptyTitle, { color: colors.text }]}>No glucose reading</Text>
@@ -850,4 +872,7 @@ const s = StyleSheet.create({
   dropdownItem:        { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10 },
   dropdownItemText:    { fontSize: 14, fontWeight: '600' },
   dropdownItemSub:     { fontSize: 11, marginTop: 2 },
+
+  trainingBtn:     { marginTop: 14, borderWidth: 1.5, borderRadius: 8, paddingVertical: 9, alignItems: 'center' },
+  trainingBtnText: { fontSize: 13, fontWeight: '600' },
 });

@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  Dimensions, ScrollView,
+  Dimensions, ScrollView, TextInput,
 } from 'react-native';
 import { useGlucoseStore } from '../store/glucoseStore';
+import type { DiabetesType } from '../store/glucoseStore';
 import { useTheme } from '../context/AppContext';
 import type { ColorScheme } from '../context/colors';
 
@@ -196,9 +197,9 @@ function FastingGridMock({ colors }: { colors: ColorScheme }) {
 /** Exact copy of the colour-coded result display from Home tab */
 function ColorResultMock({ colors }: { colors: ColorScheme }) {
   const items = [
-    { value: '60', unit: 'mg/dL', label: 'Low',    color: colors.low    },
-    { value: '110', unit: 'mg/dL', label: 'Normal', color: colors.normal },
-    { value: '210', unit: 'mg/dL', label: 'High',   color: colors.high   },
+    { value: '60', unit: 'mg/dL', label: '↓ Low',    color: colors.low    },
+    { value: '110', unit: 'mg/dL', label: '✓ Normal', color: colors.normal },
+    { value: '210', unit: 'mg/dL', label: '↑ High',   color: colors.high   },
   ];
   return (
     <View style={[mk.previewWrap, { borderColor: colors.border, backgroundColor: colors.bgCard }]}>
@@ -268,7 +269,7 @@ function GoalPillsMock({ colors }: { colors: ColorScheme }) {
   // ACTION_OPTIONS colors from foodguide.tsx: lower=colors.normal, maintain=colors.high, raise=colors.red
   const options = [
     { label: 'Lower',    color: colors.normal, active: true  },
-    { label: 'Maintain', color: colors.high,   active: false },
+    { label: 'Maintain', color: colors.textMuted, active: false },
     { label: 'Raise',    color: colors.red,    active: false },
   ];
   return (
@@ -432,13 +433,140 @@ const BULLET_EXTRAS: Record<number, Record<number, ExtraRender>> = {
   },
 };
 
+// ─── Recommended insulin parameters by diabetes type ─────────────────────────
+
+const RECOMMENDED: Record<DiabetesType, { isf: number; carbRatio: number; target: number }> = {
+  'Type 1': { isf: 50, carbRatio: 10, target: 100 },
+  'LADA':   { isf: 50, carbRatio: 10, target: 100 },
+  'Type 2': { isf: 30, carbRatio: 15, target: 110 },
+  'Other':  { isf: 40, carbRatio: 12, target: 105 },
+  '':       { isf: 50, carbRatio: 10, target: 100 },
+};
+
+// ─── Param setup slide ────────────────────────────────────────────────────────
+
+function ParamSetupSlide({
+  colors, diabetesType, onConfirm,
+}: {
+  colors: ColorScheme;
+  diabetesType: DiabetesType;
+  onConfirm: (isf: number, carbRatio: number, target: number) => void;
+}) {
+  const rec = RECOMMENDED[diabetesType] ?? RECOMMENDED[''];
+  const [useEstimates, setUseEstimates] = useState(false);
+  const [isf,      setIsf]      = useState('');
+  const [carbRatio,setCarbRatio] = useState('');
+  const [target,   setTarget]   = useState('');
+
+  const applyEstimates = (on: boolean) => {
+    setUseEstimates(on);
+    if (on) {
+      setIsf(String(rec.isf));
+      setCarbRatio(String(rec.carbRatio));
+      setTarget(String(rec.target));
+    } else {
+      setIsf(''); setCarbRatio(''); setTarget('');
+    }
+  };
+
+  const handleConfirm = () => {
+    const isfVal    = parseFloat(isf)      || rec.isf;
+    const carbVal   = parseFloat(carbRatio) || rec.carbRatio;
+    const targetVal = parseFloat(target)   || rec.target;
+    onConfirm(isfVal, carbVal, targetVal);
+  };
+
+  const inputStyle = [ps.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }];
+
+  return (
+    <ScrollView style={{ width }} contentContainerStyle={styles.slide} showsVerticalScrollIndicator={false}>
+      <Text style={styles.slideIcon}>⚙️</Text>
+      <Text style={[styles.slideTitle, { color: colors.text }]}>Set Your Calculator Parameters</Text>
+      <Text style={[styles.slideBody, { color: colors.textMuted }]}>
+        The insulin calculator needs three personal values from your doctor to give accurate dose recommendations.
+      </Text>
+
+      {/* Path toggle */}
+      <View style={[ps.pathRow]}>
+        <TouchableOpacity
+          style={[ps.pathBtn, !useEstimates && { backgroundColor: colors.red, borderColor: colors.red }]}
+          onPress={() => applyEstimates(false)} activeOpacity={0.8}>
+          <Text style={[ps.pathBtnText, { color: !useEstimates ? '#fff' : colors.textMuted }]}>I have my values</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[ps.pathBtn, useEstimates && { backgroundColor: colors.red, borderColor: colors.red }]}
+          onPress={() => applyEstimates(true)} activeOpacity={0.8}>
+          <Text style={[ps.pathBtnText, { color: useEstimates ? '#fff' : colors.textMuted }]}>Suggest values for me</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Disclaimer for estimates */}
+      {useEstimates && (
+        <View style={[ps.disclaimer, { backgroundColor: colors.highBg, borderColor: colors.high }]}>
+          <Text style={[ps.disclaimerTitle, { color: colors.high }]}>⚠️ Estimates only</Text>
+          <Text style={[ps.disclaimerText, { color: colors.textMuted }]}>
+            These are population averages for {diabetesType || 'Type 1'} diabetes — not a prescription.
+            Confirm with your doctor or diabetes educator before using the calculator for real doses.
+          </Text>
+          <View style={ps.recRow}>
+            {[
+              { label: 'ISF',        value: `${rec.isf} mg/dL/u` },
+              { label: 'Carb ratio', value: `1:${rec.carbRatio} g/u` },
+              { label: 'Target',     value: `${rec.target} mg/dL` },
+            ].map((r, i) => (
+              <View key={i} style={ps.recItem}>
+                <Text style={[ps.recValue, { color: colors.text }]}>{r.value}</Text>
+                <Text style={[ps.recLabel, { color: colors.textMuted }]}>{r.label}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {/* Inputs */}
+      <View style={[styles.bulletCard, { backgroundColor: colors.bgCard, borderColor: colors.border, gap: 12, marginTop: 12 }]}>
+        {[
+          { label: 'ISF  —  how much 1 unit lowers glucose (mg/dL)', value: isf,      set: setIsf,       placeholder: `e.g. ${rec.isf}` },
+          { label: 'Carb ratio  —  grams of carbs per unit (g/u)',   value: carbRatio, set: setCarbRatio, placeholder: `e.g. ${rec.carbRatio}` },
+          { label: 'Target glucose  (mg/dL)',                         value: target,   set: setTarget,    placeholder: `e.g. ${rec.target}` },
+        ].map((f, i) => (
+          <View key={i}>
+            <Text style={[ps.inputLabel, { color: colors.textMuted }]}>{f.label}</Text>
+            <TextInput
+              style={inputStyle}
+              keyboardType="decimal-pad"
+              returnKeyType="done"
+              placeholder={f.placeholder}
+              placeholderTextColor={colors.placeholder}
+              value={f.value}
+              onChangeText={f.set}
+            />
+          </View>
+        ))}
+      </View>
+
+      <TouchableOpacity
+        style={[styles.nextBtn, { backgroundColor: colors.red, flex: 0, marginTop: 20, width: '100%' }]}
+        onPress={handleConfirm}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.nextBtnText}>Confirm & Get Started</Text>
+      </TouchableOpacity>
+
+      <Text style={[styles.pageCount, { color: colors.textFaint }]}>{SLIDES.length + 1} / {SLIDES.length + 1}</Text>
+    </ScrollView>
+  );
+}
+
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function OnboardingScreen() {
   const { colors, isDark } = useTheme();
-  const { setHasSeenOnboarding } = useGlucoseStore();
+  const { setHasSeenOnboarding, setSettings, profile } = useGlucoseStore();
   const [page, setPage] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
+
+  const TOTAL = SLIDES.length + 1; // info slides + param setup
 
   const goTo = (idx: number) => {
     scrollRef.current?.scrollTo({ x: idx * width, animated: true });
@@ -446,6 +574,13 @@ export default function OnboardingScreen() {
   };
 
   const finish = () => setHasSeenOnboarding(true);
+
+  const handleParamConfirm = (isf: number, carbRatio: number, target: number) => {
+    setSettings({ isf, carbRatio, targetGlucose: target, insulinParamsSet: true });
+    finish();
+  };
+
+  const isParamStep = page === SLIDES.length;
 
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
@@ -483,14 +618,21 @@ export default function OnboardingScreen() {
               ))}
             </View>
 
-            <Text style={[styles.pageCount, { color: colors.textFaint }]}>{i + 1} / {SLIDES.length}</Text>
+            <Text style={[styles.pageCount, { color: colors.textFaint }]}>{i + 1} / {TOTAL}</Text>
           </ScrollView>
         ))}
+
+        {/* Param setup — last page, not skippable */}
+        <ParamSetupSlide
+          colors={colors}
+          diabetesType={profile.diabetesType}
+          onConfirm={handleParamConfirm}
+        />
       </ScrollView>
 
       {/* Dots */}
       <View style={styles.dotsRow}>
-        {SLIDES.map((_, i) => (
+        {Array.from({ length: TOTAL }, (_, i) => (
           <View
             key={i}
             style={[styles.dot, {
@@ -501,31 +643,33 @@ export default function OnboardingScreen() {
         ))}
       </View>
 
-      {/* Navigation */}
-      <View style={styles.navRow}>
-        {page < SLIDES.length - 1 ? (
-          <>
-            <TouchableOpacity onPress={finish} activeOpacity={0.7}>
-              <Text style={[styles.skipText, { color: colors.textMuted }]}>Skip</Text>
-            </TouchableOpacity>
+      {/* Navigation — hidden on param step (it has its own confirm button) */}
+      {!isParamStep && (
+        <View style={styles.navRow}>
+          {page < SLIDES.length - 1 ? (
+            <>
+              <TouchableOpacity onPress={finish} activeOpacity={0.7}>
+                <Text style={[styles.skipText, { color: colors.textMuted }]}>Skip</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.nextBtn, { backgroundColor: colors.red }]}
+                onPress={() => goTo(page + 1)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.nextBtnText}>Next →</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
             <TouchableOpacity
-              style={[styles.nextBtn, { backgroundColor: colors.red }]}
-              onPress={() => goTo(page + 1)}
+              style={[styles.nextBtn, { backgroundColor: colors.red, flex: 1 }]}
+              onPress={() => goTo(SLIDES.length)}
               activeOpacity={0.8}
             >
               <Text style={styles.nextBtnText}>Next →</Text>
             </TouchableOpacity>
-          </>
-        ) : (
-          <TouchableOpacity
-            style={[styles.nextBtn, { backgroundColor: colors.red, flex: 1 }]}
-            onPress={finish}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.nextBtnText}>Get Started</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+          )}
+        </View>
+      )}
     </View>
   );
 }
@@ -560,4 +704,21 @@ const styles = StyleSheet.create({
 const mk = StyleSheet.create({
   previewWrap:  { width: '100%', borderWidth: 1, borderRadius: 8, padding: 8, marginTop: 4 },
   previewLabel: { fontSize: 9, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 },
+});
+
+// ─── Param setup slide styles ─────────────────────────────────────────────────
+
+const ps = StyleSheet.create({
+  pathRow:        { flexDirection: 'row', gap: 8, width: '100%', marginBottom: 4 },
+  pathBtn:        { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1.5, borderColor: '#ccc', alignItems: 'center' },
+  pathBtnText:    { fontSize: 13, fontWeight: '600' },
+  disclaimer:     { width: '100%', borderRadius: 10, borderWidth: 1, padding: 12, marginTop: 4 },
+  disclaimerTitle:{ fontSize: 13, fontWeight: '700', marginBottom: 4 },
+  disclaimerText: { fontSize: 12, lineHeight: 18, marginBottom: 10 },
+  recRow:         { flexDirection: 'row', justifyContent: 'space-around' },
+  recItem:        { alignItems: 'center' },
+  recValue:       { fontSize: 14, fontWeight: '800' },
+  recLabel:       { fontSize: 10, marginTop: 2 },
+  inputLabel:     { fontSize: 12, marginBottom: 4 },
+  input:          { borderWidth: 1.5, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7, fontSize: 14 },
 });

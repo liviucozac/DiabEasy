@@ -7,11 +7,11 @@ import { useGlucoseStore, DiabetesType, ThemeType, InsulinAnalogType } from '../
 import { INSULIN_ANALOGS, getAnalogByType } from '../utils/insulinUtils';
 import { useTheme } from '../context/AppContext';
 import { PressBtn } from '../components/PressBtn';
+import { ParamTrainingModal } from '../components/ParamTrainingModal';
 
 const RED = '#EC5557';
 
 type ActiveTab = 'profile' | 'settings';
-type AuthMode = 'signIn' | 'signUp';
 
 function SectionCard({ children }: { children: React.ReactNode }) {
   const { colors, isDark } = useTheme();
@@ -67,74 +67,20 @@ function StyledInput({ value, onChangeText, placeholder, keyboardType, secureTex
 function ProfileTab() {
   const { profile, setProfile } = useGlucoseStore();
   const { colors } = useTheme();
-  const [authMode, setAuthMode]               = useState<AuthMode>('signIn');
-  const [password, setPassword]               = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [isLoggedIn, setIsLoggedIn]           = useState(false);
 
   const DIABETES_TYPES: DiabetesType[] = ['Type 1', 'Type 2', 'LADA', 'Other'];
-
-  const handleAuth = () => {
-    if (authMode === 'signUp') {
-      if (!profile.name.trim() || !profile.email.trim()) { Alert.alert('Missing info', 'Please enter your name and email.'); return; }
-      if (password !== confirmPassword) { Alert.alert('Password mismatch', 'Passwords do not match.'); return; }
-    }
-    if (!profile.email.trim()) { Alert.alert('Missing info', 'Please enter your email.'); return; }
-    setIsLoggedIn(true);
-    Alert.alert('Success', authMode === 'signIn' ? 'Signed in!' : 'Account created!');
-  };
-
-  const handleSignOut = () => {
-    Alert.alert('Sign out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign out', style: 'destructive', onPress: () => setIsLoggedIn(false) },
-    ]);
-  };
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 32 }}>
       <SectionCard>
         <SectionTitle text="Account" />
-        {isLoggedIn ? (
-          <>
-            <View style={s.avatarRow}>
-              <View style={[s.avatar, { backgroundColor: colors.red }]}>
-                <Text style={s.avatarText}>{profile.name ? profile.name.charAt(0).toUpperCase() : '?'}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[s.avatarName, { color: colors.text }]}>{profile.name || 'No name set'}</Text>
-                <Text style={[s.avatarEmail, { color: colors.textMuted }]}>{profile.email}</Text>
-              </View>
-            </View>
-            <Divider />
-            <PressBtn style={[s.signOutBtn, { borderColor: colors.red, backgroundColor: 'transparent' }]} onPress={handleSignOut} activeOpacity={0.75}>
-              <Text style={[s.signOutBtnText, { color: colors.red }]}>Sign Out</Text>
-            </PressBtn>
-          </>
-        ) : (
-          <>
-            {authMode === 'signUp' && (<><FieldLabel text="Name" /><StyledInput value={profile.name} onChangeText={(v) => setProfile({ name: v })} placeholder="Your full name" /></>)}
-            <FieldLabel text="Email" />
-            <StyledInput value={profile.email} onChangeText={(v) => setProfile({ email: v })} placeholder="your@email.com" keyboardType="email-address" autoCapitalize="none" />
-            <FieldLabel text="Password" />
-            <StyledInput value={password} onChangeText={setPassword} placeholder="••••••••" secureTextEntry autoCapitalize="none" />
-            {authMode === 'signUp' && (<><FieldLabel text="Confirm Password" /><StyledInput value={confirmPassword} onChangeText={setConfirmPassword} placeholder="••••••••" secureTextEntry autoCapitalize="none" /></>)}
-            <PressBtn style={[s.authBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={handleAuth}>
-              <Text style={s.authBtnText}>{authMode === 'signIn' ? 'Sign In' : 'Create Account'}</Text>
-            </PressBtn>
-            <View style={s.authToggleRow}>
-              <Text style={[s.authToggleText, { color: colors.textMuted }]}>{authMode === 'signIn' ? "Don't have an account? " : 'Already have an account? '}</Text>
-              <TouchableOpacity onPress={() => setAuthMode(authMode === 'signIn' ? 'signUp' : 'signIn')} activeOpacity={0.75}>
-                <Text style={[s.authToggleLink, { color: colors.red }]}>{authMode === 'signIn' ? 'Sign Up' : 'Sign In'}</Text>
-              </TouchableOpacity>
-            </View>
-            {authMode === 'signIn' && (
-              <TouchableOpacity style={{ alignItems: 'center', marginTop: 8 }} onPress={() => Alert.alert('Reset password', 'Password reset not implemented yet.')} activeOpacity={0.75}>
-                <Text style={[s.forgotLink, { color: colors.textFaint }]}>Forgot password?</Text>
-              </TouchableOpacity>
-            )}
-          </>
-        )}
+        <View style={[s.comingSoonBox, { borderColor: colors.border, backgroundColor: colors.bgSecondary }]}>
+          <Text style={[s.comingSoonIcon]}>🔐</Text>
+          <Text style={[s.comingSoonTitle, { color: colors.text }]}>Cloud accounts — coming soon</Text>
+          <Text style={[s.comingSoonText, { color: colors.textMuted }]}>
+            All your data is stored securely on this device. Account sync will be available in a future update.
+          </Text>
+        </View>
       </SectionCard>
 
       <SectionCard>
@@ -172,6 +118,7 @@ function ProfileTab() {
 function SettingsTab() {
   const { settings, setSettings, clearHistory, clearInsulinLog } = useGlucoseStore();
   const { colors } = useTheme();
+  const [showTraining,  setShowTraining]  = useState(false);
   const [isfFocused,    setIsfFocused]    = useState(false);
   const [ratioFocused,  setRatioFocused]  = useState(false);
   const [targetFocused, setTargetFocused] = useState(false);
@@ -184,10 +131,27 @@ function SettingsTab() {
   ];
 
   const handleClearData = () => {
-    Alert.alert('Clear all data', 'This will delete your entire glucose history and insulin log. This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Clear', style: 'destructive', onPress: () => { clearHistory(); clearInsulinLog(); } },
-    ]);
+    Alert.alert(
+      'Clear all data?',
+      'This will permanently delete your entire glucose history and insulin log. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Yes, delete everything',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              'Are you sure?',
+              'Last chance — all readings and insulin entries will be gone forever.',
+              [
+                { text: 'Go back', style: 'cancel' },
+                { text: 'Delete permanently', style: 'destructive', onPress: () => { clearHistory(); clearInsulinLog(); } },
+              ]
+            );
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -262,9 +226,9 @@ function SettingsTab() {
 
         <View style={s.paramGrid}>
           {[
-            { label: 'Target glycemia\n(mg/dL)', value: String(settings.targetGlucose), focused: targetFocused, setFocused: setTargetFocused, onChange: (v: string) => setSettings({ targetGlucose: parseFloat(v) || 100 }) },
-            { label: 'ISF\n(mg/dL per unit)',    value: String(settings.isf),           focused: isfFocused,    setFocused: setIsfFocused,    onChange: (v: string) => setSettings({ isf: parseFloat(v) || 50 }) },
-            { label: 'Carb ratio\n(g per unit)', value: String(settings.carbRatio),     focused: ratioFocused,  setFocused: setRatioFocused,  onChange: (v: string) => setSettings({ carbRatio: parseFloat(v) || 10 }) },
+            { label: 'Target glycemia\n(mg/dL)', value: String(settings.targetGlucose), focused: targetFocused, setFocused: setTargetFocused, onChange: (v: string) => setSettings({ targetGlucose: parseFloat(v) || 100, insulinParamsSet: true }) },
+            { label: 'ISF\n(mg/dL per unit)',    value: String(settings.isf),           focused: isfFocused,    setFocused: setIsfFocused,    onChange: (v: string) => setSettings({ isf: parseFloat(v) || 50, insulinParamsSet: true }) },
+            { label: 'Carb ratio\n(g per unit)', value: String(settings.carbRatio),     focused: ratioFocused,  setFocused: setRatioFocused,  onChange: (v: string) => setSettings({ carbRatio: parseFloat(v) || 10, insulinParamsSet: true }) },
             { label: 'DIA\n(hours)',              value: String(settings.dia),           focused: diaFocused,    setFocused: setDiaFocused,    onChange: (v: string) => setSettings({ dia: parseFloat(v) || 5 }) },
           ].map((param, i) => (
             <View key={i} style={s.paramItem}>
@@ -277,6 +241,16 @@ function SettingsTab() {
             </View>
           ))}
         </View>
+
+        <TouchableOpacity
+          style={[s.trainingBtn, { borderColor: colors.red }]}
+          onPress={() => setShowTraining(true)}
+          activeOpacity={0.75}
+        >
+          <Text style={[s.trainingBtnText, { color: colors.red }]}>🎓 What do ISF, carb ratio, and DIA mean?</Text>
+        </TouchableOpacity>
+
+        <ParamTrainingModal visible={showTraining} onClose={() => setShowTraining(false)} />
       </SectionCard>
 
       <SectionCard>
@@ -419,4 +393,12 @@ const s = StyleSheet.create({
   primaryBtnShadow: { shadowColor: '#7a1010', shadowOffset: { width: 4, height: 4 }, shadowOpacity: 0.45, shadowRadius: 0, elevation: 4 },
   outlineBtnShadow: { shadowColor: '#000', shadowOffset: { width: 1, height: 1 }, shadowOpacity: 0.06, shadowRadius: 2 },
   dangerBtnShadow:  { shadowColor: '#e53935', shadowOffset: { width: 2, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 3 },
+
+  comingSoonBox:   { borderRadius: 10, borderWidth: 1, padding: 16, alignItems: 'center', gap: 6 },
+  comingSoonIcon:  { fontSize: 32 },
+  comingSoonTitle: { fontSize: 14, fontWeight: '700', textAlign: 'center' },
+  comingSoonText:  { fontSize: 13, textAlign: 'center', lineHeight: 19 },
+
+  trainingBtn:     { marginTop: 14, borderWidth: 1.5, borderRadius: 8, paddingVertical: 9, alignItems: 'center' },
+  trainingBtnText: { fontSize: 13, fontWeight: '600' },
 });
