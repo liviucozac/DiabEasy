@@ -7,7 +7,7 @@ import {
 import { EmptyState } from '../components/EmptyState';
 import { PressBtn } from '../components/PressBtn';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useGlucoseStore, GlucoseEntry } from '../store/glucoseStore';
+import { useGlucoseStore, GlucoseEntry, Unit } from '../store/glucoseStore';
 import { useTheme } from '../context/AppContext';
 import Svg, { Polyline, Line, Text as SvgText, Circle, G, Path } from 'react-native-svg';
 import React, { useState, useMemo, useRef, useEffect } from 'react';
@@ -156,7 +156,7 @@ function PieChart({ normal, high, low, colors }: { normal: number; high: number;
 }
 
 export default function HistoryScreen() {
-  const { history, removeEntry } = useGlucoseStore();
+  const { history, removeEntry, insulinEntries, profile, settings } = useGlucoseStore();
   const { colors, isDark } = useTheme();
 
   const [filterDateFrom, setFilterDateFrom] = useState('');
@@ -329,87 +329,216 @@ export default function HistoryScreen() {
   const inputStyle = [styles.filterInput, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }];
 
   const exportPDF = async () => {
-    const { insulinEntries, profile } = useGlucoseStore.getState();
-    const allEvents: { timestamp: string; type: 'glucose' | 'insulin'; data: any }[] = [
-      ...filteredHistory.map(e => ({ timestamp: e.timestamp, type: 'glucose' as const, data: e })),
-      ...insulinEntries.map(e => ({ timestamp: e.time, type: 'insulin' as const, data: e })),
-    ].sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+    // ── Helpers ────────────────────────────────────────────────────────────────
+    const toMgdL = (value: number, unit: Unit) => unit === 'mmol/L' ? value * 18.0182 : value;
 
-    const rows = allEvents.map((event, i) => {
-      const bg = i % 2 === 0 ? '#ffffff' : '#f7f7f7';
-      if (event.type === 'glucose') {
-        const e = event.data;
-        const color = e.interpretation === 'Low' ? '#e53935' : e.interpretation === 'High' ? '#ef6c00' : '#2e7d32';
-        return `<tr style="background-color: ${bg}"><td>${e.timestamp.split(' ')[0]}</td><td>${e.timestamp.split(' ')[1]}</td><td style="font-weight:600">${e.value} ${e.unit}</td><td style="color:${color};font-weight:600">${e.interpretation}</td><td>${e.fasting || '-'}</td><td>${e.symptoms || '-'}</td><td style="color:#1565c0">-</td><td>-</td></tr>`;
-      } else {
-        const e = event.data;
-        return `<tr style="background-color: ${bg}"><td>-</td><td>${e.time}</td><td style="color:#1565c0">-</td><td style="color:#1565c0">-</td><td>-</td><td>-</td><td style="color:#1565c0;font-weight:600">${e.type}</td><td style="color:#1565c0;font-weight:600">${e.units}u</td></tr>`;
-      }
-    }).join('');
+    const fmtInsulinDate = (e: { timestamp?: string }) => {
+      if (!e.timestamp) return '-';
+      const d = new Date(e.timestamp);
+      return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+    };
 
-    const avgGlucose   = filteredHistory.length > 0 ? (filteredHistory.reduce((s, e) => s + e.value, 0) / filteredHistory.length).toFixed(1) : '-';
-    const inRange      = filteredHistory.filter(e => e.interpretation === 'Normal').length;
-    const lows         = filteredHistory.filter(e => e.interpretation === 'Low').length;
-    const highs        = filteredHistory.filter(e => e.interpretation === 'High').length;
+    // ── Date range ─────────────────────────────────────────────────────────────
+    const sorted    = [...filteredHistory];
+    const dateFrom  = filterDateFrom || (sorted.length > 0 ? [...sorted].reverse()[0].timestamp.split(' ')[0] : '-');
+    const dateTo    = filterDateTo   || (sorted.length > 0 ? sorted[0].timestamp.split(' ')[0] : '-');
+    const genDate   = new Date().toLocaleDateString();
+    const genTime   = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    // ── Core stats ─────────────────────────────────────────────────────────────
+    const mgdlValues  = filteredHistory.map(e => toMgdL(e.value, e.unit));
+    const n           = mgdlValues.length;
+    const avgMgdL     = n > 0 ? mgdlValues.reduce((s, v) => s + v, 0) / n : null;
+    const eHbA1c      = avgMgdL !== null ? (3.31 + 0.02392 * avgMgdL).toFixed(1) : null;
+    const variance    = avgMgdL !== null ? mgdlValues.reduce((s, v) => s + (v - avgMgdL) ** 2, 0) / n : null;
+    const stdDev      = variance !== null ? Math.sqrt(variance).toFixed(1) : null;
+    const cvPercent   = avgMgdL !== null && variance !== null
+      ? ((Math.sqrt(variance) / avgMgdL) * 100).toFixed(1) : null;
+    const cvStable    = cvPercent !== null && parseFloat(cvPercent) <= 36;
     const totalInsulin = insulinEntries.reduce((s, e) => s + e.units, 0);
-    const dateFrom     = filterDateFrom || (filteredHistory.length > 0 ? [...filteredHistory].reverse()[0].timestamp.split(' ')[0] : '-');
-    const dateTo       = filterDateTo   || (filteredHistory.length > 0 ? filteredHistory[0].timestamp.split(' ')[0] : '-');
 
-    const chartEntries = [...filteredHistory].reverse().slice(-20);
+    // ── 5-band TIR ─────────────────────────────────────────────────────────────
+    const total5    = n || 1;
+    const veryLow   = mgdlValues.filter(v => v < 54).length;
+    const low5      = mgdlValues.filter(v => v >= 54 && v < 70).length;
+    const target5   = mgdlValues.filter(v => v >= 70 && v <= 180).length;
+    const high5     = mgdlValues.filter(v => v > 180 && v <= 250).length;
+    const veryHigh  = mgdlValues.filter(v => v > 250).length;
+    const tirPct    = n > 0 ? ((target5 / total5) * 100).toFixed(0) : null;
+
+    const tirBands = [
+      { label: 'Very Low',  pct: +((veryLow  / total5) * 100).toFixed(0), color: '#b71c1c' },
+      { label: 'Low',       pct: +((low5     / total5) * 100).toFixed(0), color: '#e53935' },
+      { label: 'Target',    pct: +((target5  / total5) * 100).toFixed(0), color: '#2e7d32' },
+      { label: 'High',      pct: +((high5    / total5) * 100).toFixed(0), color: '#ef6c00' },
+      { label: 'Very High', pct: +((veryHigh / total5) * 100).toFixed(0), color: '#bf360c' },
+    ];
+
+    // ── TIR stacked bar SVG ────────────────────────────────────────────────────
+    const svgTIRBar = (() => {
+      if (n === 0) return '';
+      const W = 560, barH = 28, legY = barH + 10, legH = 14, svgH = barH + legY + legH + 4;
+      let x = 0;
+      const segments = tirBands.map(b => {
+        const w = (b.pct / 100) * W;
+        const label = b.pct >= 6
+          ? `<text x="${(x + w / 2).toFixed(1)}" y="${(barH / 2 + 5).toFixed(1)}" text-anchor="middle" font-size="9" font-weight="700" fill="#fff">${b.pct}%</text>`
+          : '';
+        const seg = `<rect x="${x.toFixed(1)}" y="0" width="${w.toFixed(1)}" height="${barH}" fill="${b.color}"/>${label}`;
+        x += w;
+        return seg;
+      }).join('');
+      const legend = tirBands.map((b, i) =>
+        `<rect x="${i * 112}" y="${legY}" width="10" height="${legH}" fill="${b.color}" rx="2"/><text x="${i * 112 + 13}" y="${legY + 11}" font-size="8" fill="#555">${b.label} (${b.pct}%)</text>`
+      ).join('');
+      return `<svg width="${W}" height="${svgH}" xmlns="http://www.w3.org/2000/svg">${segments}${legend}</svg>`;
+    })();
+
+    // ── Reading-context breakdown table ───────────────────────────────────────
+    const CONTEXTS = ['Fasting', 'Pre-meal', 'Post-meal', 'Bedtime', 'Post-exercise', 'Random'];
+    const contextRows = CONTEXTS.map((ctx, i) => {
+      const entries = filteredHistory.filter(e => e.fasting === ctx);
+      if (entries.length === 0) return '';
+      const vals   = entries.map(e => toMgdL(e.value, e.unit));
+      const avg    = (vals.reduce((s, v) => s + v, 0) / vals.length).toFixed(0);
+      const min    = Math.min(...vals).toFixed(0);
+      const max    = Math.max(...vals).toFixed(0);
+      const inRng  = vals.filter(v => v >= 70 && v <= 180).length;
+      const tir    = ((inRng / vals.length) * 100).toFixed(0);
+      const bg     = i % 2 === 0 ? '#ffffff' : '#f9f9f9';
+      return `<tr style="background:${bg}"><td style="font-weight:600">${ctx}</td><td>${entries.length}</td><td style="font-weight:700;color:#ec5557">${avg}</td><td>${min}</td><td>${max}</td><td style="color:#2e7d32;font-weight:700">${tir}%</td></tr>`;
+    }).filter(Boolean).join('');
+
+    // ── Glucose trend SVG ─────────────────────────────────────────────────────
+    const chartEntries = [...filteredHistory].reverse();
     const svgLineChart = (() => {
       if (chartEntries.length < 2) return '';
-      const W = 620, H = 160, padL = 48, padR = 16, padT = 14, padB = 36;
+      const W = 560, H = 150, padL = 44, padR = 12, padT = 12, padB = 32;
       const vals = chartEntries.map(e => e.value);
       const minV = Math.min(...vals), maxV = Math.max(...vals);
-      const range = maxV - minV || 1;
+      const rng  = maxV - minV || 1;
       const xStep = (W - padL - padR) / (chartEntries.length - 1);
       const toX = (i: number) => padL + i * xStep;
-      const toY = (v: number) => padT + (H - padT - padB) * (1 - (v - minV) / range);
-      const points = chartEntries.map((e, i) => `${toX(i).toFixed(1)},${toY(e.value).toFixed(1)}`).join(' ');
-      const dots = chartEntries.map((e, i) => {
+      const toY = (v: number) => padT + (H - padT - padB) * (1 - (v - minV) / rng);
+      const points  = chartEntries.map((e, i) => `${toX(i).toFixed(1)},${toY(e.value).toFixed(1)}`).join(' ');
+      const dots    = chartEntries.map((e, i) => {
         const col = e.interpretation === 'Low' ? '#e53935' : e.interpretation === 'High' ? '#ef6c00' : '#2e7d32';
-        return `<circle cx="${toX(i).toFixed(1)}" cy="${toY(e.value).toFixed(1)}" r="4" fill="${col}" stroke="#fff" stroke-width="1.5"/>`;
+        return `<circle cx="${toX(i).toFixed(1)}" cy="${toY(e.value).toFixed(1)}" r="3" fill="${col}" stroke="#fff" stroke-width="1"/>`;
       }).join('');
-      const xLabels = Array.from({ length: Math.min(5, chartEntries.length) }, (_, k) => {
-        const idx = Math.round((k / (Math.min(5, chartEntries.length) - 1)) * (chartEntries.length - 1));
-        const label = chartEntries[idx].timestamp.split(' ')[0].substring(0, 5);
-        return `<text x="${toX(idx).toFixed(1)}" y="${H - 4}" text-anchor="middle" font-size="8" fill="#888">${label}</text>`;
+      const xLabels = Array.from({ length: Math.min(6, chartEntries.length) }, (_, k) => {
+        const idx = Math.round((k / (Math.min(6, chartEntries.length) - 1)) * (chartEntries.length - 1));
+        return `<text x="${toX(idx).toFixed(1)}" y="${H - 4}" text-anchor="middle" font-size="7" fill="#999">${chartEntries[idx].timestamp.split(' ')[0].substring(0, 5)}</text>`;
       }).join('');
       const yTicks = [minV, (minV + maxV) / 2, maxV].map(v =>
-        `<text x="${padL - 6}" y="${toY(v).toFixed(1)}" text-anchor="end" dominant-baseline="middle" font-size="8" fill="#888">${v.toFixed(0)}</text><line x1="${padL}" y1="${toY(v).toFixed(1)}" x2="${W - padR}" y2="${toY(v).toFixed(1)}" stroke="#eee" stroke-width="1"/>`
+        `<line x1="${padL}" y1="${toY(v).toFixed(1)}" x2="${W - padR}" y2="${toY(v).toFixed(1)}" stroke="#f0f0f0" stroke-width="1"/><text x="${padL - 4}" y="${toY(v).toFixed(1)}" text-anchor="end" dominant-baseline="middle" font-size="7" fill="#999">${v.toFixed(0)}</text>`
       ).join('');
-      return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">${yTicks}<polyline points="${points}" fill="none" stroke="#ec5557" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>${dots}${xLabels}<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H - padB}" stroke="#ddd" stroke-width="1"/><line x1="${padL}" y1="${H - padB}" x2="${W - padR}" y2="${H - padB}" stroke="#ddd" stroke-width="1"/></svg>`;
+      return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">${yTicks}<polyline points="${points}" fill="none" stroke="#ec5557" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>${dots}${xLabels}<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H - padB}" stroke="#ddd" stroke-width="1"/><line x1="${padL}" y1="${H - padB}" x2="${W - padR}" y2="${H - padB}" stroke="#ddd" stroke-width="1"/></svg>`;
     })();
 
-    const svgPieChart = (() => {
-      const slices = [
-        { label: 'Normal', count: inRange, color: '#2e7d32' },
-        { label: 'High',   count: highs,   color: '#ef6c00' },
-        { label: 'Low',    count: lows,    color: '#e53935' },
-      ].filter(s => s.count > 0);
-      if (slices.length === 0) return '';
-      const total = slices.reduce((s, d) => s + d.count, 0);
-      const cx = 100, cy = 100, R = 80, innerR = R * 0.42;
-      let angle = -Math.PI / 2;
-      const paths = slices.map(s => {
-        const frac = s.count / total;
-        const a1 = angle, a2 = angle + frac * 2 * Math.PI;
-        angle = a2;
-        const x1 = cx + R * Math.cos(a1), y1 = cy + R * Math.sin(a1);
-        const x2 = cx + R * Math.cos(a2), y2 = cy + R * Math.sin(a2);
-        const large = frac > 0.5 ? 1 : 0;
-        const d = slices.length === 1
-          ? `M ${cx - R} ${cy} A ${R} ${R} 0 1 1 ${cx - R + 0.001} ${cy} Z`
-          : `M ${cx} ${cy} L ${x1.toFixed(1)} ${y1.toFixed(1)} A ${R} ${R} 0 ${large} 1 ${x2.toFixed(1)} ${y2.toFixed(1)} Z`;
-        return `<path d="${d}" fill="${s.color}" opacity="0.9"/>`;
-      }).join('');
-      const legend = slices.map((s, i) =>
-        `<rect x="215" y="${20 + i * 24}" width="12" height="12" fill="${s.color}" rx="2"/><text x="232" y="${31 + i * 24}" font-size="11" fill="#444">${s.label}: ${s.count} (${((s.count/total)*100).toFixed(0)}%)</text>`
-      ).join('');
-      return `<svg width="380" height="200" xmlns="http://www.w3.org/2000/svg">${paths}<circle cx="${cx}" cy="${cy}" r="${innerR}" fill="#fff"/><text x="${cx}" y="${cy - 6}" text-anchor="middle" font-size="18" font-weight="900" fill="#222">${total}</text><text x="${cx}" y="${cy + 14}" text-anchor="middle" font-size="9" fill="#888">readings</text>${legend}</svg>`;
-    })();
+    // ── Separate log tables ────────────────────────────────────────────────────
+    const glucoseRows = [...filteredHistory].reverse().map((e, i) => {
+      const bg  = i % 2 === 0 ? '#ffffff' : '#f7f7f7';
+      const [dp, tp] = e.timestamp.split(' ');
+      const col = e.interpretation === 'Low' ? '#e53935' : e.interpretation === 'High' ? '#ef6c00' : '#2e7d32';
+      return `<tr style="background:${bg}"><td>${dp}</td><td>${tp}</td><td style="font-weight:700">${e.value} ${e.unit}</td><td style="color:${col};font-weight:700">${e.interpretation}</td><td>${e.fasting || '-'}</td><td>${e.symptoms || '-'}</td></tr>`;
+    }).join('');
 
-    const html = `<html><head><style>@page{size:A4 portrait;margin:20px 24px}body{font-family:Arial,sans-serif;color:#222;font-size:11px}h1{color:#ec5557;font-size:20px;margin-bottom:2px}h2{color:#444;font-size:13px;font-weight:600;margin:16px 0 6px;border-bottom:2px solid #ec5557;padding-bottom:3px}table{width:100%;border-collapse:collapse;font-size:9px}th{background:#ec5557;color:#fff;padding:4px 5px;text-align:left;font-size:9px}td{padding:3px 5px;border-bottom:1px solid #eee}.sb{border:1px solid #e0e0e0;border-radius:6px;padding:5px 8px;text-align:center;min-width:62px}.sn{font-size:16px;font-weight:bold;color:#ec5557}.sl{font-size:8px;color:#666}.footer{margin-top:20px;font-size:9px;color:#aaa;text-align:center;border-top:1px solid #eee;padding-top:8px}</style></head><body><h1>DiabEasy - Glucose Report</h1><div style="color:#888;font-size:10px;margin-bottom:4px">Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div><div style="font-size:11px;color:#444;margin-bottom:14px">${profile?.name ? `<strong>Patient:</strong> ${profile.name} &nbsp;|&nbsp;` : ''}<strong>Period:</strong> ${dateFrom} - ${dateTo}</div><div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px"><div class="sb"><div class="sn">${filteredHistory.length}</div><div class="sl">Total Readings</div></div><div class="sb"><div class="sn" style="color:#2e7d32">${avgGlucose}</div><div class="sl">Average</div></div><div class="sb"><div class="sn" style="color:#2e7d32">${inRange}</div><div class="sl">In Range</div></div><div class="sb"><div class="sn" style="color:#e53935">${lows}</div><div class="sl">Lows</div></div><div class="sb"><div class="sn" style="color:#ef6c00">${highs}</div><div class="sl">Highs</div></div><div class="sb"><div class="sn" style="color:#1565c0">${totalInsulin}u</div><div class="sl">Total Insulin</div></div><div class="sb"><div class="sn" style="color:#2e7d32">${tirPercent ?? '-'}%</div><div class="sl">Time in Range</div></div><div class="sb"><div class="sn" style="color:#1565c0">${eHbA1c ?? '-'}%</div><div class="sl">Est. HbA1c</div></div></div>${svgLineChart ? `<h2>Glucose Trend</h2>${svgLineChart}` : ''}${svgPieChart ? `<h2>Readings Breakdown</h2>${svgPieChart}` : ''}<h2>Health Log</h2><table><thead><tr><th>Date</th><th>Time</th><th>Glucose</th><th>Status</th><th>Reading Type</th><th>Notes</th><th>Insulin Type</th><th>Insulin Dose</th></tr></thead><tbody>${rows.length > 0 ? rows : '<tr><td colspan="8" style="text-align:center;color:#aaa;padding:10px;font-style:italic">No data recorded</td></tr>'}</tbody></table><div class="footer">DiabEasy is a personal management aid and not a medical device. Always confirm treatment decisions with your healthcare provider.</div></body></html>`;
+    const insulinRows = insulinEntries.map((e, i) => {
+      const bg = i % 2 === 0 ? '#ffffff' : '#f7f7f7';
+      return `<tr style="background:${bg}"><td>${fmtInsulinDate(e)}</td><td>${e.time}</td><td>${e.type}</td><td style="font-weight:700">${e.units}u</td></tr>`;
+    }).join('');
+
+    // ── HTML ───────────────────────────────────────────────────────────────────
+    const css = `
+      @page{size:A4 portrait;margin:22px 26px}
+      body{font-family:Arial,sans-serif;color:#1a1a1a;font-size:11px;margin:0}
+      .hdr{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #ec5557;padding-bottom:10px;margin-bottom:14px}
+      .hdr-title{font-size:22px;font-weight:900;color:#ec5557}
+      .hdr-sub{font-size:10px;color:#777;margin-top:2px}
+      .hdr-right{font-size:9px;color:#999;text-align:right;line-height:1.6}
+      .patient{border:1px solid #e8e8e8;border-radius:8px;margin-bottom:14px;overflow:hidden}
+      .patient-header{background:#ec5557;padding:6px 14px}
+      .patient-header-text{font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:0.8px}
+      .patient-body{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;background:#fff}
+      .pf{padding:8px 14px;border-bottom:1px solid #f5f5f5;border-right:1px solid #f5f5f5}
+      .pf-label{font-size:8px;color:#aaa;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px}
+      .pf-value{font-size:12px;font-weight:700;color:#1a1a1a}
+      .pf-empty{font-size:11px;font-weight:400;color:#ccc;font-style:italic}
+      .metrics{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+      .mc{flex:1;min-width:82px;border:1px solid #e8e8e8;border-radius:8px;padding:8px 10px;background:#fff}
+      .mv{font-size:20px;font-weight:900;line-height:1}
+      .ml{font-size:8px;color:#777;margin-top:3px}
+      .mr{font-size:7.5px;color:#bbb;margin-top:2px}
+      .sec{font-size:11px;font-weight:700;color:#333;border-bottom:1.5px solid #ec5557;padding-bottom:3px;margin:14px 0 7px}
+      .badge{display:inline-block;padding:1px 7px;border-radius:10px;font-size:8px;font-weight:700}
+      .stable{background:#e8f5e9;color:#2e7d32}
+      .unstable{background:#fff3e0;color:#e65100}
+      table{width:100%;border-collapse:collapse;font-size:9px}
+      th{background:#ec5557;color:#fff;padding:4px 6px;text-align:left;font-size:8.5px}
+      td{padding:3px 6px;border-bottom:1px solid #f0f0f0}
+      .ctx-th{background:#f5f5f5;color:#555;font-size:8.5px}
+      .pg{page-break-before:always}
+      .footer{margin-top:14px;font-size:7.5px;color:#ccc;text-align:center;border-top:1px solid #eee;padding-top:6px}
+    `;
+
+    const html = `<html><head><meta charset="utf-8"/><style>${css}</style></head><body>
+
+      <div class="hdr">
+        <div>
+          <div class="hdr-title">DiabEasy</div>
+          <div class="hdr-sub">Glucose Management Report</div>
+        </div>
+        <div class="hdr-right">
+          Generated: ${genDate} at ${genTime}<br/>
+          Period: ${dateFrom} — ${dateTo}<br/>
+          ${n} readings &nbsp;|&nbsp; ${totalInsulin}u insulin
+        </div>
+      </div>
+
+      <div class="patient">
+        <div class="patient-header"><span class="patient-header-text">Patient Information</span></div>
+        <div class="patient-body">
+          ${[
+            { label: 'Full Name',      value: profile?.name,          placeholder: 'Not provided — update in Profile' },
+            { label: 'Age',            value: profile?.age,           placeholder: 'Not provided' },
+            { label: 'Diabetes Type',  value: profile?.diabetesType,  placeholder: 'Not specified' },
+            { label: 'Diagnosis Date', value: profile?.diagnosisDate, placeholder: 'Not provided' },
+            { label: 'Physician',      value: profile?.doctorName,    placeholder: 'Not provided — update in Profile' },
+            { label: 'Clinic / Hospital', value: profile?.clinicName, placeholder: 'Not provided' },
+          ].map(f => `<div class="pf"><div class="pf-label">${f.label}</div>${f.value ? `<div class="pf-value">${f.value}</div>` : `<div class="pf-empty">${f.placeholder}</div>`}</div>`).join('')}
+        </div>
+      </div>
+
+      <div class="metrics">
+        <div class="mc"><div class="mv" style="color:#ec5557">${avgMgdL !== null ? avgMgdL.toFixed(1) : '—'}</div><div class="ml">Avg Glucose (mg/dL)</div><div class="mr">Target: ${settings.targetGlucose} mg/dL</div></div>
+        <div class="mc"><div class="mv" style="color:#1565c0">${eHbA1c ?? '—'}%</div><div class="ml">Est. HbA1c (GMI)</div><div class="mr">Target: &lt;7.0%</div></div>
+        <div class="mc"><div class="mv" style="color:#2e7d32">${tirPct ?? '—'}%</div><div class="ml">Time in Range</div><div class="mr">Target: &gt;70% (70–180 mg/dL)</div></div>
+        <div class="mc"><div class="mv" style="color:#555">${stdDev ?? '—'}</div><div class="ml">Std Deviation (mg/dL)</div><div class="mr">Target: &lt;${(settings.targetGlucose * 0.36).toFixed(0)} mg/dL</div></div>
+        <div class="mc"><div class="mv" style="color:#555">${cvPercent ?? '—'}%</div><div class="ml">Variability (CV%)</div><div class="mr"><span class="badge ${cvStable ? 'stable' : 'unstable'}">${cvPercent !== null ? (cvStable ? 'Stable ≤36%' : 'Unstable >36%') : '—'}</span></div></div>
+        <div class="mc"><div class="mv" style="color:#555">${n}</div><div class="ml">Total Readings</div><div class="mr">${totalInsulin}u insulin logged</div></div>
+      </div>
+
+      <div class="sec">Time in Range</div>
+      ${svgTIRBar || '<p style="color:#aaa;font-size:10px">No data</p>'}
+
+      ${contextRows ? `<div class="sec">Readings by Context</div>
+      <table><thead><tr class="ctx-th"><th class="ctx-th">Context</th><th class="ctx-th">Readings</th><th class="ctx-th">Avg (mg/dL)</th><th class="ctx-th">Min</th><th class="ctx-th">Max</th><th class="ctx-th">In Range</th></tr></thead><tbody>${contextRows}</tbody></table>` : ''}
+
+      ${svgLineChart ? `<div class="sec">Glucose Trend</div>${svgLineChart}` : ''}
+
+      <div class="pg"></div>
+
+      <div class="sec">Glucose Log</div>
+      <table><thead><tr><th>Date</th><th>Time</th><th>Glucose</th><th>Status</th><th>Context</th><th>Notes</th></tr></thead>
+      <tbody>${glucoseRows || '<tr><td colspan="6" style="text-align:center;color:#aaa;padding:10px;font-style:italic">No glucose data</td></tr>'}</tbody></table>
+
+      ${insulinRows ? `<div class="sec" style="margin-top:14px">Insulin Log</div>
+      <table><thead><tr><th>Date</th><th>Time</th><th>Type</th><th>Units</th></tr></thead>
+      <tbody>${insulinRows}</tbody></table>` : ''}
+
+      <div class="footer">DiabEasy is a personal management aid, not a medical device. Always confirm treatment decisions with your healthcare provider. &nbsp;|&nbsp; Generated ${genDate} at ${genTime}</div>
+
+    </body></html>`;
 
     try {
       const { uri } = await Print.printToFileAsync({ html });

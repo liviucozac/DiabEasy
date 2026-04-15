@@ -9,6 +9,10 @@ interface PressBtnProps {
   children: React.ReactNode;
   activeOpacity?: number;
   disabled?: boolean;
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
+  accessibilityRole?: 'button' | 'link' | 'none' | 'menuitem' | 'tab' | 'search';
+  accessibilityState?: object;
 }
 
 export function PressBtn({
@@ -19,6 +23,10 @@ export function PressBtn({
   children,
   activeOpacity = 0.75,
   disabled,
+  accessibilityLabel,
+  accessibilityHint,
+  accessibilityRole = 'button',
+  accessibilityState,
 }: PressBtnProps) {
   const scale = useRef(new Animated.Value(1)).current;
 
@@ -51,6 +59,10 @@ export function PressBtn({
         onPressOut={handlePressOut}
         activeOpacity={activeOpacity}
         disabled={disabled}
+        accessibilityLabel={accessibilityLabel}
+        accessibilityHint={accessibilityHint}
+        accessibilityRole={accessibilityRole}
+        accessibilityState={accessibilityState}
       >
         {children}
       </TouchableOpacity>

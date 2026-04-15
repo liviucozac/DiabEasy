@@ -292,17 +292,20 @@ export default function HomeScreen() {
 
           {/* Unit toggle */}
           <View style={styles.unitToggleRow}>
-            <TouchableOpacity onPress={() => setUnit('mg/dL')} activeOpacity={0.8}>
+            <TouchableOpacity onPress={() => setUnit('mg/dL')} activeOpacity={0.8} accessibilityLabel="Use mg/dL" accessibilityRole="radio" accessibilityState={{ checked: unit === 'mg/dL' }}>
               <Text style={[styles.unitLabel, { color: unit === 'mg/dL' ? colors.red : colors.textMuted }]}>mg/dL</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.sliderTrack, { backgroundColor: colors.border }]}
               onPress={() => setUnit(unit === 'mg/dL' ? 'mmol/L' : 'mg/dL')}
               activeOpacity={0.8}
+              accessibilityLabel={`Switch unit, currently ${unit}`}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: unit === 'mmol/L' }}
             >
               <View style={[styles.sliderKnob, { backgroundColor: colors.text }, unit === 'mmol/L' && styles.sliderKnobRight]} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setUnit('mmol/L')} activeOpacity={0.8}>
+            <TouchableOpacity onPress={() => setUnit('mmol/L')} activeOpacity={0.8} accessibilityLabel="Use mmol/L" accessibilityRole="radio" accessibilityState={{ checked: unit === 'mmol/L' }}>
               <Text style={[styles.unitLabel, { color: unit === 'mmol/L' ? colors.red : colors.textMuted }]}>mmol/L</Text>
             </TouchableOpacity>
           </View>
@@ -327,6 +330,8 @@ export default function HomeScreen() {
             onFocus={() => setInputFocused(true)}
             onBlur={() => setInputFocused(false)}
             returnKeyType="done"
+            accessibilityLabel="Blood glucose value"
+            accessibilityHint={`Enter your reading in ${unit}`}
           />
 
           {/* Fasting options */}
@@ -334,6 +339,9 @@ export default function HomeScreen() {
             {FASTING_OPTIONS.map((opt) => (
               <TouchableOpacity
                 key={opt.value}
+                accessibilityLabel={opt.label}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: fasting === opt.value }}
                 style={[styles.fastingRow, {
                   backgroundColor: colors.bgSecondary,
                   borderColor: colors.red,
@@ -367,6 +375,8 @@ export default function HomeScreen() {
             maxLength={30}
             returnKeyType="done"
             multiline
+            accessibilityLabel="Notes"
+            accessibilityHint="Optional notes such as symptoms or insulin taken"
           />
 
           {/* Submit — with bounce animation + red shadow */}
@@ -375,6 +385,7 @@ export default function HomeScreen() {
             onPress={handleSubmit}
             style={[styles.submitBtn, { backgroundColor: colors.red }]}
             textStyle={styles.submitBtnText}
+            accessibilityLabel="Submit glucose reading"
           />
 
           {/* Result — with pop-in spring */}
@@ -433,8 +444,8 @@ export default function HomeScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      <HypoPopup  visible={showHypoPopup}  glucoseValue={glucoseValue ?? 0} unit={unit} onClose={() => setShowHypoPopup(false)} />
-      <HyperPopup visible={showHyperPopup} glucoseValue={glucoseValue ?? 0} unit={unit} onClose={() => setShowHyperPopup(false)} />
+      <HypoPopup  visible={showHypoPopup}  glucoseValue={glucoseValue!} unit={unit} onClose={() => setShowHypoPopup(false)} />
+      <HyperPopup visible={showHyperPopup} glucoseValue={glucoseValue!} unit={unit} onClose={() => setShowHyperPopup(false)} />
     </View>
   );
 }

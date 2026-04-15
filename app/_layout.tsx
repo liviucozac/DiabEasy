@@ -1,10 +1,10 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AppProvider, useTheme } from '../context/AppContext';
-import { View, Text, Image, StyleSheet, Animated } from 'react-native';
+import { View, Text, Image, StyleSheet, Animated, AppState, AppStateStatus } from 'react-native';
 import { useGlucoseStore } from '../store/glucoseStore';
 import OnboardingScreen from './onboarding';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { UIManager, Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import {
@@ -12,11 +12,14 @@ import {
   rescheduleAllReminders,
   cancelAllReminderNotifications,
 } from '../utils/notificationUtils';
+import { LockScreen } from '../components/LockScreen';
 
 // Show notifications as banners even when the app is in the foreground
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
   }),
@@ -125,7 +128,9 @@ function TabsLayout() {
 
 function RootContent() {
   const { hasSeenOnboarding, reminders, settings } = useGlucoseStore();
-  const permGranted = useRef(false);
+  const permGranted    = useRef(false);
+  const [isLocked, setIsLocked] = useState(false);
+  const backgroundedAt = useRef<number | null>(null);
 
   // Request permissions and schedule all active reminders on first mount
   useEffect(() => {
@@ -146,7 +151,37 @@ function RootContent() {
     }
   }, [settings.notificationsEnabled]);
 
+  // Lock on background / foreground based on lockTimeout setting
+  useEffect(() => {
+    if (settings.securityMethod === 'none') return;
+
+    const handleChange = (next: AppStateStatus) => {
+      if (next === 'background' || next === 'inactive') {
+        backgroundedAt.current = Date.now();
+        if (settings.lockTimeout === 'immediate') setIsLocked(true);
+      } else if (next === 'active') {
+        if (settings.lockTimeout === 'immediate') { setIsLocked(true); return; }
+        if (settings.lockTimeout === 'app-close') return;
+        const elapsed = backgroundedAt.current ? Date.now() - backgroundedAt.current : 0;
+        const threshold = settings.lockTimeout === '1min' ? 60_000 : 300_000;
+        if (elapsed >= threshold) setIsLocked(true);
+      }
+    };
+
+    const sub = AppState.addEventListener('change', handleChange);
+    return () => sub.remove();
+  }, [settings.securityMethod, settings.lockTimeout]);
+
+  // Lock on first open if security is set
+  useEffect(() => {
+    const method = settings.securityMethod ?? 'none';
+    if (method !== 'none' && hasSeenOnboarding) {
+      setIsLocked(true);
+    }
+  }, []);
+
   if (!hasSeenOnboarding) return <OnboardingScreen />;
+  if (isLocked) return <LockScreen onUnlock={() => setIsLocked(false)} />;
   return <TabsLayout />;
 }
 

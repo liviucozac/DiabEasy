@@ -3,11 +3,12 @@ import {
   View, Text, TouchableOpacity, ScrollView,
   TextInput, StyleSheet, Platform, Alert, Switch,
 } from 'react-native';
-import { useGlucoseStore, DiabetesType, ThemeType, InsulinAnalogType } from '../store/glucoseStore';
+import { useGlucoseStore, DiabetesType, ThemeType, InsulinAnalogType, SecurityMethod, LockTimeout } from '../store/glucoseStore';
 import { INSULIN_ANALOGS, getAnalogByType } from '../utils/insulinUtils';
 import { useTheme } from '../context/AppContext';
 import { PressBtn } from '../components/PressBtn';
 import { ParamTrainingModal } from '../components/ParamTrainingModal';
+import { hashValue, checkHash, biometricsAvailable } from '../utils/securityUtils';
 
 const RED = '#EC5557';
 
@@ -45,9 +46,10 @@ function FieldLabel({ text }: { text: string }) {
   return <Text style={[s.fieldLabel, { color: colors.textMuted }]}>{text}</Text>;
 }
 
-function StyledInput({ value, onChangeText, placeholder, keyboardType, secureTextEntry, autoCapitalize }: {
+function StyledInput({ value, onChangeText, placeholder, keyboardType, secureTextEntry, autoCapitalize, maxLength, accessibilityLabel }: {
   value: string; onChangeText: (v: string) => void; placeholder: string;
   keyboardType?: any; secureTextEntry?: boolean; autoCapitalize?: any;
+  maxLength?: number; accessibilityLabel?: string;
 }) {
   const { colors } = useTheme();
   const [focused, setFocused] = useState(false);
@@ -57,6 +59,7 @@ function StyledInput({ value, onChangeText, placeholder, keyboardType, secureTex
       value={value} onChangeText={onChangeText} placeholder={placeholder}
       placeholderTextColor={colors.placeholder} keyboardType={keyboardType ?? 'default'}
       secureTextEntry={secureTextEntry} autoCapitalize={autoCapitalize ?? 'sentences'}
+      maxLength={maxLength} accessibilityLabel={accessibilityLabel}
       onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} returnKeyType="done"
     />
   );
@@ -115,14 +118,69 @@ function ProfileTab() {
 
 // ─── Settings Tab ─────────────────────────────────────────────────────────────
 
+const LOCK_TIMEOUT_OPTIONS: { label: string; value: LockTimeout }[] = [
+  { label: 'Immediately',    value: 'immediate' },
+  { label: 'After 1 minute', value: '1min'      },
+  { label: 'After 5 minutes',value: '5min'      },
+  { label: 'On app close',   value: 'app-close' },
+];
+
+const SECURITY_METHOD_OPTIONS: { label: string; value: SecurityMethod; icon: string }[] = [
+  { label: 'None',       value: 'none',       icon: '🔓' },
+  { label: 'PIN',        value: 'pin',        icon: '🔢' },
+  { label: 'Password',   value: 'password',   icon: '🔑' },
+  { label: 'Biometrics', value: 'biometrics', icon: '🪪' },
+];
+
 function SettingsTab() {
   const { settings, setSettings, clearHistory, clearInsulinLog } = useGlucoseStore();
   const { colors } = useTheme();
-  const [showTraining,  setShowTraining]  = useState(false);
-  const [isfFocused,    setIsfFocused]    = useState(false);
-  const [ratioFocused,  setRatioFocused]  = useState(false);
-  const [targetFocused, setTargetFocused] = useState(false);
-  const [diaFocused,    setDiaFocused]    = useState(false);
+  const [showTraining,    setShowTraining]    = useState(false);
+  const [isfFocused,      setIsfFocused]      = useState(false);
+  const [ratioFocused,    setRatioFocused]    = useState(false);
+  const [targetFocused,   setTargetFocused]   = useState(false);
+  const [diaFocused,      setDiaFocused]      = useState(false);
+  // Security change state
+  const [secNewPin,       setSecNewPin]       = useState('');
+  const [secConfirmPin,   setSecConfirmPin]   = useState('');
+  const [secNewPass,      setSecNewPass]      = useState('');
+  const [secConfirmPass,  setSecConfirmPass]  = useState('');
+  const [secError,        setSecError]        = useState('');
+  const [secSuccess,      setSecSuccess]      = useState('');
+
+  const handleMethodChange = async (method: SecurityMethod) => {
+    setSecError(''); setSecSuccess('');
+    setSecNewPin(''); setSecConfirmPin('');
+    setSecNewPass(''); setSecConfirmPass('');
+    if (method === 'biometrics') {
+      const ok = await biometricsAvailable();
+      if (!ok) { setSecError('No biometrics enrolled on this device.'); return; }
+    }
+    if (method === 'none') {
+      setSettings({ securityMethod: 'none', securityHash: '' });
+      setSecSuccess('Security disabled.');
+    } else {
+      setSettings({ securityMethod: method, securityHash: '' });
+      if (method === 'biometrics') setSecSuccess('Biometrics enabled.');
+    }
+  };
+
+  const handleSaveCredential = () => {
+    setSecError(''); setSecSuccess('');
+    if (settings.securityMethod === 'pin') {
+      if (secNewPin.length !== 4 || !/^\d{4}$/.test(secNewPin)) { setSecError('PIN must be exactly 4 digits.'); return; }
+      if (secNewPin !== secConfirmPin)  { setSecError('PINs do not match.'); return; }
+      setSettings({ securityHash: hashValue(secNewPin) });
+      setSecNewPin(''); setSecConfirmPin('');
+      setSecSuccess('PIN saved.');
+    } else if (settings.securityMethod === 'password') {
+      if (secNewPass.length < 7)        { setSecError('Password must be at least 7 characters.'); return; }
+      if (secNewPass !== secConfirmPass) { setSecError('Passwords do not match.'); return; }
+      setSettings({ securityHash: hashValue(secNewPass) });
+      setSecNewPass(''); setSecConfirmPass('');
+      setSecSuccess('Password saved.');
+    }
+  };
 
   const THEMES: { label: string; value: ThemeType }[] = [
     { label: '☀️ Light', value: 'light' },
@@ -226,10 +284,10 @@ function SettingsTab() {
 
         <View style={s.paramGrid}>
           {[
-            { label: 'Target glycemia\n(mg/dL)', value: String(settings.targetGlucose), focused: targetFocused, setFocused: setTargetFocused, onChange: (v: string) => setSettings({ targetGlucose: parseFloat(v) || 100, insulinParamsSet: true }) },
-            { label: 'ISF\n(mg/dL per unit)',    value: String(settings.isf),           focused: isfFocused,    setFocused: setIsfFocused,    onChange: (v: string) => setSettings({ isf: parseFloat(v) || 50, insulinParamsSet: true }) },
-            { label: 'Carb ratio\n(g per unit)', value: String(settings.carbRatio),     focused: ratioFocused,  setFocused: setRatioFocused,  onChange: (v: string) => setSettings({ carbRatio: parseFloat(v) || 10, insulinParamsSet: true }) },
-            { label: 'DIA\n(hours)',              value: String(settings.dia),           focused: diaFocused,    setFocused: setDiaFocused,    onChange: (v: string) => setSettings({ dia: parseFloat(v) || 5 }) },
+            { label: 'Target glycemia\n(mg/dL)', value: String(settings.targetGlucose), focused: targetFocused, setFocused: setTargetFocused, onChange: (v: string) => { const n = parseFloat(v); if (!isNaN(n)) setSettings({ targetGlucose: n, insulinParamsSet: true }); } },
+            { label: 'ISF\n(mg/dL per unit)',    value: String(settings.isf),           focused: isfFocused,    setFocused: setIsfFocused,    onChange: (v: string) => { const n = parseFloat(v); if (!isNaN(n)) setSettings({ isf: n, insulinParamsSet: true }); } },
+            { label: 'Carb ratio\n(g per unit)', value: String(settings.carbRatio),     focused: ratioFocused,  setFocused: setRatioFocused,  onChange: (v: string) => { const n = parseFloat(v); if (!isNaN(n)) setSettings({ carbRatio: n, insulinParamsSet: true }); } },
+            { label: 'DIA\n(hours)',              value: String(settings.dia),           focused: diaFocused,    setFocused: setDiaFocused,    onChange: (v: string) => { const n = parseFloat(v); if (!isNaN(n)) setSettings({ dia: n }); } },
           ].map((param, i) => (
             <View key={i} style={s.paramItem}>
               <Text style={[s.paramLabel, { color: colors.textMuted }]}>{param.label}</Text>
@@ -251,6 +309,77 @@ function SettingsTab() {
         </TouchableOpacity>
 
         <ParamTrainingModal visible={showTraining} onClose={() => setShowTraining(false)} />
+      </SectionCard>
+
+      <SectionCard>
+        <SectionTitle text="Security" />
+        <Text style={[s.sectionHint, { color: colors.textMuted }]}>Choose how the app locks when you leave it.</Text>
+
+        {/* Method pills */}
+        <FieldLabel text="Lock method" />
+        <View style={s.pillRow}>
+          {SECURITY_METHOD_OPTIONS.map((opt) => {
+            const active = settings.securityMethod === opt.value;
+            return (
+              <TouchableOpacity key={opt.value}
+                style={[s.pill, active ? s.primaryBtnShadow : null, { borderColor: colors.red, backgroundColor: active ? colors.red : 'transparent' }]}
+                onPress={() => handleMethodChange(opt.value)} activeOpacity={0.75}
+                accessibilityLabel={opt.label} accessibilityRole="radio" accessibilityState={{ checked: active }}>
+                <Text style={[s.pillText, { color: active ? '#fff' : colors.textMuted }]}>{opt.icon} {opt.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* PIN entry */}
+        {settings.securityMethod === 'pin' && (
+          <View style={{ gap: 8, marginTop: 10 }}>
+            <FieldLabel text="New PIN (4 digits)" />
+            <StyledInput value={secNewPin} onChangeText={setSecNewPin} placeholder="••••" keyboardType="number-pad" maxLength={4} secureTextEntry accessibilityLabel="New PIN" />
+            <FieldLabel text="Confirm PIN" />
+            <StyledInput value={secConfirmPin} onChangeText={setSecConfirmPin} placeholder="••••" keyboardType="number-pad" maxLength={4} secureTextEntry accessibilityLabel="Confirm PIN" />
+            <PressBtn style={[s.authBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={handleSaveCredential} accessibilityLabel="Save PIN">
+              <Text style={s.authBtnText}>Save PIN</Text>
+            </PressBtn>
+          </View>
+        )}
+
+        {/* Password entry */}
+        {settings.securityMethod === 'password' && (
+          <View style={{ gap: 8, marginTop: 10 }}>
+            <FieldLabel text="New password (7+ characters)" />
+            <StyledInput value={secNewPass} onChangeText={setSecNewPass} placeholder="New password" secureTextEntry accessibilityLabel="New password" />
+            <FieldLabel text="Confirm password" />
+            <StyledInput value={secConfirmPass} onChangeText={setSecConfirmPass} placeholder="Repeat password" secureTextEntry accessibilityLabel="Confirm password" />
+            <PressBtn style={[s.authBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={handleSaveCredential} accessibilityLabel="Save password">
+              <Text style={s.authBtnText}>Save Password</Text>
+            </PressBtn>
+          </View>
+        )}
+
+        {!!secError   && <Text style={[s.secMsg, { color: '#e53935' }]}>{secError}</Text>}
+        {!!secSuccess && <Text style={[s.secMsg, { color: '#2e7d32' }]}>{secSuccess}</Text>}
+
+        {/* Lock timeout — only shown when a method is active */}
+        {settings.securityMethod !== 'none' && (
+          <>
+            <Divider />
+            <FieldLabel text="Lock after" />
+            <View style={s.pillRow}>
+              {LOCK_TIMEOUT_OPTIONS.map((opt) => {
+                const active = settings.lockTimeout === opt.value;
+                return (
+                  <TouchableOpacity key={opt.value}
+                    style={[s.pill, active ? s.primaryBtnShadow : null, { borderColor: colors.red, backgroundColor: active ? colors.red : 'transparent' }]}
+                    onPress={() => setSettings({ lockTimeout: opt.value })} activeOpacity={0.75}
+                    accessibilityLabel={opt.label} accessibilityRole="radio" accessibilityState={{ checked: active }}>
+                    <Text style={[s.pillText, { color: active ? '#fff' : colors.textMuted }]}>{opt.label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </>
+        )}
       </SectionCard>
 
       <SectionCard>
@@ -346,6 +475,7 @@ const s = StyleSheet.create({
 
   authBtn:        { borderRadius: 8, paddingVertical: 12, alignItems: 'center', marginTop: 12 },
   authBtnText:    { fontSize: 15, color: '#fff', fontWeight: '700', backgroundColor: 'transparent' },
+  secMsg:         { fontSize: 13, textAlign: 'center', marginTop: 8, fontWeight: '600' },
   authToggleRow:  { flexDirection: 'row', justifyContent: 'center', marginTop: 10 },
   authToggleText: { fontSize: 13 },
   authToggleLink: { fontSize: 13, fontWeight: '700' },

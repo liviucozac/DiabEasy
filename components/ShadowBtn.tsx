@@ -12,6 +12,9 @@ interface ShadowBtnProps {
   disabled?: boolean;
   shadowColor?: string;
   distance?: number;
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
+  accessibilityRole?: 'button' | 'link' | 'none' | 'menuitem' | 'tab' | 'search';
 }
 
 export function ShadowBtn({
@@ -23,6 +26,9 @@ export function ShadowBtn({
   disabled,
   shadowColor = 'rgba(201,64,66,0.25)',
   distance = 6,
+  accessibilityLabel,
+  accessibilityHint,
+  accessibilityRole = 'button',
 }: ShadowBtnProps) {
   return (
     <Shadow
@@ -37,6 +43,9 @@ export function ShadowBtn({
         onPress={onPress}
         activeOpacity={activeOpacity}
         disabled={disabled}
+        accessibilityLabel={accessibilityLabel ?? label}
+        accessibilityHint={accessibilityHint}
+        accessibilityRole={accessibilityRole}
       >
         <Text style={textStyle}>{label}</Text>
       </PressBtn>

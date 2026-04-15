@@ -4,9 +4,10 @@ import {
   Dimensions, ScrollView, TextInput,
 } from 'react-native';
 import { useGlucoseStore } from '../store/glucoseStore';
-import type { DiabetesType } from '../store/glucoseStore';
+import type { DiabetesType, SecurityMethod } from '../store/glucoseStore';
 import { useTheme } from '../context/AppContext';
 import type { ColorScheme } from '../context/colors';
+import { hashValue, biometricsAvailable } from '../utils/securityUtils';
 
 const { width } = Dimensions.get('window');
 
@@ -566,7 +567,7 @@ export default function OnboardingScreen() {
   const [page, setPage] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
 
-  const TOTAL = SLIDES.length + 1; // info slides + param setup
+  const TOTAL = SLIDES.length + 2; // info slides + param setup + security setup
 
   const goTo = (idx: number) => {
     scrollRef.current?.scrollTo({ x: idx * width, animated: true });
@@ -577,10 +578,16 @@ export default function OnboardingScreen() {
 
   const handleParamConfirm = (isf: number, carbRatio: number, target: number) => {
     setSettings({ isf, carbRatio, targetGlucose: target, insulinParamsSet: true });
+    goTo(SLIDES.length + 1); // advance to security setup
+  };
+
+  const handleSecurityConfirm = (method: SecurityMethod, hash: string) => {
+    setSettings({ securityMethod: method, securityHash: hash, hasSeenSecuritySetup: true });
     finish();
   };
 
-  const isParamStep = page === SLIDES.length;
+  const isParamStep    = page === SLIDES.length;
+  const isSecurityStep = page === SLIDES.length + 1;
 
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
@@ -622,11 +629,18 @@ export default function OnboardingScreen() {
           </ScrollView>
         ))}
 
-        {/* Param setup — last page, not skippable */}
+        {/* Param setup */}
         <ParamSetupSlide
           colors={colors}
           diabetesType={profile.diabetesType}
           onConfirm={handleParamConfirm}
+        />
+
+        {/* Security setup — final page */}
+        <SecuritySetupSlide
+          colors={colors}
+          onConfirm={handleSecurityConfirm}
+          slideTotal={TOTAL}
         />
       </ScrollView>
 
@@ -643,8 +657,8 @@ export default function OnboardingScreen() {
         ))}
       </View>
 
-      {/* Navigation — hidden on param step (it has its own confirm button) */}
-      {!isParamStep && (
+      {/* Navigation — hidden on param and security steps (they have their own confirm buttons) */}
+      {!isParamStep && !isSecurityStep && (
         <View style={styles.navRow}>
           {page < SLIDES.length - 1 ? (
             <>
@@ -721,4 +735,170 @@ const ps = StyleSheet.create({
   recLabel:       { fontSize: 10, marginTop: 2 },
   inputLabel:     { fontSize: 12, marginBottom: 4 },
   input:          { borderWidth: 1.5, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7, fontSize: 14 },
+});
+
+// ─── Security setup slide ─────────────────────────────────────────────────────
+
+const METHOD_OPTIONS: { value: SecurityMethod; icon: string; label: string; desc: string }[] = [
+  { value: 'none',       icon: '🔓', label: 'No protection',  desc: 'App opens instantly' },
+  { value: 'pin',        icon: '🔢', label: '4-digit PIN',    desc: 'Quick numeric code' },
+  { value: 'password',   icon: '🔑', label: 'Password',       desc: '7+ character passphrase' },
+  { value: 'biometrics', icon: '🪪', label: 'Face / Finger',  desc: 'Biometric authentication' },
+];
+
+function SecuritySetupSlide({
+  colors,
+  onConfirm,
+  slideTotal,
+}: {
+  colors: ColorScheme;
+  onConfirm: (method: SecurityMethod, hash: string) => void;
+  slideTotal: number;
+}) {
+  const [method,          setMethod]          = useState<SecurityMethod>('none');
+  const [pin,             setPin]             = useState('');
+  const [pinConfirm,      setPinConfirm]      = useState('');
+  const [password,        setPassword]        = useState('');
+  const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [bioOk,           setBioOk]           = useState<boolean | null>(null);
+  const [error,           setError]           = useState('');
+
+  const selectMethod = async (m: SecurityMethod) => {
+    setMethod(m); setError('');
+    if (m === 'biometrics') {
+      const ok = await biometricsAvailable();
+      setBioOk(ok);
+      if (!ok) setError('No biometrics enrolled on this device. Choose another method.');
+    }
+  };
+
+  const handleConfirm = () => {
+    setError('');
+    if (method === 'none') { onConfirm('none', ''); return; }
+    if (method === 'pin') {
+      if (pin.length !== 4)           { setError('PIN must be exactly 4 digits.'); return; }
+      if (!/^\d{4}$/.test(pin))       { setError('PIN must contain only digits.'); return; }
+      if (pin !== pinConfirm)         { setError('PINs do not match.'); return; }
+      onConfirm('pin', hashValue(pin)); return;
+    }
+    if (method === 'password') {
+      if (password.length < 7)        { setError('Password must be at least 7 characters.'); return; }
+      if (password !== passwordConfirm){ setError('Passwords do not match.'); return; }
+      onConfirm('password', hashValue(password)); return;
+    }
+    if (method === 'biometrics') {
+      if (!bioOk) { setError('No biometrics enrolled on this device. Choose another method.'); return; }
+      onConfirm('biometrics', ''); return;
+    }
+  };
+
+  const inputStyle = [ps.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }];
+
+  return (
+    <ScrollView style={{ width }} contentContainerStyle={styles.slide} showsVerticalScrollIndicator={false}>
+      <Text style={styles.slideIcon}>🔐</Text>
+      <Text style={[styles.slideTitle, { color: colors.text }]}>Secure Your App</Text>
+      <Text style={[styles.slideBody, { color: colors.textMuted }]}>
+        Choose how you want to unlock DiabEasy each time you open it. You can change this later in Profile → Settings.
+      </Text>
+
+      {/* Method cards */}
+      <View style={sc.methodGrid}>
+        {METHOD_OPTIONS.map((opt) => {
+          const active = method === opt.value;
+          return (
+            <TouchableOpacity
+              key={opt.value}
+              style={[sc.methodCard, { borderColor: active ? colors.red : colors.border, backgroundColor: active ? colors.bgSecondary : colors.bgCard }]}
+              onPress={() => selectMethod(opt.value)}
+              activeOpacity={0.75}
+              accessibilityLabel={`${opt.label} — ${opt.desc}`}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: active }}
+            >
+              <Text style={sc.methodIcon}>{opt.icon}</Text>
+              <Text style={[sc.methodLabel, { color: active ? colors.red : colors.text }]}>{opt.label}</Text>
+              <Text style={[sc.methodDesc,  { color: colors.textFaint }]}>{opt.desc}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {/* PIN entry */}
+      {method === 'pin' && (
+        <View style={[styles.bulletCard, { backgroundColor: colors.bgCard, borderColor: colors.border, gap: 12, marginTop: 12 }]}>
+          <View>
+            <Text style={[ps.inputLabel, { color: colors.textMuted }]}>Enter 4-digit PIN</Text>
+            <TextInput style={inputStyle} keyboardType="number-pad" maxLength={4} secureTextEntry
+              placeholder="••••" placeholderTextColor={colors.placeholder} value={pin} onChangeText={setPin}
+              accessibilityLabel="PIN" />
+          </View>
+          <View>
+            <Text style={[ps.inputLabel, { color: colors.textMuted }]}>Confirm PIN</Text>
+            <TextInput style={inputStyle} keyboardType="number-pad" maxLength={4} secureTextEntry
+              placeholder="••••" placeholderTextColor={colors.placeholder} value={pinConfirm} onChangeText={setPinConfirm}
+              accessibilityLabel="Confirm PIN" />
+          </View>
+        </View>
+      )}
+
+      {/* Password entry */}
+      {method === 'password' && (
+        <View style={[styles.bulletCard, { backgroundColor: colors.bgCard, borderColor: colors.border, gap: 12, marginTop: 12 }]}>
+          <View>
+            <Text style={[ps.inputLabel, { color: colors.textMuted }]}>Password (7+ characters)</Text>
+            <TextInput style={inputStyle} secureTextEntry
+              placeholder="Enter password" placeholderTextColor={colors.placeholder} value={password} onChangeText={setPassword}
+              accessibilityLabel="Password" />
+          </View>
+          <View>
+            <Text style={[ps.inputLabel, { color: colors.textMuted }]}>Confirm password</Text>
+            <TextInput style={inputStyle} secureTextEntry
+              placeholder="Repeat password" placeholderTextColor={colors.placeholder} value={passwordConfirm} onChangeText={setPasswordConfirm}
+              accessibilityLabel="Confirm password" />
+          </View>
+        </View>
+      )}
+
+      {/* Biometrics note */}
+      {method === 'biometrics' && bioOk === false && (
+        <View style={[sc.bioWarning, { backgroundColor: colors.highBg, borderColor: colors.high }]}>
+          <Text style={[sc.bioWarningText, { color: colors.high }]}>⚠️ No biometrics enrolled on this device. Please choose another method or enrol first in your device settings.</Text>
+        </View>
+      )}
+      {method === 'biometrics' && bioOk === true && (
+        <View style={[sc.bioWarning, { backgroundColor: colors.normalBg, borderColor: colors.normal }]}>
+          <Text style={[sc.bioWarningText, { color: colors.normal }]}>✓ Biometrics detected. You'll be prompted to authenticate each time you open the app.</Text>
+        </View>
+      )}
+
+      {/* Error */}
+      {!!error && <Text style={sc.errorText}>{error}</Text>}
+
+      <TouchableOpacity
+        style={[styles.nextBtn, { backgroundColor: colors.red, flex: 0, marginTop: 20, width: '100%' }]}
+        onPress={handleConfirm}
+        activeOpacity={0.8}
+        accessibilityLabel="Confirm security method and finish setup"
+        accessibilityRole="button"
+      >
+        <Text style={styles.nextBtnText}>
+          {method === 'none' ? 'Skip & Get Started' : 'Confirm & Get Started'}
+        </Text>
+      </TouchableOpacity>
+
+      <Text style={[styles.pageCount, { color: colors.textFaint }]}>{slideTotal} / {slideTotal}</Text>
+    </ScrollView>
+  );
+}
+
+const sc = StyleSheet.create({
+  methodGrid:    { flexDirection: 'row', flexWrap: 'wrap', gap: 10, width: '100%', marginTop: 4 },
+  methodCard:    { width: '47%', borderRadius: 12, borderWidth: 1.5, padding: 12, alignItems: 'center', gap: 4 },
+  methodIcon:    { fontSize: 28 },
+  methodLabel:   { fontSize: 13, fontWeight: '700', textAlign: 'center' },
+  methodDesc:    { fontSize: 11, textAlign: 'center' },
+  bioWarning:    { width: '100%', borderRadius: 10, borderWidth: 1, padding: 12, marginTop: 12 },
+  bioWarningText:{ fontSize: 13, lineHeight: 19 },
+  errorText:     { fontSize: 13, color: '#e53935', marginTop: 8, textAlign: 'center' },
 });

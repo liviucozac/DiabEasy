@@ -59,7 +59,7 @@ export function ParamTrainingModal({ visible, onClose }: { visible: boolean; onC
           {/* Header */}
           <View style={tr.header}>
             <Text style={[tr.headerTitle, { color: colors.text }]}>Understanding your parameters</Text>
-            <TouchableOpacity onPress={handleClose} activeOpacity={0.7} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <TouchableOpacity onPress={handleClose} activeOpacity={0.7} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityLabel="Close" accessibilityRole="button">
               <Text style={[tr.closeX, { color: colors.textMuted }]}>✕</Text>
             </TouchableOpacity>
           </View>
@@ -101,16 +101,16 @@ export function ParamTrainingModal({ visible, onClose }: { visible: boolean; onC
           {/* Nav */}
           <View style={tr.navRow}>
             {page > 0 && (
-              <TouchableOpacity onPress={() => goTo(page - 1)} activeOpacity={0.75} style={[tr.navBtn, { borderColor: colors.border }]}>
+              <TouchableOpacity onPress={() => goTo(page - 1)} activeOpacity={0.75} style={[tr.navBtn, { borderColor: colors.border }]} accessibilityLabel="Previous slide" accessibilityRole="button">
                 <Text style={[tr.navBtnText, { color: colors.textMuted }]}>← Back</Text>
               </TouchableOpacity>
             )}
             {page < TOTAL - 1 ? (
-              <TouchableOpacity onPress={() => goTo(page + 1)} activeOpacity={0.8} style={[tr.navBtn, tr.navBtnPrimary, { backgroundColor: colors.red }]}>
+              <TouchableOpacity onPress={() => goTo(page + 1)} activeOpacity={0.8} style={[tr.navBtn, tr.navBtnPrimary, { backgroundColor: colors.red }]} accessibilityLabel={`Next slide, ${page + 2} of ${TOTAL}`} accessibilityRole="button">
                 <Text style={[tr.navBtnText, { color: '#fff' }]}>Next →</Text>
               </TouchableOpacity>
             ) : (
-              <TouchableOpacity onPress={handleClose} activeOpacity={0.8} style={[tr.navBtn, tr.navBtnPrimary, { backgroundColor: colors.red }]}>
+              <TouchableOpacity onPress={handleClose} activeOpacity={0.8} style={[tr.navBtn, tr.navBtnPrimary, { backgroundColor: colors.red }]} accessibilityLabel="Done, close guide" accessibilityRole="button">
                 <Text style={[tr.navBtnText, { color: '#fff' }]}>Got it ✓</Text>
               </TouchableOpacity>
             )}

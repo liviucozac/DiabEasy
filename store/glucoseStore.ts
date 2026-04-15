@@ -14,6 +14,8 @@ export type DiabetesType     = 'Type 1' | 'Type 2' | 'LADA' | 'Other' | '';
 export type ThemeType        = 'light' | 'dark' | 'system';
 export type InsulinAnalogType    = 'standard' | 'ultra-rapid' | 'inhaled';
 export type LongActingInsulinType = 'glargine-u100' | 'glargine-u300' | 'detemir' | 'degludec' | 'nph';
+export type SecurityMethod       = 'none' | 'pin' | 'password' | 'biometrics';
+export type LockTimeout          = 'immediate' | '1min' | '5min' | 'app-close';
 
 export interface GlucoseEntry {
   value: number;
@@ -67,6 +69,10 @@ export interface AppSettings {
   longActingInsulinType: LongActingInsulinType;
   emergencyNumber: string;
   insulinParamsSet: boolean;  // true once user has explicitly saved ISF/carbRatio/target
+  securityMethod: SecurityMethod;
+  securityHash: string;       // djb2 hash of PIN or password
+  lockTimeout: LockTimeout;
+  hasSeenSecuritySetup: boolean;
 }
 
 // ─── Store interface ──────────────────────────────────────────────────────────
@@ -136,6 +142,10 @@ const DEFAULT_SETTINGS: AppSettings = {
   longActingInsulinType: 'glargine-u100' as LongActingInsulinType,
     emergencyNumber: '112',
   insulinParamsSet: false,
+  securityMethod: 'none',
+  securityHash: '',
+  lockTimeout: '1min',
+  hasSeenSecuritySetup: false,
 };
 
 // ─── Store ────────────────────────────────────────────────────────────────────
@@ -188,6 +198,12 @@ export const useGlucoseStore = create<GlucoseStore>()(
     {
       name: 'diabeasy-store',
       storage: createJSONStorage(() => AsyncStorage),
+      merge: (persistedState: any, currentState) => ({
+        ...currentState,
+        ...persistedState,
+        settings: { ...currentState.settings, ...(persistedState.settings ?? {}) },
+        profile:  { ...currentState.profile,  ...(persistedState.profile  ?? {}) },
+      }),
     }
   )
 );
