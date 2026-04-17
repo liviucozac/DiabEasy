@@ -8,6 +8,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { generateId } from '../utils/idUtils';
 
 export type Unit             = 'mg/dL' | 'mmol/L';
 export type DiabetesType     = 'Type 1' | 'Type 2' | 'LADA' | 'Other' | '';
@@ -27,10 +28,10 @@ export interface GlucoseEntry {
 }
 
 export interface InsulinEntry {
-  units:      number;
-  time:       string;            // "HH:MM" for display
-  type:       'Rapid-acting' | 'Long-acting';
-  timestamp?: string;            // ISO 8601 — set on new entries, used for IOB
+  units:     number;
+  time:      string;      // "HH:MM" for display
+  type:      'Rapid-acting' | 'Long-acting';
+  timestamp: string;      // ISO 8601 — required for IOB calculation
 }
 
 export interface Reminder {
@@ -69,6 +70,8 @@ export interface AppSettings {
   longActingInsulinType: LongActingInsulinType;
   emergencyNumber: string;
   insulinParamsSet: boolean;  // true once user has explicitly saved ISF/carbRatio/target
+  glucoseLow: number;         // low threshold in mg/dL (default 70)
+  glucoseHigh: number;        // high threshold in mg/dL (default 180)
   securityMethod: SecurityMethod;
   securityHash: string;       // djb2 hash of PIN or password
   lockTimeout: LockTimeout;
@@ -142,6 +145,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   longActingInsulinType: 'glargine-u100' as LongActingInsulinType,
     emergencyNumber: '112',
   insulinParamsSet: false,
+  glucoseLow: 70,
+  glucoseHigh: 180,
   securityMethod: 'none',
   securityHash: '',
   lockTimeout: '1min',
@@ -178,8 +183,8 @@ export const useGlucoseStore = create<GlucoseStore>()(
   clearInsulinLog: () => set({ insulinEntries: [] }),
 
   reminders: [
-    { id: '1', label: 'Morning rapid insulin', time: '08:00', type: 'Rapid-acting', units: 0,  active: true },
-    { id: '2', label: 'Evening long insulin',  time: '22:00', type: 'Long-acting',  units: 10, active: true },
+    { id: generateId(), label: 'Morning rapid insulin', time: '08:00', type: 'Rapid-acting', units: 0,  active: true },
+    { id: generateId(), label: 'Evening long insulin',  time: '22:00', type: 'Long-acting',  units: 10, active: true },
   ],
   addReminder: (r) => set((state) => ({ reminders: [...state.reminders, r] })),
   updateReminder: (id, changes) =>
@@ -203,6 +208,10 @@ export const useGlucoseStore = create<GlucoseStore>()(
         ...persistedState,
         settings: { ...currentState.settings, ...(persistedState.settings ?? {}) },
         profile:  { ...currentState.profile,  ...(persistedState.profile  ?? {}) },
+        // Backfill legacy insulin entries that predate the required timestamp field
+        insulinEntries: (persistedState.insulinEntries ?? []).map((e: any) =>
+          e.timestamp ? e : { ...e, timestamp: new Date(0).toISOString() }
+        ),
       }),
     }
   )

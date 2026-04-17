@@ -15,28 +15,20 @@ type Unit = 'mg/dL' | 'mmol/L';
 type FastingType = 'Fasting' | 'Pre-meal' | 'Post-meal' | 'Random' | 'Bedtime' | 'Post-exercise' | '';
 type ColorClass = 'low' | 'normal' | 'high';
 
-function getColorClass(value: number, unit: Unit): ColorClass {
-  if (unit === 'mg/dL') {
-    if (value < 75)   return 'low';
-    if (value <= 150) return 'normal';
-    return 'high';
-  } else {
-    if (value < 4.2)  return 'low';
-    if (value <= 8.3) return 'normal';
-    return 'high';
-  }
+function getColorClass(value: number, unit: Unit, lowMgdl = 70, highMgdl = 180): ColorClass {
+  const low  = unit === 'mmol/L' ? lowMgdl  / 18.0182 : lowMgdl;
+  const high = unit === 'mmol/L' ? highMgdl / 18.0182 : highMgdl;
+  if (value < low)  return 'low';
+  if (value <= high) return 'normal';
+  return 'high';
 }
 
-function getInterpretation(value: number, unit: Unit): string {
-  if (unit === 'mg/dL') {
-    if (value < 75)   return 'Low';
-    if (value <= 150) return 'Normal';
-    return 'High';
-  } else {
-    if (value < 4.2)  return 'Low';
-    if (value <= 8.3) return 'Normal';
-    return 'High';
-  }
+function getInterpretation(value: number, unit: Unit, lowMgdl = 70, highMgdl = 180): string {
+  const low  = unit === 'mmol/L' ? lowMgdl  / 18.0182 : lowMgdl;
+  const high = unit === 'mmol/L' ? highMgdl / 18.0182 : highMgdl;
+  if (value < low)  return 'Low';
+  if (value <= high) return 'Normal';
+  return 'High';
 }
 
 function statusIcon(interpretation: string): string {
@@ -57,7 +49,7 @@ function formatTimestamp(): string {
 // ─── Quick Stats ──────────────────────────────────────────────────────────────
 
 function QuickStats({ unit }: { unit: string }) {
-  const { history } = useGlucoseStore();
+  const { history, settings } = useGlucoseStore();
   const { colors, isDark }  = useTheme();
 
   const now = new Date();
@@ -68,9 +60,9 @@ function QuickStats({ unit }: { unit: string }) {
 
   const count   = todayEntries.length;
   const avg     = count > 0 ? (todayEntries.reduce((s, e) => s + e.value, 0) / count).toFixed(1) : null;
-  const inRange = todayEntries.filter((e) => getColorClass(e.value, e.unit as Unit) === 'normal').length;
-  const highs   = todayEntries.filter((e) => getColorClass(e.value, e.unit as Unit) === 'high').length;
-  const lows    = todayEntries.filter((e) => getColorClass(e.value, e.unit as Unit) === 'low').length;
+  const inRange = todayEntries.filter((e) => getColorClass(e.value, e.unit as Unit, settings.glucoseLow, settings.glucoseHigh) === 'normal').length;
+  const highs   = todayEntries.filter((e) => getColorClass(e.value, e.unit as Unit, settings.glucoseLow, settings.glucoseHigh) === 'high').length;
+  const lows    = todayEntries.filter((e) => getColorClass(e.value, e.unit as Unit, settings.glucoseLow, settings.glucoseHigh) === 'low').length;
 
   return (
     <View style={[styles.statsCard, {
@@ -210,7 +202,7 @@ const FASTING_OPTIONS: { label: string; value: FastingType }[] = [
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function HomeScreen() {
-  const { addEntry, setGlucoseValue: setGlobalGlucose, unit: globalUnit, setHasSeenOnboarding } = useGlucoseStore();
+  const { addEntry, setGlucoseValue: setGlobalGlucose, unit: globalUnit, setHasSeenOnboarding, settings } = useGlucoseStore();
   const { colors, isDark } = useTheme();
 
   const [unit, setUnit]                     = useState<Unit>(globalUnit ?? 'mg/dL');
@@ -238,8 +230,8 @@ export default function HomeScreen() {
     ]).start();
 
     const timestamp      = formatTimestamp();
-    const interpretation = getInterpretation(value, unit);
-    const colorClass     = getColorClass(value, unit);
+    const interpretation = getInterpretation(value, unit, settings.glucoseLow, settings.glucoseHigh);
+    const colorClass     = getColorClass(value, unit, settings.glucoseLow, settings.glucoseHigh);
     setGlucoseValue(value);
     setGlobalGlucose(value, unit);
     addEntry({ value, unit, timestamp, interpretation, fasting, symptoms });
@@ -252,14 +244,14 @@ export default function HomeScreen() {
     setInputValue(''); setSymptoms(''); setFasting('');
   };
 
-  const cls = glucoseValue !== null ? getColorClass(glucoseValue, unit) : null;
+  const cls = glucoseValue !== null ? getColorClass(glucoseValue, unit, settings.glucoseLow, settings.glucoseHigh) : null;
   const resultColor =
     cls === 'low'    ? colors.low :
     cls === 'high'   ? colors.high :
     cls === 'normal' ? colors.normal : colors.text;
 
   const liveNum   = parseFloat(inputValue);
-  const liveClass = inputValue && !isNaN(liveNum) && liveNum > 0 ? getColorClass(liveNum, unit) : null;
+  const liveClass = inputValue && !isNaN(liveNum) && liveNum > 0 ? getColorClass(liveNum, unit, settings.glucoseLow, settings.glucoseHigh) : null;
   const inputBorderColor = liveClass
     ? liveClass === 'low'  ? colors.low
     : liveClass === 'high' ? colors.high
@@ -268,7 +260,7 @@ export default function HomeScreen() {
 
   const handleSeeHelp = () => {
     if (!glucoseValue) return;
-    const colorClass = getColorClass(glucoseValue, unit);
+    const colorClass = getColorClass(glucoseValue, unit, settings.glucoseLow, settings.glucoseHigh);
     if (colorClass === 'low')       setShowHypoPopup(true);
     else if (colorClass === 'high') setShowHyperPopup(true);
   };

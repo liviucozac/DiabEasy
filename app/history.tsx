@@ -2,7 +2,7 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import {
   View, Text, ScrollView, TextInput,
-  TouchableOpacity, StyleSheet, Platform, Dimensions, PanResponder,
+  TouchableOpacity, StyleSheet, Platform, Dimensions, PanResponder, Alert, Modal,
 } from 'react-native';
 import { EmptyState } from '../components/EmptyState';
 import { PressBtn } from '../components/PressBtn';
@@ -17,19 +17,16 @@ type HistoryEntry = GlucoseEntry;
 const statusIcon = (interpretation: string): string =>
   interpretation === 'Low' ? '↓' : interpretation === 'High' ? '↑' : '✓';
 
-const getColorClass = (value: number, unit: string): 'low' | 'normal' | 'high' => {
-  if (unit === 'mg/dL') {
-    if (value < 75)   return 'low';
-    if (value <= 150) return 'normal';
-    return 'high';
-  } else {
-    if (value < 4.2)  return 'low';
-    if (value <= 8.3) return 'normal';
-    return 'high';
-  }
+const getColorClass = (value: number, unit: string, lowMgdl = 70, highMgdl = 180): 'low' | 'normal' | 'high' => {
+  const low  = unit === 'mmol/L' ? lowMgdl  / 18.0182 : lowMgdl;
+  const high = unit === 'mmol/L' ? highMgdl / 18.0182 : highMgdl;
+  if (value < low)  return 'low';
+  if (value <= high) return 'normal';
+  return 'high';
 };
 
 function LineChart({ data, colors }: { data: HistoryEntry[]; colors: any }) {
+  const { settings } = useGlucoseStore();
   const W = Dimensions.get('window').width - 64;
   const H = 160;
   const PAD = { top: 16, bottom: 32, left: 44, right: 16 };
@@ -38,20 +35,20 @@ function LineChart({ data, colors }: { data: HistoryEntry[]; colors: any }) {
 
   if (data.length < 2) return null;
 
-  const values = data.map(e => e.value);
-  const minV   = Math.min(...values);
-  const maxV   = Math.max(...values);
-  const range  = maxV - minV || 1;
+  const Y_MIN = 0;
+  const Y_MAX = 220;  // headroom above 200 so clipped values still show
+  const Y_TICKS = [0, 50, 100, 150, 200];
+
+  const toY = (val: number) =>
+    PAD.top + chartH - (Math.min(Math.max(val, Y_MIN), Y_MAX) / Y_MAX) * chartH;
 
   const pts = data.map((e, i) => ({
     x: PAD.left + (i / (data.length - 1)) * chartW,
-    y: PAD.top + chartH - ((e.value - minV) / range) * chartH,
+    y: toY(e.value),
     entry: e,
   }));
 
   const polyPoints = pts.map(p => `${p.x},${p.y}`).join(' ');
-  const yTicks = 4;
-  const yTickVals = Array.from({ length: yTicks }, (_, i) => minV + (range / (yTicks - 1)) * i);
   const xLabelCount   = Math.min(5, data.length);
   const xLabelIndices = Array.from({ length: xLabelCount }, (_, i) =>
     Math.round((i / (xLabelCount - 1)) * (data.length - 1))
@@ -59,14 +56,14 @@ function LineChart({ data, colors }: { data: HistoryEntry[]; colors: any }) {
 
   return (
     <Svg width={W} height={H}>
-      {yTickVals.map((val, i) => {
-        const y = PAD.top + chartH - ((val - minV) / range) * chartH;
+      {Y_TICKS.map((val) => {
+        const y = toY(val);
         return (
-          <G key={i}>
+          <G key={val}>
             <Line x1={PAD.left} y1={y} x2={W - PAD.right} y2={y}
               stroke={colors.border} strokeWidth={1} strokeDasharray="3,3" />
             <SvgText x={PAD.left - 6} y={y + 4} fontSize={9} fill={colors.textMuted} textAnchor="end">
-              {Math.round(val)}
+              {val === 200 ? '200+' : val}
             </SvgText>
           </G>
         );
@@ -74,7 +71,7 @@ function LineChart({ data, colors }: { data: HistoryEntry[]; colors: any }) {
       <Polyline points={polyPoints} fill="none" stroke={colors.red}
         strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
       {pts.map((p, i) => {
-        const cls = getColorClass(p.entry.value, p.entry.unit);
+        const cls = getColorClass(p.entry.value, p.entry.unit, settings.glucoseLow, settings.glucoseHigh);
         const dotColor = cls === 'low' ? colors.low : cls === 'high' ? colors.high : colors.normal;
         return <Circle key={i} cx={p.x} cy={p.y} r={3.5} fill={dotColor} stroke={colors.bgCard} strokeWidth={1.5} />;
       })}
@@ -85,6 +82,68 @@ function LineChart({ data, colors }: { data: HistoryEntry[]; colors: any }) {
           <SvgText key={idx} x={p.x} y={H - 6} fontSize={9} fill={colors.textMuted} textAnchor="middle">
             {label}
           </SvgText>
+        );
+      })}
+    </Svg>
+  );
+}
+
+function ExpandedLineChart({ data, colors }: { data: HistoryEntry[]; colors: any }) {
+  const { settings } = useGlucoseStore();
+  const screenW = Dimensions.get('window').width;
+  const POINT_W = 56;
+  const chartW_inner = Math.max(data.length * POINT_W, screenW - 64);
+  const H = 240;
+  const PAD = { top: 20, bottom: 52, left: 44, right: 20 };
+  const totalW = PAD.left + chartW_inner + PAD.right;
+  const chartH = H - PAD.top - PAD.bottom;
+
+  if (data.length < 2) return null;
+
+  const Y_MIN = 0;
+  const Y_MAX = 220;
+  const Y_TICKS = [0, 50, 100, 150, 200];
+
+  const toY = (val: number) =>
+    PAD.top + chartH - (Math.min(Math.max(val, Y_MIN), Y_MAX) / Y_MAX) * chartH;
+
+  const pts = data.map((e, i) => ({
+    x: PAD.left + (i / (data.length - 1)) * chartW_inner,
+    y: toY(e.value),
+    entry: e,
+  }));
+
+  const polyPoints = pts.map(p => `${p.x},${p.y}`).join(' ');
+
+  return (
+    <Svg width={totalW} height={H}>
+      {Y_TICKS.map((val) => {
+        const y = toY(val);
+        return (
+          <G key={val}>
+            <Line x1={PAD.left} y1={y} x2={totalW - PAD.right} y2={y}
+              stroke={colors.border} strokeWidth={1} strokeDasharray="3,3" />
+            <SvgText x={PAD.left - 6} y={y + 4} fontSize={9} fill={colors.textMuted} textAnchor="end">
+              {val === 200 ? '200+' : val}
+            </SvgText>
+          </G>
+        );
+      })}
+      <Polyline points={polyPoints} fill="none" stroke={colors.red}
+        strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+      {pts.map((p, i) => {
+        const cls = getColorClass(p.entry.value, p.entry.unit, settings.glucoseLow, settings.glucoseHigh);
+        const dotColor = cls === 'low' ? colors.low : cls === 'high' ? colors.high : colors.normal;
+        const parts = p.entry.timestamp.split(' ');
+        const date = parts[0]?.substring(0, 5) ?? '';
+        const time = parts[1] ?? '';
+        const baseY = H - PAD.bottom;
+        return (
+          <G key={i}>
+            <Circle cx={p.x} cy={p.y} r={4} fill={dotColor} stroke={colors.bgCard} strokeWidth={1.5} />
+            <SvgText x={p.x} y={baseY + 14} fontSize={9} fill={colors.textMuted} textAnchor="middle">{date}</SvgText>
+            <SvgText x={p.x} y={baseY + 26} fontSize={9} fill={colors.textMuted} textAnchor="middle">{time}</SvgText>
+          </G>
         );
       })}
     </Svg>
@@ -127,23 +186,17 @@ function PieChart({ normal, high, low, colors }: { normal: number; high: number;
 
   return (
     <View>
-      <Svg width={W} height={cy * 2 + 20}>
+      <Svg width={W} height={cy * 2 + 40}>
         {arcs.map((arc, i) => (
           <G key={i}>
             <Path d={arc.d} fill={arc.color} opacity={0.9} />
-            {arc.fraction > 0.08 && (
-              <SvgText x={arc.lx} y={arc.ly} fontSize={10}
-                fill={arc.color} textAnchor="middle" fontWeight="700">
-                {arc.label}{'\n'}{arc.value}
-              </SvgText>
-            )}
           </G>
         ))}
         <Circle cx={cx} cy={cy} r={R * 0.42} fill={colors.bgCard} />
         <SvgText x={cx} y={cy - 6} fontSize={18} fontWeight="900" fill={colors.text} textAnchor="middle">{total}</SvgText>
         <SvgText x={cx} y={cy + 12} fontSize={9} fill={colors.textMuted} textAnchor="middle">readings</SvgText>
       </Svg>
-      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, marginTop: 4 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, marginTop: 8 }}>
         {arcs.map((arc, i) => (
           <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
             <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: arc.color }} />
@@ -156,7 +209,8 @@ function PieChart({ normal, high, low, colors }: { normal: number; high: number;
 }
 
 export default function HistoryScreen() {
-  const { history, removeEntry, insulinEntries, profile, settings } = useGlucoseStore();
+  const { history, removeEntry, insulinEntries, profile, settings, } = useGlucoseStore();
+  const { glucoseLow, glucoseHigh } = settings;
   const { colors, isDark } = useTheme();
 
   const [filterDateFrom, setFilterDateFrom] = useState('');
@@ -169,6 +223,7 @@ export default function HistoryScreen() {
   const [filtersApplied, setFiltersApplied] = useState(false);
   const [chartWindow,    setChartWindow]    = useState<7 | 14 | 20 | 'all'>(20);
   const [showWeekly,     setShowWeekly]     = useState(false);
+  const [showChartModal, setShowChartModal] = useState(false);
 
   // ── Readings list custom red scrollbar ──────────────────────────────────────
   const readingsScrollRef       = useRef<ScrollView>(null);
@@ -252,7 +307,7 @@ export default function HistoryScreen() {
   const avgGlucoseMgDl = useMemo(() => {
     if (totalReadings === 0) return null;
     return filteredHistory.reduce((s, e) => {
-      const mgdl = e.unit === 'mmol/L' ? e.value * 18 : e.value;
+      const mgdl = e.unit === 'mmol/L' ? e.value * 18.0182 : e.value;
       return s + mgdl;
     }, 0) / totalReadings;
   }, [filteredHistory, totalReadings]);
@@ -263,7 +318,7 @@ export default function HistoryScreen() {
 
   const eHbA1c = avgGlucoseMgDl !== null
     ? ((avgGlucoseMgDl + 46.7) / 28.7).toFixed(1)
-    : null;
+    : null; // ADAG formula: HbA1c = (avgGlucose_mgdl + 46.7) / 28.7
 
   const weeklyAverages = useMemo(() => {
     if (filteredHistory.length === 0) return [];
@@ -274,7 +329,7 @@ export default function HistoryScreen() {
       const weekStart = new Date(date);
       weekStart.setDate(date.getDate() - date.getDay());
       const key = weekStart.toISOString().split('T')[0];
-      const mgdl = e.unit === 'mmol/L' ? e.value * 18 : e.value;
+      const mgdl = e.unit === 'mmol/L' ? e.value * 18.0182 : e.value;
       if (!weeks[key]) weeks[key] = [];
       weeks[key].push(mgdl);
     });
@@ -305,7 +360,7 @@ export default function HistoryScreen() {
   };
 
   const renderEntry = (entry: GlucoseEntry, index: number) => {
-    const status   = getColorClass(entry.value, entry.unit);
+    const status   = getColorClass(entry.value, entry.unit, glucoseLow, glucoseHigh);
     const barColor = status === 'low' ? colors.low : status === 'high' ? colors.high : colors.normal;
     const date = entry.timestamp.split(' ')[0];
     const time = entry.timestamp.split(' ')[1];
@@ -349,7 +404,7 @@ export default function HistoryScreen() {
     const mgdlValues  = filteredHistory.map(e => toMgdL(e.value, e.unit));
     const n           = mgdlValues.length;
     const avgMgdL     = n > 0 ? mgdlValues.reduce((s, v) => s + v, 0) / n : null;
-    const eHbA1c      = avgMgdL !== null ? (3.31 + 0.02392 * avgMgdL).toFixed(1) : null;
+    const eHbA1c      = avgMgdL !== null ? ((avgMgdL + 46.7) / 28.7).toFixed(1) : null; // ADAG
     const variance    = avgMgdL !== null ? mgdlValues.reduce((s, v) => s + (v - avgMgdL) ** 2, 0) / n : null;
     const stdDev      = variance !== null ? Math.sqrt(variance).toFixed(1) : null;
     const cvPercent   = avgMgdL !== null && variance !== null
@@ -511,7 +566,7 @@ export default function HistoryScreen() {
 
       <div class="metrics">
         <div class="mc"><div class="mv" style="color:#ec5557">${avgMgdL !== null ? avgMgdL.toFixed(1) : '—'}</div><div class="ml">Avg Glucose (mg/dL)</div><div class="mr">Target: ${settings.targetGlucose} mg/dL</div></div>
-        <div class="mc"><div class="mv" style="color:#1565c0">${eHbA1c ?? '—'}%</div><div class="ml">Est. HbA1c (GMI)</div><div class="mr">Target: &lt;7.0%</div></div>
+        <div class="mc"><div class="mv" style="color:#1565c0">${eHbA1c ?? '—'}%</div><div class="ml">Est. HbA1c (ADAG)</div><div class="mr">Target: &lt;7.0% · from logged readings</div></div>
         <div class="mc"><div class="mv" style="color:#2e7d32">${tirPct ?? '—'}%</div><div class="ml">Time in Range</div><div class="mr">Target: &gt;70% (70–180 mg/dL)</div></div>
         <div class="mc"><div class="mv" style="color:#555">${stdDev ?? '—'}</div><div class="ml">Std Deviation (mg/dL)</div><div class="mr">Target: &lt;${(settings.targetGlucose * 0.36).toFixed(0)} mg/dL</div></div>
         <div class="mc"><div class="mv" style="color:#555">${cvPercent ?? '—'}%</div><div class="ml">Variability (CV%)</div><div class="mr"><span class="badge ${cvStable ? 'stable' : 'unstable'}">${cvPercent !== null ? (cvStable ? 'Stable ≤36%' : 'Unstable >36%') : '—'}</span></div></div>
@@ -543,7 +598,10 @@ export default function HistoryScreen() {
     try {
       const { uri } = await Print.printToFileAsync({ html });
       await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: 'Export Glucose Report' });
-    } catch (error) { console.error('PDF export error:', error); }
+    } catch (error) {
+      console.error('PDF export error:', error);
+      Alert.alert('Export failed', 'Could not generate the PDF. Please try again.');
+    }
   };
 
   return (
@@ -644,7 +702,7 @@ export default function HistoryScreen() {
               setReadingsContainerH(h);
             }}
           >
-            {filteredHistory.map((entry, index) => renderEntry(entry, index))}
+            {[...filteredHistory].reverse().map((entry, index) => renderEntry(entry, index))}
           </ScrollView>
 
           {rMaxScrY > 0 && (
@@ -696,7 +754,7 @@ export default function HistoryScreen() {
                   <Text style={{ fontSize: 16, fontWeight: '900', color: eHbA1c !== null && parseFloat(eHbA1c) <= 7 ? colors.normal : eHbA1c !== null && parseFloat(eHbA1c) <= 8 ? colors.high : colors.low }}>
                     {eHbA1c ?? '-'}%
                   </Text>
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text, marginTop: 2 }}>Est. HbA1c</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text, marginTop: 2 }}>Est. HbA1c (ADAG)</Text>
                   <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 1 }}>Target: below 7%</Text>
                 </View>
               </View>
@@ -731,6 +789,13 @@ export default function HistoryScreen() {
           <Text style={[styles.chartSub, { color: colors.textFaint }]}>
             Showing {chartData.length} reading{chartData.length !== 1 ? 's' : ''}
           </Text>
+          <TouchableOpacity
+            onPress={() => setShowChartModal(true)}
+            style={{ alignSelf: 'flex-start', marginTop: 6, marginBottom: 2, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6, borderWidth: 1.5, borderColor: colors.red }}
+            activeOpacity={0.75}
+          >
+            <Text style={{ fontSize: 11, fontWeight: '600', color: colors.red }}>⛶ Expand</Text>
+          </TouchableOpacity>
           <View style={{ alignItems: 'center', marginVertical: 8 }}>
             <LineChart data={chartData} colors={colors} />
           </View>
@@ -742,6 +807,31 @@ export default function HistoryScreen() {
               </View>
             ))}
           </View>
+
+          {/* ── Expanded chart modal ── */}
+          <Modal visible={showChartModal} animationType="slide" transparent onRequestClose={() => setShowChartModal(false)}>
+            <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
+              <View style={{ backgroundColor: colors.bgCard, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '85%' }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                  <Text style={{ fontSize: 15, fontWeight: '700', color: colors.text }}>Glucose Over Time</Text>
+                  <TouchableOpacity onPress={() => setShowChartModal(false)} activeOpacity={0.7}>
+                    <Text style={{ fontSize: 18, fontWeight: '700', color: colors.red }}>✕</Text>
+                  </TouchableOpacity>
+                </View>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <ExpandedLineChart data={chartData} colors={colors} />
+                </ScrollView>
+                <View style={[styles.lineLegend, { marginTop: 12 }]}>
+                  {[{ label: 'Low', color: colors.low }, { label: 'Normal', color: colors.normal }, { label: 'High', color: colors.high }].map(l => (
+                    <View key={l.label} style={styles.lineLegendItem}>
+                      <View style={[styles.lineLegendDot, { backgroundColor: l.color }]} />
+                      <Text style={[styles.lineLegendText, { color: colors.textMuted }]}>{l.label}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </View>
+          </Modal>
 
           <View style={[styles.chartDivider, { backgroundColor: colors.border }]} />
 

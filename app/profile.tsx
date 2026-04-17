@@ -8,7 +8,7 @@ import { INSULIN_ANALOGS, getAnalogByType } from '../utils/insulinUtils';
 import { useTheme } from '../context/AppContext';
 import { PressBtn } from '../components/PressBtn';
 import { ParamTrainingModal } from '../components/ParamTrainingModal';
-import { hashValue, checkHash, biometricsAvailable } from '../utils/securityUtils';
+import { hashValue, biometricsAvailable } from '../utils/securityUtils';
 
 const RED = '#EC5557';
 
@@ -395,7 +395,7 @@ function SettingsTab() {
 
       <SectionCard>
         <SectionTitle text="Data" />
-        <PressBtn style={[s.dangerBtn, s.dangerBtnShadow]} onPress={handleClearData} activeOpacity={0.75}>
+        <PressBtn style={[s.dangerBtn]} onPress={handleClearData} activeOpacity={0.75}>
           <Text style={s.dangerBtnText}>🗑 Clear all data</Text>
         </PressBtn>
         <Text style={[s.dangerHint, { color: colors.textFaint }]}>Deletes glucose history and insulin log. Cannot be undone.</Text>

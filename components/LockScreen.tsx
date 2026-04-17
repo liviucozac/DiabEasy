@@ -70,13 +70,31 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
     settings.securityMethod === 'biometrics' ? 'primary' : settings.securityMethod === 'pin' ? 'pin' : 'password'
   );
   const [passwordInput, setPasswordInput] = useState('');
-  const [attempts, setAttempts]     = useState(0);
+  const [attempts, setAttempts]       = useState(0);
   const [lockedUntil, setLockedUntil] = useState<number | null>(null);
+  const [countdown, setCountdown]     = useState(0);
 
   const MAX_ATTEMPTS = 5;
   const LOCKOUT_MS   = 30_000;
 
   const isLockedOut = () => lockedUntil !== null && Date.now() < lockedUntil;
+
+  useEffect(() => {
+    if (lockedUntil === null) return;
+    const tick = () => {
+      const remaining = Math.ceil((lockedUntil - Date.now()) / 1000);
+      if (remaining <= 0) {
+        setLockedUntil(null);
+        setCountdown(0);
+        setError('');
+      } else {
+        setCountdown(remaining);
+      }
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [lockedUntil]);
 
   const recordFailure = () => {
     const next = attempts + 1;
@@ -84,7 +102,6 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
     if (next >= MAX_ATTEMPTS) {
       setLockedUntil(Date.now() + LOCKOUT_MS);
       setAttempts(0);
-      setError(`Too many attempts. Try again in 30 seconds.`);
     }
   };
 
@@ -145,10 +162,14 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
         </Text>
       </View>
 
-      {/* Error */}
-      {!!error && (
+      {/* Error / lockout countdown */}
+      {(!!error || countdown > 0) && (
         <View style={[lk.errorBanner, { backgroundColor: '#fdecea', borderColor: '#e53935' }]}>
-          <Text style={lk.errorText}>{error}</Text>
+          <Text style={lk.errorText}>
+            {countdown > 0
+              ? `Too many attempts. Try again in ${countdown}s.`
+              : error}
+          </Text>
         </View>
       )}
 

@@ -6,6 +6,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useGlucoseStore } from '../store/glucoseStore';
 import { calcCorrectionDose, getAnalogByType } from '../utils/insulinUtils';
+import { generateId } from '../utils/idUtils';
 import { useTheme } from '../context/AppContext';
 import { PressBtn } from '../components/PressBtn';
 
@@ -207,7 +208,7 @@ function calcTotals(items: MealItem[]): NutrientTotals {
 
 function estimatePostMeal(currentGlucose: number, currentUnit: string, items: MealItem[]): { value: number; unit: string } | null {
   if (items.length === 0) return null;
-  const mgDl       = currentUnit === 'mmol/L' ? currentGlucose * 18 : currentGlucose;
+  const mgDl       = currentUnit === 'mmol/L' ? currentGlucose * 18.0182 : currentGlucose;
   const totalCarbs = items.reduce((s, i) => s + i.carbs * (i.quantity ?? 1), 0);
   const avgGI      = totalCarbs > 0 ? items.reduce((s, i) => s + i.gi * i.carbs * (i.quantity ?? 1), 0) / totalCarbs : 0;
   const estimated  = Math.round(mgDl + totalCarbs * (avgGI / 100) * 10);
@@ -215,14 +216,16 @@ function estimatePostMeal(currentGlucose: number, currentUnit: string, items: Me
   return { value: estimated, unit: 'mg/dL' };
 }
 
-function statusColor(value: number, unit: string): string {
-  if (unit === 'mg/dL') return value < 75 ? '#e53935' : value <= 150 ? '#2e7d32' : '#ef6c00';
-  return value < 4.2 ? '#e53935' : value <= 8.3 ? '#2e7d32' : '#ef6c00';
+function statusColor(value: number, unit: string, lowMgdL: number, highMgdL: number): string {
+  const lo = unit === 'mmol/L' ? lowMgdL  / 18.0182 : lowMgdL;
+  const hi = unit === 'mmol/L' ? highMgdL / 18.0182 : highMgdL;
+  return value < lo ? '#e53935' : value <= hi ? '#2e7d32' : '#ef6c00';
 }
 
-function statusLabel(value: number, unit: string): string {
-  if (unit === 'mg/dL') return value < 75 ? 'Low' : value <= 150 ? 'Normal' : 'High';
-  return value < 4.2 ? 'Low' : value <= 8.3 ? 'Normal' : 'High';
+function statusLabel(value: number, unit: string, lowMgdL: number, highMgdL: number): string {
+  const lo = unit === 'mmol/L' ? lowMgdL  / 18.0182 : lowMgdL;
+  const hi = unit === 'mmol/L' ? highMgdL / 18.0182 : highMgdL;
+  return value < lo ? 'Low' : value <= hi ? 'Normal' : 'High';
 }
 
 function NutrientGrid({ totals }: { totals: NutrientTotals }) {
@@ -294,7 +297,7 @@ export default function FoodGuideScreen() {
     setCurrentMeal((prev) => {
       const existing = prev.find((i) => i.name === item.name);
       if (existing) return prev.map((i) => i.name === item.name ? { ...i, quantity: i.quantity + 1 } : i);
-      const next = [...prev, { ...item, uniqueId: `${item.name}-${Date.now()}`, quantity: 1 }];
+      const next = [...prev, { ...item, uniqueId: generateId(), quantity: 1 }];
       setTimeout(() => scrollRef.current?.scrollTo({ y: mealYRef.current, animated: true }), 350);
       return next;
     });
@@ -306,7 +309,7 @@ export default function FoodGuideScreen() {
   const saveMeal = () => {
     if (!hasMeal) return;
     setSavedMeals((prev) => [{
-      id: Date.now().toString(), date: formatNow(), action: foodAction,
+      id: generateId(), date: formatNow(), action: foodAction,
       items: currentMeal.flatMap(({ uniqueId: _u, quantity: q, ...rest }) => Array.from({ length: q }, () => ({ ...rest }))),
       totals, estimatedGlycemia: postMeal?.value ?? null,
       currentGlucose: glucoseValue, unit: unit ?? 'mg/dL',
@@ -351,8 +354,8 @@ export default function FoodGuideScreen() {
           </View>
 
           {(() => {
-            const mgdl = unit === 'mmol/L' ? glucoseValue! * 18 : glucoseValue!;
-            if (mgdl <= 150) return null;
+            const mgdl = unit === 'mmol/L' ? glucoseValue! * 18.0182 : glucoseValue!;
+            if (mgdl <= settings.targetGlucose) return null;
             const mmolEq  = (mgdl / 18).toFixed(1);
             const rawDose = calcCorrectionDose(mgdl, settings.targetGlucose, settings.isf);
             const dose    = rawDose > 0 ? Math.round(rawDose) : null;
@@ -471,7 +474,7 @@ export default function FoodGuideScreen() {
               </View>
 
               {postMeal !== null && (() => {
-                const col = statusColor(postMeal.value, postMeal.unit);
+                const col = statusColor(postMeal.value, postMeal.unit, settings.glucoseLow, settings.glucoseHigh);
                 return (
                   <View style={[s.glycemiaCard, { borderColor: col, backgroundColor: colors.bgCard }]}>
                     <View style={s.glycemiaRow}>
@@ -482,7 +485,7 @@ export default function FoodGuideScreen() {
                       <View style={s.glycemiaRight}>
                         <Text style={[s.glycemiaValue, { color: col }]}>{postMeal.value}</Text>
                         <Text style={[s.glycemiaUnit,  { color: col }]}>{postMeal.unit}</Text>
-                        <Text style={[s.glycemiaStatus,{ color: col }]}>{statusLabel(postMeal.value, postMeal.unit)}</Text>
+                        <Text style={[s.glycemiaStatus,{ color: col }]}>{statusLabel(postMeal.value, postMeal.unit, settings.glucoseLow, settings.glucoseHigh)}</Text>
                       </View>
                     </View>
                     <Text style={[s.glycemiaDisclaimer, { color: colors.textFaint }]}>⚠️ Estimate only — individual response varies. Always verify with a reading.</Text>
@@ -555,7 +558,7 @@ export default function FoodGuideScreen() {
         savedMeals.map((meal) => {
           const isOpen = expandedMealId === meal.id;
           const actionColor = meal.action === 'lower' ? '#2e7d32' : meal.action === 'raise' ? RED : '#ef6c00';
-          const estCol = meal.estimatedGlycemia !== null ? statusColor(meal.estimatedGlycemia, meal.unit) : '#888';
+          const estCol = meal.estimatedGlycemia !== null ? statusColor(meal.estimatedGlycemia, meal.unit, settings.glucoseLow, settings.glucoseHigh) : '#888';
           return (
             <View key={meal.id} style={[s.groupCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
               <TouchableOpacity style={s.groupHeader} onPress={() => setExpandedMealId(isOpen ? null : meal.id)} activeOpacity={0.8}>
@@ -586,7 +589,7 @@ export default function FoodGuideScreen() {
                         <View style={s.glycemiaRight}>
                           <Text style={[s.glycemiaValue, { color: estCol }]}>{meal.estimatedGlycemia}</Text>
                           <Text style={[s.glycemiaUnit,  { color: estCol }]}>{meal.unit}</Text>
-                          <Text style={[s.glycemiaStatus,{ color: estCol }]}>{statusLabel(meal.estimatedGlycemia, meal.unit)}</Text>
+                          <Text style={[s.glycemiaStatus,{ color: estCol }]}>{statusLabel(meal.estimatedGlycemia, meal.unit, settings.glucoseLow, settings.glucoseHigh)}</Text>
                         </View>
                       </View>
                     </View>

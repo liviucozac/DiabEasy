@@ -221,9 +221,9 @@ export default function EmergencyScreen() {
             {filteredPhoneContacts.length === 0 ? (
               <Text style={[s.pickerEmpty, { color: colors.textMuted }]}>No contacts found.</Text>
             ) : (
-              filteredPhoneContacts.map((c) => (
+              filteredPhoneContacts.map((c, i) => (
                 <TouchableOpacity
-                  key={c.id}
+                  key={c.name ?? String(i)}
                   style={[s.pickerRow, { borderBottomColor: colors.border }]}
                   onPress={() => pickContact(c)}
                   activeOpacity={0.7}
@@ -365,15 +365,17 @@ export default function EmergencyScreen() {
 
       {/* ── 4. HYPO SYMPTOMS ── */}
       <SectionCard>
-        <TouchableOpacity style={s.rowBetween} onPress={() => setHypoOpen(v => !v)} activeOpacity={0.8}>
-          <View style={s.symptomTitleRow}>
-            <View style={[s.symptomDot, { backgroundColor: '#e53935' }]} />
-            <SectionTitle text="Hypoglycemia Symptoms" color="#e53935" />
+        <TouchableOpacity onPress={() => setHypoOpen(v => !v)} activeOpacity={0.8}>
+          <View style={s.rowBetween}>
+            <View style={s.symptomTitleRow}>
+              <View style={[s.symptomDot, { backgroundColor: '#e53935' }]} />
+              <SectionTitle text="Hypoglycemia Symptoms" color="#e53935" />
+            </View>
+            <Text style={s.chevron}>{hypoOpen ? '▲' : '▼'}</Text>
           </View>
-          <Text style={s.chevron}>{hypoOpen ? '▲' : '▼'}</Text>
+          <Text style={[s.symptomThreshold, { color: colors.textMuted }]}>Low blood sugar — below 75 mg/dL / 4.2 mmol/L</Text>
+          {!hypoOpen && <Text style={[s.clickForMore, { color: colors.textFaint }]}>Click for more</Text>}
         </TouchableOpacity>
-        <Text style={[s.symptomThreshold, { color: colors.textMuted }]}>Low blood sugar — below 75 mg/dL / 4.2 mmol/L</Text>
-        {!hypoOpen && <Text style={[s.clickForMore, { color: colors.textFaint }]}>Click for more</Text>}
         {hypoOpen && (
           <>
             <View style={s.symptomsGrid}>
@@ -396,15 +398,17 @@ export default function EmergencyScreen() {
 
       {/* ── 5. HYPER SYMPTOMS ── */}
       <SectionCard>
-        <TouchableOpacity style={s.rowBetween} onPress={() => setHyperOpen(v => !v)} activeOpacity={0.8}>
-          <View style={s.symptomTitleRow}>
-            <View style={[s.symptomDot, { backgroundColor: '#ef6c00' }]} />
-            <SectionTitle text="Hyperglycemia Symptoms" color="#ef6c00" />
+        <TouchableOpacity onPress={() => setHyperOpen(v => !v)} activeOpacity={0.8}>
+          <View style={s.rowBetween}>
+            <View style={s.symptomTitleRow}>
+              <View style={[s.symptomDot, { backgroundColor: '#ef6c00' }]} />
+              <SectionTitle text="Hyperglycemia Symptoms" color="#ef6c00" />
+            </View>
+            <Text style={s.chevron}>{hyperOpen ? '▲' : '▼'}</Text>
           </View>
-          <Text style={s.chevron}>{hyperOpen ? '▲' : '▼'}</Text>
+          <Text style={[s.symptomThreshold, { color: colors.textMuted }]}>High blood sugar — above 150 mg/dL / 8.3 mmol/L</Text>
+          {!hyperOpen && <Text style={[s.clickForMore, { color: colors.textFaint }]}>Click for more</Text>}
         </TouchableOpacity>
-        <Text style={[s.symptomThreshold, { color: colors.textMuted }]}>High blood sugar — above 150 mg/dL / 8.3 mmol/L</Text>
-        {!hyperOpen && <Text style={[s.clickForMore, { color: colors.textFaint }]}>Click for more</Text>}
         {hyperOpen && (
           <>
             <View style={s.symptomsGrid}>
@@ -427,12 +431,14 @@ export default function EmergencyScreen() {
 
       {/* ── 6. DO'S AND DON'TS ── */}
       <SectionCard>
-        <TouchableOpacity style={s.rowBetween} onPress={() => setDosOpen(v => !v)} activeOpacity={0.8}>
-          <SectionTitle text="Do's & Don'ts During a Crisis" />
-          <Text style={s.chevron}>{dosOpen ? '▲' : '▼'}</Text>
+        <TouchableOpacity onPress={() => setDosOpen(v => !v)} activeOpacity={0.8}>
+          <View style={s.rowBetween}>
+            <SectionTitle text="Do's & Don'ts During a Crisis" />
+            <Text style={s.chevron}>{dosOpen ? '▲' : '▼'}</Text>
+          </View>
+          <Text style={[s.symptomThreshold, { color: colors.textMuted }]}>Quick reference for any diabetic emergency</Text>
+          {!dosOpen && <Text style={[s.clickForMore, { color: colors.textFaint }]}>Click for more</Text>}
         </TouchableOpacity>
-        <Text style={[s.symptomThreshold, { color: colors.textMuted }]}>Quick reference for any diabetic emergency</Text>
-        {!dosOpen && <Text style={[s.clickForMore, { color: colors.textFaint }]}>Click for more</Text>}
         {dosOpen && (
           <View style={s.dosGrid}>
             {DOS.map((item, i) => (

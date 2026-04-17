@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView,
   TextInput, StyleSheet, Platform, Alert,
@@ -6,6 +6,7 @@ import {
 import { useGlucoseStore, InsulinEntry, Reminder } from '../store/glucoseStore';
 import { calculateIOB, calcCorrectionDose, getAnalogByType, getLongActingByType, INSULIN_ANALOGS, LONG_ACTING_INSULINS } from '../utils/insulinUtils';
 import { scheduleReminder, cancelReminder } from '../utils/notificationUtils';
+import { generateId } from '../utils/idUtils';
 import type { InsulinAnalogType, LongActingInsulinType } from '../store/glucoseStore';
 import { useTheme } from '../context/AppContext';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -27,7 +28,7 @@ function formatNow(): string {
 }
 
 function toMgDl(value: number, unit: string): number {
-  return unit === 'mmol/L' ? value * 18 : value;
+  return unit === 'mmol/L' ? value * 18.0182 : value;
 }
 
 function SectionCard({ children }: { children: React.ReactNode }) {
@@ -129,11 +130,20 @@ function CalculatorTab() {
   const { glucoseValue, unit, totalCarbs, settings, insulinEntries, setSettings } = useGlucoseStore();
   const { colors } = useTheme();
   const [showTraining, setShowTraining] = useState(false);
+  const [limitLowInput,  setLimitLowInput]  = useState(String(settings.glucoseLow));
+  const [limitHighInput, setLimitHighInput] = useState(String(settings.glucoseHigh));
 
   const ISF        = settings.isf;
   const CARB_RATIO = settings.carbRatio;
   const targetMgDl = settings.targetGlucose;
   const currentMgDl = glucoseValue !== null ? toMgDl(glucoseValue, unit) : null;
+
+  // Tick every 60 s so IOB (which depends on elapsed time) stays current
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   const result = useMemo(() => {
     if (currentMgDl === null) return null;
@@ -147,12 +157,12 @@ function CalculatorTab() {
       iob:        Math.round(iob * 10) / 10,   // one decimal
       total:      Math.round(total),
     };
-  }, [currentMgDl, targetMgDl, totalCarbs, ISF, CARB_RATIO, insulinEntries, settings.insulinAnalogType, settings.dia]);
+  }, [now, currentMgDl, targetMgDl, totalCarbs, ISF, CARB_RATIO, insulinEntries, settings.insulinAnalogType, settings.dia]);
 
   const glucoseColor =
-    currentMgDl === null  ? '#888'
-    : currentMgDl < 75    ? '#e53935'
-    : currentMgDl <= 150  ? '#2e7d32'
+    currentMgDl === null                          ? '#888'
+    : currentMgDl < settings.glucoseLow           ? '#e53935'
+    : currentMgDl <= settings.glucoseHigh         ? '#2e7d32'
     : '#ef6c00';
 
   return (
@@ -162,6 +172,56 @@ function CalculatorTab() {
         <InfoRow label="Blood glucose" value={glucoseValue !== null ? `${glucoseValue} ${unit}` : 'Not logged — go to Home tab'} valueColor={glucoseValue !== null ? glucoseColor : '#aaa'} />
         <View style={s.divider} />
         <InfoRow label="Meal carbs" value={totalCarbs > 0 ? `${totalCarbs} g` : 'No meal planned — go to Food Guide'} valueColor={totalCarbs > 0 ? '#222' : '#aaa'} />
+      </SectionCard>
+
+      <SectionCard>
+        <SectionTitle text="Glucose Limits" />
+        <Text style={[s.paramHint, { color: colors.textMuted }]}>
+          Readings outside these limits are flagged Low or High across the entire app.
+        </Text>
+        <View style={s.limitsRow}>
+          <View style={s.limitField}>
+            <Text style={[s.limitLabel, { color: colors.textMuted }]}>Low threshold (mg/dL)</Text>
+            <TextInput
+              style={[s.limitInput, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]}
+              value={limitLowInput}
+              onChangeText={setLimitLowInput}
+              keyboardType="numeric"
+              returnKeyType="done"
+              accessibilityLabel="Low glucose threshold"
+              onBlur={() => {
+                const n = parseFloat(limitLowInput);
+                if (!isNaN(n) && n > 0 && n < settings.glucoseHigh) {
+                  setSettings({ glucoseLow: n });
+                } else {
+                  setLimitLowInput(String(settings.glucoseLow));
+                }
+              }}
+            />
+          </View>
+          <View style={s.limitField}>
+            <Text style={[s.limitLabel, { color: colors.textMuted }]}>High threshold (mg/dL)</Text>
+            <TextInput
+              style={[s.limitInput, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]}
+              value={limitHighInput}
+              onChangeText={setLimitHighInput}
+              keyboardType="numeric"
+              returnKeyType="done"
+              accessibilityLabel="High glucose threshold"
+              onBlur={() => {
+                const n = parseFloat(limitHighInput);
+                if (!isNaN(n) && n > settings.glucoseLow) {
+                  setSettings({ glucoseHigh: n });
+                } else {
+                  setLimitHighInput(String(settings.glucoseHigh));
+                }
+              }}
+            />
+          </View>
+        </View>
+        <Text style={[s.limitHint, { color: colors.textFaint }]}>
+          Below {settings.glucoseLow} = Low · Above {settings.glucoseHigh} = High
+        </Text>
       </SectionCard>
 
       <SectionCard>
@@ -586,7 +646,7 @@ function RemindersTab() {
 
   const handleAdd = () => {
     if (!addLabel.trim()) { Alert.alert('Missing info', 'Please fill in a label.'); return; }
-    const newReminder = { id: Date.now().toString(), label: addLabel.trim(), time: formatTime(addTimeDate), type: addType, units: addUnits, active: true };
+    const newReminder = { id: generateId(), label: addLabel.trim(), time: formatTime(addTimeDate), type: addType, units: addUnits, active: true };
     addReminder(newReminder);
     if (settings.notificationsEnabled) scheduleReminder(newReminder, settings);
     setAddLabel(''); setAddTimeDate(new Date()); setAddType('Rapid-acting'); setAddUnits(1);
@@ -875,4 +935,9 @@ const s = StyleSheet.create({
 
   trainingBtn:     { marginTop: 14, borderWidth: 1.5, borderRadius: 8, paddingVertical: 9, alignItems: 'center' },
   trainingBtnText: { fontSize: 13, fontWeight: '600' },
+  limitsRow:       { flexDirection: 'row', gap: 12, marginTop: 4 },
+  limitField:      { flex: 1 },
+  limitLabel:      { fontSize: 11, marginBottom: 4 },
+  limitInput:      { borderWidth: 1.5, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 16, fontWeight: '700', textAlign: 'center' },
+  limitHint:       { fontSize: 11, textAlign: 'center', marginTop: 8 },
 });
