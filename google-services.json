@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "150645699717",
+    "project_id": "diabeasy2",
+    "storage_bucket": "diabeasy2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:150645699717:android:be77dd3d9667e6fae5e5ec",
+        "android_client_info": {
+          "package_name": "com.liviucozac.diabeasy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBQ859khQPzLYNNOUhvDzezvKlP_vFSkZQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

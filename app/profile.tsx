@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView,
   TextInput, StyleSheet, Platform, Alert, Switch,
@@ -9,6 +9,7 @@ import { useTheme } from '../context/AppContext';
 import { PressBtn } from '../components/PressBtn';
 import { ParamTrainingModal } from '../components/ParamTrainingModal';
 import { hashValue, biometricsAvailable } from '../utils/securityUtils';
+import { signIn, signUp, signOut, onAuthStateChanged } from '../utils/firebaseAuth';
 
 const RED = '#EC5557';
 
@@ -65,6 +66,95 @@ function StyledInput({ value, onChangeText, placeholder, keyboardType, secureTex
   );
 }
 
+function AccountSection() {
+  const { colors } = useTheme();
+  const [user, setUser]         = useState<any>(null);
+  const [mode, setMode]         = useState<'login' | 'signup'>('login');
+  const [email, setEmail]       = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState('');
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged((u) => setUser(u));
+    return unsub;
+  }, []);
+
+  const handleAuth = async () => {
+    if (!email.trim() || !password.trim()) { setError('Please enter email and password.'); return; }
+    setLoading(true); setError('');
+    try {
+      if (mode === 'login') {
+        await signIn(email.trim(), password);
+      } else {
+        await signUp(email.trim(), password);
+      }
+      setEmail(''); setPassword('');
+    } catch (e: any) {
+      setError(e.message ?? 'Authentication failed.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    setUser(null);
+  };
+
+  if (user) {
+    return (
+      <SectionCard>
+        <SectionTitle text="Account" />
+        <View style={s.avatarRow}>
+          <View style={[s.avatar, { backgroundColor: colors.red }]}>
+            <Text style={s.avatarText}>{user.email?.[0]?.toUpperCase() ?? '?'}</Text>
+          </View>
+          <View>
+            <Text style={[s.avatarName, { color: colors.text }]}>Signed in</Text>
+            <Text style={[s.avatarEmail, { color: colors.textMuted }]}>{user.email}</Text>
+          </View>
+        </View>
+        <PressBtn
+          style={[s.signOutBtn, { borderColor: colors.red }]}
+          onPress={handleSignOut}
+          activeOpacity={0.75}
+        >
+          <Text style={[s.signOutBtnText, { color: colors.red }]}>Sign Out</Text>
+        </PressBtn>
+      </SectionCard>
+    );
+  }
+
+  return (
+    <SectionCard>
+      <SectionTitle text="Account" />
+      <View style={{ flexDirection: 'row', marginBottom: 12, borderRadius: 8, borderWidth: 1.5, borderColor: colors.red, overflow: 'hidden' }}>
+        {(['login', 'signup'] as const).map((m) => (
+          <TouchableOpacity key={m} style={{ flex: 1, paddingVertical: 8, alignItems: 'center', backgroundColor: mode === m ? colors.red : 'transparent' }}
+            onPress={() => { setMode(m); setError(''); }} activeOpacity={0.8}>
+            <Text style={{ fontSize: 13, fontWeight: '600', color: mode === m ? '#fff' : colors.red }}>
+              {m === 'login' ? 'Sign In' : 'Sign Up'}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      <FieldLabel text="Email" />
+      <StyledInput value={email} onChangeText={setEmail} placeholder="your@email.com" keyboardType="email-address" autoCapitalize="none" />
+      <FieldLabel text="Password" />
+      <StyledInput value={password} onChangeText={setPassword} placeholder="Password" secureTextEntry />
+      {!!error && <Text style={{ fontSize: 12, color: '#e53935', marginTop: 4, textAlign: 'center' }}>{error}</Text>}
+      <PressBtn
+        style={[s.authBtn, { backgroundColor: loading ? colors.border : colors.red }, s.primaryBtnShadow]}
+        onPress={handleAuth}
+        activeOpacity={0.75}
+      >
+        <Text style={s.authBtnText}>{loading ? 'Please wait...' : mode === 'login' ? 'Sign In' : 'Create Account'}</Text>
+      </PressBtn>
+    </SectionCard>
+  );
+}
+
 // ─── Profile Tab ──────────────────────────────────────────────────────────────
 
 function ProfileTab() {
@@ -75,16 +165,8 @@ function ProfileTab() {
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 32 }}>
-      <SectionCard>
-        <SectionTitle text="Account" />
-        <View style={[s.comingSoonBox, { borderColor: colors.border, backgroundColor: colors.bgSecondary }]}>
-          <Text style={[s.comingSoonIcon]}>🔐</Text>
-          <Text style={[s.comingSoonTitle, { color: colors.text }]}>Cloud accounts — coming soon</Text>
-          <Text style={[s.comingSoonText, { color: colors.textMuted }]}>
-            All your data is stored securely on this device. Account sync will be available in a future update.
-          </Text>
-        </View>
-      </SectionCard>
+      <AccountSection />
+
 
       <SectionCard>
         <SectionTitle text="Personal Info" />

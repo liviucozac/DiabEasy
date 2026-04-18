@@ -38,12 +38,7 @@ function statusIcon(interpretation: string): string {
 }
 
 function formatTimestamp(): string {
-  const now  = new Date();
-  const dd   = String(now.getDate()).padStart(2, '0');
-  const mm   = String(now.getMonth() + 1).padStart(2, '0');
-  const yyyy = now.getFullYear();
-  const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  return `${dd}/${mm}/${yyyy} ${time}`;
+  return new Date().toISOString();
 }
 
 // ─── Quick Stats ──────────────────────────────────────────────────────────────
@@ -52,11 +47,8 @@ function QuickStats({ unit }: { unit: string }) {
   const { history, settings } = useGlucoseStore();
   const { colors, isDark }  = useTheme();
 
-  const now = new Date();
-  const dd  = String(now.getDate()).padStart(2, '0');
-  const mm  = String(now.getMonth() + 1).padStart(2, '0');
-  const todayPrefix  = `${dd}/${mm}/${now.getFullYear()}`;
-  const todayEntries = history.filter((e) => e.timestamp.startsWith(todayPrefix) && e.unit === unit);
+  const todayDate    = new Date().toISOString().split('T')[0];
+  const todayEntries = history.filter((e) => e.timestamp.startsWith(todayDate) && e.unit === unit);
 
   const count   = todayEntries.length;
   const avg     = count > 0 ? (todayEntries.reduce((s, e) => s + e.value, 0) / count).toFixed(1) : null;

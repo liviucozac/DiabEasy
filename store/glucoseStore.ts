@@ -17,21 +17,24 @@ export type InsulinAnalogType    = 'standard' | 'ultra-rapid' | 'inhaled';
 export type LongActingInsulinType = 'glargine-u100' | 'glargine-u300' | 'detemir' | 'degludec' | 'nph';
 export type SecurityMethod       = 'none' | 'pin' | 'password' | 'biometrics';
 export type LockTimeout          = 'immediate' | '1min' | '5min' | 'app-close';
+import { syncGlucoseEntry, deleteGlucoseEntry } from '../utils/firestoreSync';
 
 export interface GlucoseEntry {
+  id: string;
   value: number;
   unit: Unit;
-  timestamp: string;       // "dd/mm/yyyy HH:MM"
+  timestamp: string;       // ISO 8601
   interpretation: string;  // "Low" | "Normal" | "High"
   fasting: string;
   symptoms: string;
 }
 
 export interface InsulinEntry {
+  id:        string;
   units:     number;
-  time:      string;      // "HH:MM" for display
+  time:      string;
   type:      'Rapid-acting' | 'Long-acting';
-  timestamp: string;      // ISO 8601 — required for IOB calculation
+  timestamp: string;
 }
 
 export interface Reminder {
@@ -96,8 +99,8 @@ interface GlucoseStore {
 
   // History log
   history: GlucoseEntry[];
-  addEntry: (entry: GlucoseEntry) => void;
-  removeEntry: (index: number) => void;
+  addEntry: (entry: Omit<GlucoseEntry, 'id'>) => void;
+  removeEntry: (id: string) => void;
   clearHistory: () => void;
 
   // Insulin log
@@ -170,12 +173,17 @@ export const useGlucoseStore = create<GlucoseStore>()(
 
   history: [],
   addEntry: (entry) =>
-    set((state) => ({ history: [...state.history, entry] })),
+    set((state) => {
+      const newEntry = { ...entry, id: generateId() };
+      syncGlucoseEntry(newEntry).catch(() => {});
+      return { history: [...state.history, newEntry] };
+    }),
   clearHistory: () => set({ history: [] }),
-  removeEntry: (index) =>
-    set((state) => ({
-      history: state.history.filter((_, i) => i !== index),
-    })),
+  removeEntry: (id) =>
+    set((state) => {
+      deleteGlucoseEntry(id).catch(() => {});
+      return { history: state.history.filter((e) => e.id !== id) };
+    }),
 
   insulinEntries: [],
   addInsulinEntry: (entry) =>
@@ -212,6 +220,18 @@ export const useGlucoseStore = create<GlucoseStore>()(
         insulinEntries: (persistedState.insulinEntries ?? []).map((e: any) =>
           e.timestamp ? e : { ...e, timestamp: new Date(0).toISOString() }
         ),
+        // Backfill missing IDs and convert legacy "dd/mm/yyyy HH:MM" timestamps to ISO 8601
+        history: (persistedState.history ?? []).map((e: any) => {
+          const withId = e.id ? e : { ...e, id: generateId() };
+          if (withId.timestamp && !withId.timestamp.includes('T')) {
+            const [datePart, timePart = '00:00'] = withId.timestamp.split(' ');
+            const [d, m, y] = datePart.split('/');
+            const [h, min]  = timePart.split(':');
+            const iso = new Date(+y, +m - 1, +d, +h, +min).toISOString();
+            return { ...withId, timestamp: iso };
+          }
+          return withId;
+        }),
       }),
     }
   )

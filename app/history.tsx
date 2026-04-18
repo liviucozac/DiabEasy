@@ -77,7 +77,8 @@ function LineChart({ data, colors }: { data: HistoryEntry[]; colors: any }) {
       })}
       {xLabelIndices.map((idx) => {
         const p = pts[idx];
-        const label = data[idx].timestamp.split(' ')[0].substring(0, 5);
+        const ld = new Date(data[idx].timestamp);
+        const label = `${String(ld.getDate()).padStart(2,'0')}/${String(ld.getMonth()+1).padStart(2,'0')}`;
         return (
           <SvgText key={idx} x={p.x} y={H - 6} fontSize={9} fill={colors.textMuted} textAnchor="middle">
             {label}
@@ -134,9 +135,9 @@ function ExpandedLineChart({ data, colors }: { data: HistoryEntry[]; colors: any
       {pts.map((p, i) => {
         const cls = getColorClass(p.entry.value, p.entry.unit, settings.glucoseLow, settings.glucoseHigh);
         const dotColor = cls === 'low' ? colors.low : cls === 'high' ? colors.high : colors.normal;
-        const parts = p.entry.timestamp.split(' ');
-        const date = parts[0]?.substring(0, 5) ?? '';
-        const time = parts[1] ?? '';
+        const ed   = new Date(p.entry.timestamp);
+        const date = `${String(ed.getDate()).padStart(2,'0')}/${String(ed.getMonth()+1).padStart(2,'0')}`;
+        const time = `${String(ed.getHours()).padStart(2,'0')}:${String(ed.getMinutes()).padStart(2,'0')}`;
         const baseY = H - PAD.bottom;
         return (
           <G key={i}>
@@ -282,12 +283,10 @@ export default function HistoryScreen() {
     ? (history as HistoryEntry[])
     : (history as HistoryEntry[]).filter((entry) => {
         if (unitFilter && entry.unit !== unitFilter) return false;
-        const entryDate = entry.timestamp.split(' ')[0];
-        const [d, m, y] = entryDate.split('/');
-        const iso = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-        if (filterDateFrom && filterDateTo) { if (!(iso >= filterDateFrom && iso <= filterDateTo)) return false; }
-        else if (filterDateFrom) { if (iso < filterDateFrom) return false; }
-        else if (filterDateTo)   { if (iso > filterDateTo)   return false; }
+        const entryDate = entry.timestamp.split('T')[0];
+        if (filterDateFrom && filterDateTo) { if (!(entryDate >= filterDateFrom && entryDate <= filterDateTo)) return false; }
+        else if (filterDateFrom) { if (entryDate < filterDateFrom) return false; }
+        else if (filterDateTo)   { if (entryDate > filterDateTo)   return false; }
         if (filterMin && entry.value < parseFloat(filterMin)) return false;
         if (filterMax && entry.value > parseFloat(filterMax)) return false;
         return true;
@@ -324,8 +323,7 @@ export default function HistoryScreen() {
     if (filteredHistory.length === 0) return [];
     const weeks: Record<string, number[]> = {};
     filteredHistory.forEach(e => {
-      const [d, m, y] = e.timestamp.split(' ')[0].split('/');
-      const date = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+      const date = new Date(e.timestamp);
       const weekStart = new Date(date);
       weekStart.setDate(date.getDate() - date.getDay());
       const key = weekStart.toISOString().split('T')[0];
@@ -359,19 +357,20 @@ export default function HistoryScreen() {
     );
   };
 
-  const renderEntry = (entry: GlucoseEntry, index: number) => {
+  const renderEntry = (entry: GlucoseEntry) => {
     const status   = getColorClass(entry.value, entry.unit, glucoseLow, glucoseHigh);
     const barColor = status === 'low' ? colors.low : status === 'high' ? colors.high : colors.normal;
-    const date = entry.timestamp.split(' ')[0];
-    const time = entry.timestamp.split(' ')[1];
+    const d = new Date(entry.timestamp);
+    const date = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+    const time = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
     return (
-      <View key={index} style={[styles.historyItem, { backgroundColor: colors.bgSecondary, borderColor: colors.bgSecondary, borderBottomColor: barColor }]}>
+      <View key={entry.id} style={[styles.historyItem, { backgroundColor: colors.bgSecondary, borderColor: colors.bgSecondary, borderBottomColor: barColor }]}>
         <View style={styles.entryRow}>
           <Text style={[styles.entryDate,  { color: colors.text }]}>{date}</Text>
           <Text style={[styles.entryTime,  { color: colors.textMuted }]}>{time}</Text>
           <Text style={[styles.entryValue, { color: colors.text }]}>{entry.value} {entry.unit}</Text>
           <Text style={[styles.entryBadge, { color: barColor }]}>{statusIcon(entry.interpretation)} {entry.interpretation}</Text>
-          <TouchableOpacity onPress={() => { const realIndex = history.indexOf(entry); removeEntry(realIndex); }} activeOpacity={0.7}>
+          <TouchableOpacity onPress={() => removeEntry(entry.id)} activeOpacity={0.7}>
             <Text style={[styles.deleteBtn, { color: colors.textMuted }]}>Delete</Text>
           </TouchableOpacity>
         </View>
@@ -394,9 +393,10 @@ export default function HistoryScreen() {
     };
 
     // ── Date range ─────────────────────────────────────────────────────────────
+    const fmtIso = (iso: string) => { const d = new Date(iso); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; };
     const sorted    = [...filteredHistory];
-    const dateFrom  = filterDateFrom || (sorted.length > 0 ? [...sorted].reverse()[0].timestamp.split(' ')[0] : '-');
-    const dateTo    = filterDateTo   || (sorted.length > 0 ? sorted[0].timestamp.split(' ')[0] : '-');
+    const dateFrom  = filterDateFrom ? fmtIso(filterDateFrom + 'T00:00:00') : (sorted.length > 0 ? fmtIso(sorted[sorted.length - 1].timestamp) : '-');
+    const dateTo    = filterDateTo   ? fmtIso(filterDateTo   + 'T00:00:00') : (sorted.length > 0 ? fmtIso(sorted[0].timestamp) : '-');
     const genDate   = new Date().toLocaleDateString();
     const genTime   = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -482,7 +482,9 @@ export default function HistoryScreen() {
       }).join('');
       const xLabels = Array.from({ length: Math.min(6, chartEntries.length) }, (_, k) => {
         const idx = Math.round((k / (Math.min(6, chartEntries.length) - 1)) * (chartEntries.length - 1));
-        return `<text x="${toX(idx).toFixed(1)}" y="${H - 4}" text-anchor="middle" font-size="7" fill="#999">${chartEntries[idx].timestamp.split(' ')[0].substring(0, 5)}</text>`;
+        const td = new Date(chartEntries[idx].timestamp);
+        const lbl = `${String(td.getDate()).padStart(2,'0')}/${String(td.getMonth()+1).padStart(2,'0')}`;
+        return `<text x="${toX(idx).toFixed(1)}" y="${H - 4}" text-anchor="middle" font-size="7" fill="#999">${lbl}</text>`;
       }).join('');
       const yTicks = [minV, (minV + maxV) / 2, maxV].map(v =>
         `<line x1="${padL}" y1="${toY(v).toFixed(1)}" x2="${W - padR}" y2="${toY(v).toFixed(1)}" stroke="#f0f0f0" stroke-width="1"/><text x="${padL - 4}" y="${toY(v).toFixed(1)}" text-anchor="end" dominant-baseline="middle" font-size="7" fill="#999">${v.toFixed(0)}</text>`
@@ -493,7 +495,9 @@ export default function HistoryScreen() {
     // ── Separate log tables ────────────────────────────────────────────────────
     const glucoseRows = [...filteredHistory].reverse().map((e, i) => {
       const bg  = i % 2 === 0 ? '#ffffff' : '#f7f7f7';
-      const [dp, tp] = e.timestamp.split(' ');
+      const gd  = new Date(e.timestamp);
+      const dp  = `${String(gd.getDate()).padStart(2,'0')}/${String(gd.getMonth()+1).padStart(2,'0')}/${gd.getFullYear()}`;
+      const tp  = `${String(gd.getHours()).padStart(2,'0')}:${String(gd.getMinutes()).padStart(2,'0')}`;
       const col = e.interpretation === 'Low' ? '#e53935' : e.interpretation === 'High' ? '#ef6c00' : '#2e7d32';
       return `<tr style="background:${bg}"><td>${dp}</td><td>${tp}</td><td style="font-weight:700">${e.value} ${e.unit}</td><td style="color:${col};font-weight:700">${e.interpretation}</td><td>${e.fasting || '-'}</td><td>${e.symptoms || '-'}</td></tr>`;
     }).join('');
@@ -702,7 +706,7 @@ export default function HistoryScreen() {
               setReadingsContainerH(h);
             }}
           >
-            {[...filteredHistory].reverse().map((entry, index) => renderEntry(entry, index))}
+            {[...filteredHistory].reverse().map((entry) => renderEntry(entry))}
           </ScrollView>
 
           {rMaxScrY > 0 && (
