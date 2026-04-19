@@ -13,8 +13,9 @@ import {
   cancelAllReminderNotifications,
 } from '../utils/notificationUtils';
 import { LockScreen } from '../components/LockScreen';
+import { onAuthStateChanged } from '../utils/firebaseAuth';
+import { fetchGlucoseHistory, fetchInsulinLog, fetchUserData } from '../utils/firestoreSync';
 
-// Show notifications as banners even when the app is in the foreground
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -142,7 +143,7 @@ function RootContent() {
     });
   }, []);
 
-  // React to the notificationsEnabled toggle in Profile → Settings
+  // React to the notificationsEnabled toggle in Profile -> Settings
   useEffect(() => {
     if (!settings.notificationsEnabled) {
       cancelAllReminderNotifications();
@@ -178,6 +179,28 @@ function RootContent() {
     if (method !== 'none' && hasSeenOnboarding) {
       setIsLocked(true);
     }
+  }, []);
+
+  // Load data from Firestore when user signs in
+  useEffect(() => {
+    const { loadFromFirestore, clearLocalData } = useGlucoseStore.getState();
+    const unsub = onAuthStateChanged(async (user: any) => {
+      if (user) {
+        try {
+          const [history, insulinEntries, userData] = await Promise.all([
+            fetchGlucoseHistory(),
+            fetchInsulinLog(),
+            fetchUserData(),
+          ]);
+          loadFromFirestore(history, insulinEntries, userData?.profile ?? {});
+        } catch (e) {
+          console.error('Firestore load error:', e);
+        }
+      } else {
+        clearLocalData();
+      }
+    });
+    return unsub;
   }, []);
 
   if (!hasSeenOnboarding) return <OnboardingScreen />;
