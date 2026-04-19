@@ -66,19 +66,13 @@ function StyledInput({ value, onChangeText, placeholder, keyboardType, secureTex
   );
 }
 
-function AccountSection() {
+function AccountSection({ user }: { user: any }) {
   const { colors } = useTheme();
-  const [user, setUser]         = useState<any>(null);
   const [mode, setMode]         = useState<'login' | 'signup'>('login');
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
-
-  useEffect(() => {
-    const unsub = onAuthStateChanged((u) => setUser(u));
-    return unsub;
-  }, []);
 
   const handleAuth = async () => {
     if (!email.trim() || !password.trim()) { setError('Please enter email and password.'); return; }
@@ -99,7 +93,6 @@ function AccountSection() {
 
   const handleSignOut = async () => {
     await signOut();
-    setUser(null);
   };
 
   if (user) {
@@ -161,39 +154,64 @@ function ProfileTab() {
   const { profile, setProfile } = useGlucoseStore();
   const { colors } = useTheme();
 
+  const [user,  setUser]  = useState<any>(null);
+  const [draft, setDraft] = useState({ ...profile });
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged((u) => setUser(u));
+    return unsub;
+  }, []);
+
+  const set = (field: Partial<typeof draft>) => setDraft(d => ({ ...d, ...field }));
+
+  const handleSave = () => {
+    setProfile(draft);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
   const DIABETES_TYPES: DiabetesType[] = ['Type 1', 'Type 2', 'LADA', 'Other'];
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 32 }}>
-      <AccountSection />
+      <AccountSection user={user} />
 
-
-      <SectionCard>
+      {user && <SectionCard>
         <SectionTitle text="Personal Info" />
         <FieldLabel text="Full name" />
-        <StyledInput value={profile.name} onChangeText={(v) => setProfile({ name: v })} placeholder="Your full name" />
+        <StyledInput value={draft.name} onChangeText={(v) => set({ name: v })} placeholder="Your full name" />
         <FieldLabel text="Age" />
-        <StyledInput value={profile.age} onChangeText={(v) => setProfile({ age: v })} placeholder="e.g. 28" keyboardType="number-pad" />
+        <StyledInput value={draft.age} onChangeText={(v) => set({ age: v })} placeholder="e.g. 28" keyboardType="number-pad" />
         <FieldLabel text="Diabetes type" />
         <View style={s.pillRow}>
           {DIABETES_TYPES.map((t) => {
-            const active = profile.diabetesType === t;
+            const active = draft.diabetesType === t;
             return (
               <TouchableOpacity key={t}
                 style={[s.pill, active ? s.primaryBtnShadow : null, { borderColor: colors.red, backgroundColor: active ? colors.red : 'transparent' }]}
-                onPress={() => setProfile({ diabetesType: t })} activeOpacity={0.75}>
+                onPress={() => set({ diabetesType: t })} activeOpacity={0.75}>
                 <Text style={[s.pillText, { color: active ? '#fff' : colors.textMuted }]}>{t}</Text>
               </TouchableOpacity>
             );
           })}
         </View>
         <FieldLabel text="Diagnosis date (MM/YYYY)" />
-        <StyledInput value={profile.diagnosisDate} onChangeText={(v) => setProfile({ diagnosisDate: v })} placeholder="e.g. 03/2018" keyboardType="numbers-and-punctuation" />
+        <StyledInput value={draft.diagnosisDate} onChangeText={(v) => set({ diagnosisDate: v })} placeholder="e.g. 03/2018" keyboardType="numbers-and-punctuation" />
         <FieldLabel text="Doctor / specialist name" />
-        <StyledInput value={profile.doctorName} onChangeText={(v) => setProfile({ doctorName: v })} placeholder="e.g. Dr. Smith" />
+        <StyledInput value={draft.doctorName} onChangeText={(v) => set({ doctorName: v })} placeholder="e.g. Dr. Smith" />
         <FieldLabel text="Clinic / hospital" />
-        <StyledInput value={profile.clinicName} onChangeText={(v) => setProfile({ clinicName: v })} placeholder="e.g. City Medical Centre" />
-      </SectionCard>
+        <StyledInput value={draft.clinicName} onChangeText={(v) => set({ clinicName: v })} placeholder="e.g. City Medical Centre" />
+
+        <PressBtn
+          style={[s.saveProfileBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]}
+          onPress={handleSave}
+          activeOpacity={0.8}
+          accessibilityLabel="Save personal info"
+        >
+          <Text style={s.saveProfileBtnText}>{saved ? '✓ Saved' : 'Save'}</Text>
+        </PressBtn>
+      </SectionCard>}
     </ScrollView>
   );
 }
@@ -613,4 +631,6 @@ const s = StyleSheet.create({
 
   trainingBtn:     { marginTop: 14, borderWidth: 1.5, borderRadius: 8, paddingVertical: 9, alignItems: 'center' },
   trainingBtnText: { fontSize: 13, fontWeight: '600' },
+  saveProfileBtn:     { marginTop: 16, borderRadius: 10, paddingVertical: 13, alignItems: 'center' },
+  saveProfileBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
 });

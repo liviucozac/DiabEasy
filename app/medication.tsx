@@ -13,6 +13,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { PressBtn } from '../components/PressBtn';
 import { ParamTrainingModal } from '../components/ParamTrainingModal';
 
+
 const RED = '#EC5557';
 
 type ActiveTab = 'calculator' | 'log' | 'reminders';
@@ -408,8 +409,7 @@ function LogTab() {
 
   const handleAdd = () => {
     if (units <= 0) { Alert.alert('Missing info', 'Please set at least 1 unit.'); return; }
-    addInsulinEntry({ units, time: formatTime(timeDate), type: insulinType, timestamp: new Date().toISOString() });
-    setUnits(0); setTimeDate(new Date());
+  addInsulinEntry({ id: generateId(), units, time: formatTime(timeDate), type: insulinType, timestamp: new Date().toISOString() });    setUnits(0); setTimeDate(new Date());
   };
 
   const handleClear = () => {

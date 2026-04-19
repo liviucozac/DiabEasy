@@ -6,7 +6,6 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { generateId } from '../utils/idUtils';
-import { syncGlucoseEntry, deleteGlucoseEntry } from '../utils/firestoreSync';
 
 export type Unit                  = 'mg/dL' | 'mmol/L';
 export type DiabetesType          = 'Type 1' | 'Type 2' | 'LADA' | 'Other' | '';
@@ -15,6 +14,7 @@ export type InsulinAnalogType     = 'standard' | 'ultra-rapid' | 'inhaled';
 export type LongActingInsulinType = 'glargine-u100' | 'glargine-u300' | 'detemir' | 'degludec' | 'nph';
 export type SecurityMethod        = 'none' | 'pin' | 'password' | 'biometrics';
 export type LockTimeout           = 'immediate' | '1min' | '5min' | 'app-close';
+import { syncGlucoseEntry, deleteGlucoseEntry, syncInsulinEntry, syncProfile } from '../utils/firestoreSync';
 
 export interface GlucoseEntry {
   id: string;
@@ -169,7 +169,10 @@ export const useGlucoseStore = create<GlucoseStore>()(
 
       insulinEntries: [],
       addInsulinEntry: (entry) =>
-        set((state) => ({ insulinEntries: [...state.insulinEntries, entry] })),
+        set((state) => {
+        syncInsulinEntry(entry).catch(() => {});
+          return { insulinEntries: [...state.insulinEntries, entry] };
+        }),
       clearInsulinLog: () => set({ insulinEntries: [] }),
 
       loadFromFirestore: (history, insulinEntries, profile) =>
@@ -200,7 +203,11 @@ export const useGlucoseStore = create<GlucoseStore>()(
 
       profile: DEFAULT_PROFILE,
       setProfile: (partial) =>
-        set((state) => ({ profile: { ...state.profile, ...partial } })),
+        set((state) => {
+          const updated = { ...state.profile, ...partial };
+          syncProfile(updated).catch(() => {});
+          return { profile: updated };
+        }),
 
       settings: DEFAULT_SETTINGS,
       setSettings: (partial) =>
