@@ -3,9 +3,12 @@ import {
   View, Text, TouchableOpacity, StyleSheet,
   Modal, ActivityIndicator, PermissionsAndroid, Platform,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BleManager } from 'react-native-ble-plx';
 import { BleGlucometerService, BleStatus, GlucoseReading } from '../utils/bleGlucometerService';
 import { useTheme } from '../context/AppContext';
+
+const BLE_DEVICE_KEY = 'ble_glucometer_device_id';
 
 interface Props {
   visible:   boolean;
@@ -46,7 +49,12 @@ export function BleGlucometerScanner({ visible, onClose, onReading }: Props) {
   const [reading, setReading] = useState<GlucoseReading | null>(null);
   const [error,   setError]   = useState('');
 
-  const serviceRef = useRef<BleGlucometerService | null>(null);
+  const serviceRef    = useRef<BleGlucometerService | null>(null);
+  const knownDeviceId = useRef<string | null>(null);
+
+  useEffect(() => {
+    AsyncStorage.getItem(BLE_DEVICE_KEY).then(id => { knownDeviceId.current = id; });
+  }, []);
 
   useEffect(() => {
     if (!visible) {
@@ -71,20 +79,19 @@ export function BleGlucometerScanner({ visible, onClose, onReading }: Props) {
     const service = new BleGlucometerService(bleManager);
     serviceRef.current = service;
 
-    await service.readLastGlucose({
-      onStatus: (s, msg) => {
-        setStatus(s);
-        if (msg) setMessage(msg);
+    const deviceId = await service.readLastGlucose(
+      {
+        onStatus: (s, msg) => { setStatus(s); if (msg) setMessage(msg); },
+        onReading: (r)     => { setReading(r); setStatus('done'); },
+        onError:   (msg)   => { setError(msg); setStatus('error'); },
       },
-      onReading: (r) => {
-        setReading(r);
-        setStatus('done');
-      },
-      onError: (msg) => {
-        setError(msg);
-        setStatus('error');
-      },
-    });
+      knownDeviceId.current ?? undefined,
+    );
+
+    if (deviceId && deviceId !== knownDeviceId.current) {
+      knownDeviceId.current = deviceId;
+      AsyncStorage.setItem(BLE_DEVICE_KEY, deviceId);
+    }
   };
 
   const handleConfirm = () => {

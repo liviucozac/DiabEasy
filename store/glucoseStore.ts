@@ -133,7 +133,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   emergencyNumber: '112',
   insulinParamsSet: false,
   glucoseLow: 70,
-  glucoseHigh: 180,
+  glucoseHigh: 175,
   securityMethod: 'none',
   securityHash: '',
   lockTimeout: '1min',

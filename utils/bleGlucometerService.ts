@@ -117,9 +117,26 @@ export class BleGlucometerService {
     this.manager = manager;
   }
 
-  async readLastGlucose(callbacks: BleServiceCallbacks): Promise<void> {
+  async readLastGlucose(callbacks: BleServiceCallbacks, knownDeviceId?: string): Promise<string | null> {
     const { onStatus, onReading, onError } = callbacks;
 
+    // ── Fast path: connect directly if we know the device ID ─────────────────
+    if (knownDeviceId) {
+      onStatus('connecting', 'Connecting to glucometer…');
+      try {
+        this.device = await this.manager.connectToDevice(knownDeviceId);
+        await this.device.discoverAllServicesAndCharacteristics();
+        onStatus('reading', 'Reading last measurement…');
+        await this.readAndNotify(callbacks);
+        await this.cleanup();
+        return knownDeviceId;
+      } catch {
+        // Known device unreachable — fall through to scan
+        await this.cleanup();
+      }
+    }
+
+    // ── Slow path: scan for the device ────────────────────────────────────────
     onStatus('scanning', 'Searching for glucometer…');
 
     return new Promise((resolve) => {
@@ -129,7 +146,7 @@ export class BleGlucometerService {
         if (!found) {
           this.manager.stopDeviceScan();
           onError('Glucometer not found. Make sure it is on and nearby.');
-          resolve();
+          resolve(null);
         }
       }, 15000);
 
@@ -140,7 +157,7 @@ export class BleGlucometerService {
           if (error) {
             this.cleanup();
             onError(error.message);
-            resolve();
+            resolve(null);
             return;
           }
 
@@ -154,75 +171,66 @@ export class BleGlucometerService {
             onStatus('connecting', `Connecting to ${device.name ?? device.id}…`);
             this.device = await this.manager.connectToDevice(device.id);
             await this.device.discoverAllServicesAndCharacteristics();
-
             onStatus('reading', 'Reading last measurement…');
-
-            // GLP requires indications on RACP (0x2A52) to be enabled BEFORE
-            // writing to it, and notifications on Glucose Measurement (0x2A18)
-            // to be enabled to receive the reading.
-            await new Promise<void>((resInner, rejInner) => {
-              let received = false;
-
-              // 1. Enable indications on RACP — device won't accept writes otherwise
-              this.device!.monitorCharacteristicForService(
-                UUID_GLUCOSE_SERVICE,
-                UUID_RACP,
-                (err) => {
-                  if (err && !received) {
-                    rejInner(new Error(err.message));
-                  }
-                  // RACP response indicates operation complete — we don't need to parse it
-                }
-              );
-
-              // 2. Enable notifications on Glucose Measurement
-              this.device!.monitorCharacteristicForService(
-                UUID_GLUCOSE_SERVICE,
-                UUID_GLUCOSE_MEAS,
-                (err, characteristic) => {
-                  if (err) { rejInner(new Error(err.message)); return; }
-                  if (!characteristic?.value) return;
-                  if (received) return;
-                  received = true;
-
-                  const reading = parseGlucoseMeasurement(characteristic.value);
-                  if (reading) {
-                    onStatus('done');
-                    onReading(reading);
-                    resInner();
-                  } else {
-                    rejInner(new Error('Could not parse glucose measurement.'));
-                  }
-                }
-              );
-
-              // 3. Write RACP "Report Last Record" after subscriptions are set up
-              setTimeout(async () => {
-                try {
-                  await this.device!.writeCharacteristicWithResponseForService(
-                    UUID_GLUCOSE_SERVICE,
-                    UUID_RACP,
-                    RACP_REPORT_LAST,
-                  );
-                } catch (e: any) {
-                  rejInner(new Error(e?.message ?? 'RACP write failed.'));
-                }
-
-                // Timeout if no notification arrives within 10 seconds
-                setTimeout(() => {
-                  if (!received) rejInner(new Error('No reading received from device.'));
-                }, 10000);
-              }, 600);
-            });
-
+            await this.readAndNotify(callbacks);
+            resolve(device.id);
           } catch (e: any) {
             onError(e?.message ?? 'Connection failed.');
+            resolve(null);
           } finally {
             this.cleanup();
-            resolve();
           }
         }
       );
+    });
+  }
+
+  private readAndNotify(callbacks: BleServiceCallbacks): Promise<void> {
+    const { onStatus, onReading } = callbacks;
+    return new Promise<void>((resInner, rejInner) => {
+      let received = false;
+
+      // 1. Enable indications on RACP — device won't accept writes otherwise
+      this.device!.monitorCharacteristicForService(
+        UUID_GLUCOSE_SERVICE,
+        UUID_RACP,
+        (err) => {
+          if (err && !received) rejInner(new Error(err.message));
+        }
+      );
+
+      // 2. Enable notifications on Glucose Measurement
+      this.device!.monitorCharacteristicForService(
+        UUID_GLUCOSE_SERVICE,
+        UUID_GLUCOSE_MEAS,
+        (err, characteristic) => {
+          if (err) { rejInner(new Error(err.message)); return; }
+          if (!characteristic?.value || received) return;
+          received = true;
+          const reading = parseGlucoseMeasurement(characteristic.value);
+          if (reading) {
+            onStatus('done');
+            onReading(reading);
+            resInner();
+          } else {
+            rejInner(new Error('Could not parse glucose measurement.'));
+          }
+        }
+      );
+
+      // 3. Write RACP "Report Last Record" after subscriptions are active
+      setTimeout(async () => {
+        try {
+          await this.device!.writeCharacteristicWithResponseForService(
+            UUID_GLUCOSE_SERVICE, UUID_RACP, RACP_REPORT_LAST,
+          );
+        } catch (e: any) {
+          rejInner(new Error(e?.message ?? 'RACP write failed.'));
+        }
+        setTimeout(() => {
+          if (!received) rejInner(new Error('No reading received from device.'));
+        }, 10000);
+      }, 600);
     });
   }
 
