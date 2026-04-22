@@ -92,5 +92,5 @@ export const COLORS = {
 
 export type ColorScheme = { [K in keyof typeof COLORS.light]: string };
 
-/* the cat is not real */
+/* and all I did I did it for her */
 
