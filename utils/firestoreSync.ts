@@ -94,3 +94,16 @@ export const fetchUserData = async () => {
     .get();
   return doc.exists() ? doc.data() : null;
 };
+
+// Returns true if the Firestore user document has isPremium: true.
+// This is the manual override — grants full premium regardless of Play Store status.
+export const checkFirebasePremium = async (): Promise<boolean> => {
+  const uid = getUid();
+  if (!uid) return false;
+  try {
+    const doc = await firestore().collection('users').doc(uid).get();
+    return doc.exists() ? (doc.data()?.isPremium === true) : false;
+  } catch {
+    return false;
+  }
+};

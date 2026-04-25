@@ -9,6 +9,8 @@ import { PressBtn } from '../components/PressBtn';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useGlucoseStore, GlucoseEntry, Unit } from '../store/glucoseStore';
 import { useTheme } from '../context/AppContext';
+import { useSubscription, FREE_HISTORY_DAYS } from '../hooks/useSubscription';
+import { UpgradeModal } from '../components/UpgradeModal';
 import Svg, { Polyline, Line, Text as SvgText, Circle, G, Path } from 'react-native-svg';
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 
@@ -213,6 +215,7 @@ export default function HistoryScreen() {
   const { history, removeEntry, insulinEntries, profile, settings, } = useGlucoseStore();
   const { glucoseLow, glucoseHigh } = settings;
   const { colors, isDark } = useTheme();
+  const { isPremium, canUseFullPdf, isTrialActive, hasUsedTrialPdf, markTrialPdfUsed } = useSubscription();
 
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo,   setFilterDateTo]   = useState('');
@@ -225,6 +228,7 @@ export default function HistoryScreen() {
   const [chartWindow,    setChartWindow]    = useState<7 | 14 | 20 | 'all'>(20);
   const [showWeekly,     setShowWeekly]     = useState(false);
   const [showChartModal, setShowChartModal] = useState(false);
+  const [showUpgrade,    setShowUpgrade]    = useState(false);
 
   // ── Readings list custom red scrollbar ──────────────────────────────────────
   const readingsScrollRef       = useRef<ScrollView>(null);
@@ -294,9 +298,17 @@ export default function HistoryScreen() {
 
   const chartData = useMemo(() => {
     const reversed = [...filteredHistory].reverse();
-    if (chartWindow === 'all') return reversed;
-    return reversed.slice(-chartWindow);
-  }, [filteredHistory, chartWindow]);
+    // Free users: cap chart to last FREE_HISTORY_DAYS readings
+    const capped = isPremium ? reversed : reversed.slice(-FREE_HISTORY_DAYS);
+    if (chartWindow === 'all') return capped;
+    return capped.slice(-chartWindow);
+  }, [filteredHistory, chartWindow, isPremium]);
+
+  const hasOlderData = useMemo(() => {
+    if (isPremium || filteredHistory.length === 0) return false;
+    const cutoff = Date.now() - FREE_HISTORY_DAYS * 86_400_000;
+    return filteredHistory.some(e => new Date(e.timestamp).getTime() < cutoff);
+  }, [filteredHistory, isPremium]);
 
   const pieNormal = filteredHistory.filter(e => e.interpretation === 'Normal').length;
   const pieHigh   = filteredHistory.filter(e => e.interpretation === 'High').length;
@@ -382,9 +394,15 @@ export default function HistoryScreen() {
 
   const inputStyle = [styles.filterInput, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }];
 
-  const exportPDF = async () => {
+  const exportPDF = async (basic: boolean = false) => {
     // ── Helpers ────────────────────────────────────────────────────────────────
     const toMgdL = (value: number, unit: Unit) => unit === 'mmol/L' ? value * 18.0182 : value;
+
+    // Basic mode: last 7 days only; full mode: filtered selection
+    const sevenDaysAgo = Date.now() - 7 * 86_400_000;
+    const pdfData = basic
+      ? filteredHistory.filter(e => new Date(e.timestamp).getTime() >= sevenDaysAgo)
+      : filteredHistory;
 
     const fmtInsulinDate = (e: { timestamp?: string }) => {
       if (!e.timestamp) return '-';
@@ -401,7 +419,7 @@ export default function HistoryScreen() {
     const genTime   = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     // ── Core stats ─────────────────────────────────────────────────────────────
-    const mgdlValues  = filteredHistory.map(e => toMgdL(e.value, e.unit));
+    const mgdlValues  = pdfData.map(e => toMgdL(e.value, e.unit));
     const n           = mgdlValues.length;
     const avgMgdL     = n > 0 ? mgdlValues.reduce((s, v) => s + v, 0) / n : null;
     const eHbA1c      = avgMgdL !== null ? ((avgMgdL + 46.7) / 28.7).toFixed(1) : null; // ADAG
@@ -452,7 +470,7 @@ export default function HistoryScreen() {
     // ── Reading-context breakdown table ───────────────────────────────────────
     const CONTEXTS = ['Fasting', 'Pre-meal', 'Post-meal', 'Bedtime', 'Post-exercise', 'Random'];
     const contextRows = CONTEXTS.map((ctx, i) => {
-      const entries = filteredHistory.filter(e => e.fasting === ctx);
+      const entries = pdfData.filter(e => e.fasting === ctx);
       if (entries.length === 0) return '';
       const vals   = entries.map(e => toMgdL(e.value, e.unit));
       const avg    = (vals.reduce((s, v) => s + v, 0) / vals.length).toFixed(0);
@@ -465,7 +483,7 @@ export default function HistoryScreen() {
     }).filter(Boolean).join('');
 
     // ── Glucose trend SVG ─────────────────────────────────────────────────────
-    const chartEntries = [...filteredHistory].reverse();
+    const chartEntries = [...pdfData].reverse();
     const svgLineChart = (() => {
       if (chartEntries.length < 2) return '';
       const W = 560, H = 150, padL = 44, padR = 12, padT = 12, padB = 32;
@@ -492,8 +510,48 @@ export default function HistoryScreen() {
       return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">${yTicks}<polyline points="${points}" fill="none" stroke="#ec5557" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>${dots}${xLabels}<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H - padB}" stroke="#ddd" stroke-width="1"/><line x1="${padL}" y1="${H - padB}" x2="${W - padR}" y2="${H - padB}" stroke="#ddd" stroke-width="1"/></svg>`;
     })();
 
+    // ── Pie chart SVG ─────────────────────────────────────────────────────────────
+    const pdfPieNormal = pdfData.filter(e => e.interpretation === 'Normal').length;
+    const pdfPieHigh   = pdfData.filter(e => e.interpretation === 'High').length;
+    const pdfPieLow    = pdfData.filter(e => e.interpretation === 'Low').length;
+    const svgPieChart = (() => {
+      const total = pdfPieNormal + pdfPieHigh + pdfPieLow;
+      if (total === 0) return '';
+      const cx = 100, cy = 100, R = 75;
+      const W = 420, H = cy * 2 + 20;
+      const segs = [
+        { value: pdfPieNormal, color: '#2e7d32', label: 'Normal' },
+        { value: pdfPieHigh,   color: '#ef6c00', label: 'High'   },
+        { value: pdfPieLow,    color: '#e53935', label: 'Low'    },
+      ].filter(s => s.value > 0);
+      let angle = -Math.PI / 2;
+      const paths = segs.map(seg => {
+        const fraction = seg.value / total;
+        const start = angle;
+        const end   = angle + fraction * 2 * Math.PI;
+        angle = end;
+        const x1 = (cx + R * Math.cos(start)).toFixed(2);
+        const y1 = (cy + R * Math.sin(start)).toFixed(2);
+        const x2 = (cx + R * Math.cos(end)).toFixed(2);
+        const y2 = (cy + R * Math.sin(end)).toFixed(2);
+        const large = fraction > 0.5 ? 1 : 0;
+        const d = segs.length === 1
+          ? `M ${cx - R} ${cy} A ${R} ${R} 0 1 1 ${cx - R + 0.001} ${cy} Z`
+          : `M ${cx} ${cy} L ${x1} ${y1} A ${R} ${R} 0 ${large} 1 ${x2} ${y2} Z`;
+        return `<path d="${d}" fill="${seg.color}" opacity="0.9"/>`;
+      }).join('');
+      const legend = segs.map((seg, i) => {
+        const lx = cx + R + 24;
+        const ly = cy - (segs.length - 1) * 14 + i * 28;
+        const pct = ((seg.value / total) * 100).toFixed(0);
+        return `<rect x="${lx}" y="${ly - 8}" width="12" height="12" fill="${seg.color}" rx="2"/><text x="${lx + 16}" y="${ly + 2}" font-size="9" fill="#444">${seg.label}: ${seg.value} (${pct}%)</text>`;
+      }).join('');
+      const innerR = (R * 0.42).toFixed(0);
+      return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">${paths}<circle cx="${cx}" cy="${cy}" r="${innerR}" fill="white"/><text x="${cx}" y="${cy - 5}" text-anchor="middle" font-size="18" font-weight="900" fill="#1a1a1a">${total}</text><text x="${cx}" y="${cy + 12}" text-anchor="middle" font-size="8" fill="#777">readings</text>${legend}</svg>`;
+    })();
+
     // ── Separate log tables ────────────────────────────────────────────────────
-    const glucoseRows = [...filteredHistory].reverse().map((e, i) => {
+    const glucoseRows = [...pdfData].reverse().map((e, i) => {
       const bg  = i % 2 === 0 ? '#ffffff' : '#f7f7f7';
       const gd  = new Date(e.timestamp);
       const dp  = `${String(gd.getDate()).padStart(2,'0')}/${String(gd.getMonth()+1).padStart(2,'0')}/${gd.getFullYear()}`;
@@ -545,7 +603,7 @@ export default function HistoryScreen() {
       <div class="hdr">
         <div>
           <div class="hdr-title">DiabEasy</div>
-          <div class="hdr-sub">Glucose Management Report</div>
+          <div class="hdr-sub">Glucose Management Report${basic ? ' · Basic (7-day)' : ''}</div>
         </div>
         <div class="hdr-right">
           Generated: ${genDate} at ${genTime}<br/>
@@ -577,6 +635,7 @@ export default function HistoryScreen() {
         <div class="mc"><div class="mv" style="color:#555">${n}</div><div class="ml">Total Readings</div><div class="mr">${totalInsulin}u insulin logged</div></div>
       </div>
 
+      ${!basic ? `
       <div class="sec">Time in Range</div>
       ${svgTIRBar || '<p style="color:#aaa;font-size:10px">No data</p>'}
 
@@ -584,6 +643,9 @@ export default function HistoryScreen() {
       <table><thead><tr class="ctx-th"><th class="ctx-th">Context</th><th class="ctx-th">Readings</th><th class="ctx-th">Avg (mg/dL)</th><th class="ctx-th">Min</th><th class="ctx-th">Max</th><th class="ctx-th">In Range</th></tr></thead><tbody>${contextRows}</tbody></table>` : ''}
 
       ${svgLineChart ? `<div class="sec">Glucose Trend</div>${svgLineChart}` : ''}
+
+      ${svgPieChart ? `<div class="sec">Readings Breakdown</div>${svgPieChart}` : ''}
+      ` : `<div style="border:1.5px dashed #ec5557;border-radius:8px;padding:10px 14px;margin:14px 0;text-align:center;color:#ec5557;font-size:10px;font-weight:700">📊 Charts &amp; analytics available in Premium — upgrade at diabeasy.app</div>`}
 
       <div class="pg"></div>
 
@@ -670,12 +732,28 @@ export default function HistoryScreen() {
         </PressBtn>
       </View>
 
-      <PressBtn
-        onPress={exportPDF}
-        style={[styles.clearBtn, { borderColor: colors.red, backgroundColor: colors.red }, styles.primaryBtnShadow]}
-      >
-        <Text style={[styles.clearBtnText, { color: '#fff' }]}>Export PDF Report</Text>
-      </PressBtn>
+      {canUseFullPdf ? (
+        <PressBtn
+          onPress={() => { exportPDF(false); if (isTrialActive && !hasUsedTrialPdf) markTrialPdfUsed(); }}
+          style={[styles.clearBtn, { borderColor: colors.red, backgroundColor: colors.red }, styles.primaryBtnShadow]}
+        >
+          <Text style={[styles.clearBtnText, { color: '#fff' }]}>
+            Export Full PDF{isTrialActive && !hasUsedTrialPdf ? ' ★' : ''}
+          </Text>
+        </PressBtn>
+      ) : (
+        <View>
+          <PressBtn
+            onPress={() => exportPDF(true)}
+            style={[styles.clearBtn, { borderColor: colors.red, backgroundColor: colors.red }, styles.primaryBtnShadow]}
+          >
+            <Text style={[styles.clearBtnText, { color: '#fff' }]}>Export Basic PDF (7 days)</Text>
+          </PressBtn>
+          <TouchableOpacity onPress={() => setShowUpgrade(true)} activeOpacity={0.75} style={styles.upgradeLink}>
+            <Text style={[styles.upgradeLinkText, { color: colors.red }]}>🔒 Unlock full reports — Upgrade</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
@@ -792,7 +870,13 @@ export default function HistoryScreen() {
 
           <Text style={[styles.chartSub, { color: colors.textFaint }]}>
             Showing {chartData.length} reading{chartData.length !== 1 ? 's' : ''}
+            {hasOlderData ? ` (last ${FREE_HISTORY_DAYS} days)` : ''}
           </Text>
+          {hasOlderData && (
+            <TouchableOpacity onPress={() => setShowUpgrade(true)} activeOpacity={0.75} style={[styles.chartLockBanner, { backgroundColor: colors.lowBg, borderColor: colors.red }]}>
+              <Text style={[styles.chartLockText, { color: colors.red }]}>🔒 You have older data — upgrade to unlock full history chart</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
             onPress={() => setShowChartModal(true)}
             style={{ alignSelf: 'flex-start', marginTop: 6, marginBottom: 2, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6, borderWidth: 1.5, borderColor: colors.red }}
@@ -886,6 +970,9 @@ export default function HistoryScreen() {
 
         </View>
       )}
+
+      <UpgradeModal visible={showUpgrade} onClose={() => setShowUpgrade(false)} />
+
     </ScrollView>
   );
 }
@@ -906,8 +993,12 @@ const styles = StyleSheet.create({
   filterBtnsRow:    { flexDirection: 'row', justifyContent: 'center', gap: 12, marginBottom: 8 },
   filterActionBtn:  { alignSelf: 'center', paddingHorizontal: 20, paddingVertical: 8, borderRadius: 6, borderWidth: 1.5, marginBottom: 16 },
   filterActionBtnText: { fontSize: 14, fontWeight: '500' },
-  clearBtn:         { alignSelf: 'center', paddingHorizontal: 20, paddingVertical: 8, borderRadius: 6, borderWidth: 1.5, marginBottom: 16 },
+  clearBtn:         { alignSelf: 'center', paddingHorizontal: 20, paddingVertical: 8, borderRadius: 6, borderWidth: 1.5, marginBottom: 8 },
   clearBtnText:     { fontSize: 14, fontWeight: '500' },
+  upgradeLink:      { alignItems: 'center', marginBottom: 12 },
+  upgradeLinkText:  { fontSize: 13, fontWeight: '600' },
+  chartLockBanner:  { borderRadius: 8, borderWidth: 1.5, paddingVertical: 8, paddingHorizontal: 12, marginBottom: 8 },
+  chartLockText:    { fontSize: 12, fontWeight: '600', textAlign: 'center' },
   divider:          { height: 1, marginBottom: 16 },
   historyItem:      { borderRadius: 6, paddingHorizontal: 14, paddingVertical: 6, marginBottom: 6, borderWidth: 1, overflow: 'hidden', borderBottomWidth: 3 },
   entryRow:         { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },

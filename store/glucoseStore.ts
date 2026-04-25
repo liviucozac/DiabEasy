@@ -15,6 +15,9 @@ export type LongActingInsulinType = 'glargine-u100' | 'glargine-u300' | 'detemir
 export type SecurityMethod        = 'none' | 'pin' | 'password' | 'biometrics';
 export type LockTimeout           = 'immediate' | '1min' | '5min' | 'app-close';
 import { syncGlucoseEntry, deleteGlucoseEntry, syncInsulinEntry, syncProfile } from '../utils/firestoreSync';
+import { useSubscriptionStore } from './subscriptionStore';
+
+const isSyncEnabled = () => useSubscriptionStore.getState().isPremiumPaid;
 
 export interface GlucoseEntry {
   id: string;
@@ -38,6 +41,7 @@ export interface Reminder {
   id: string;
   label: string;
   time: string;
+  days?: string; // 'everyday' | 'YYYY-MM-DD' — undefined treated as 'everyday'
   type: 'Rapid-acting' | 'Long-acting';
   units: number;
   active: boolean;
@@ -157,20 +161,20 @@ export const useGlucoseStore = create<GlucoseStore>()(
       addEntry: (entry) =>
         set((state) => {
           const newEntry = { ...entry, id: generateId() };
-          syncGlucoseEntry(newEntry).catch(() => {});
+          if (isSyncEnabled()) syncGlucoseEntry(newEntry).catch(() => {});
           return { history: [...state.history, newEntry] };
         }),
       clearHistory: () => set({ history: [] }),
       removeEntry: (id) =>
         set((state) => {
-          deleteGlucoseEntry(id).catch(() => {});
+          if (isSyncEnabled()) deleteGlucoseEntry(id).catch(() => {});
           return { history: state.history.filter((e) => e.id !== id) };
         }),
 
       insulinEntries: [],
       addInsulinEntry: (entry) =>
         set((state) => {
-        syncInsulinEntry(entry).catch(() => {});
+        if (isSyncEnabled()) syncInsulinEntry(entry).catch(() => {});
           return { insulinEntries: [...state.insulinEntries, entry] };
         }),
       clearInsulinLog: () => set({ insulinEntries: [] }),
@@ -205,7 +209,7 @@ export const useGlucoseStore = create<GlucoseStore>()(
       setProfile: (partial) =>
         set((state) => {
           const updated = { ...state.profile, ...partial };
-          syncProfile(updated).catch(() => {});
+          if (isSyncEnabled()) syncProfile(updated).catch(() => {});
           return { profile: updated };
         }),
 

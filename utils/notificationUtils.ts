@@ -39,10 +39,28 @@ export async function scheduleReminder(
   settings: AppSettings,
 ): Promise<void> {
   const [hour, minute] = reminder.time.split(':').map(Number);
+  const days = reminder.days ?? 'everyday';
 
   const brandName = reminder.type === 'Rapid-acting'
     ? getAnalogByType(settings.insulinAnalogType).sublabel
     : getLongActingByType(settings.longActingInsulinType).sublabel;
+
+  let trigger: any;
+  if (days === 'everyday') {
+    trigger = {
+      type: Notifications.SchedulableTriggerInputTypes.DAILY,
+      hour,
+      minute,
+    };
+  } else {
+    const [yr, mo, dy] = days.split('-').map(Number);
+    const fireDate = new Date(yr, mo - 1, dy, hour, minute, 0, 0);
+    if (fireDate <= new Date()) return; // past date — skip scheduling
+    trigger = {
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
+      date: fireDate,
+    };
+  }
 
   await Notifications.scheduleNotificationAsync({
     identifier: `reminder-${reminder.id}`,
@@ -52,11 +70,7 @@ export async function scheduleReminder(
       sound: true,
       ...(Platform.OS === 'android' && { channelId: CHANNEL_ID }),
     },
-    trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.DAILY,
-      hour,
-      minute,
-    },
+    trigger,
   });
 }
 

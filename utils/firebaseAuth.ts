@@ -21,3 +21,15 @@ export const getCurrentUser = () => {
 export const onAuthStateChanged = (callback: (user: any) => void) => {
   return auth().onAuthStateChanged(callback);
 };
+
+export const sendPasswordReset = async (email: string) => {
+  await auth().sendPasswordResetEmail(email);
+};
+
+export const changePassword = async (currentPassword: string, newPassword: string) => {
+  const user = auth().currentUser;
+  if (!user || !user.email) throw new Error('Not signed in.');
+  const credential = auth.EmailAuthProvider.credential(user.email, currentPassword);
+  await user.reauthenticateWithCredential(credential);
+  await user.updatePassword(newPassword);
+};

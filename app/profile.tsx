@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView,
-  TextInput, StyleSheet, Platform, Alert, Switch,
+  TextInput, StyleSheet, Platform, Alert, Switch, Modal,
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useGlucoseStore, DiabetesType, ThemeType, InsulinAnalogType, SecurityMethod, LockTimeout } from '../store/glucoseStore';
 import { INSULIN_ANALOGS, getAnalogByType } from '../utils/insulinUtils';
 import { useTheme } from '../context/AppContext';
 import { PressBtn } from '../components/PressBtn';
 import { ParamTrainingModal } from '../components/ParamTrainingModal';
 import { hashValue, biometricsAvailable } from '../utils/securityUtils';
-import { signIn, signUp, signOut, onAuthStateChanged } from '../utils/firebaseAuth';
+import { signIn, signUp, signOut, onAuthStateChanged, sendPasswordReset, changePassword } from '../utils/firebaseAuth';
+import { checkFirebasePremium } from '../utils/firestoreSync';
+import { useSubscriptionStore } from '../store/subscriptionStore';
 
 const RED = '#EC5557';
 
@@ -68,11 +71,23 @@ function StyledInput({ value, onChangeText, placeholder, keyboardType, secureTex
 
 function AccountSection({ user }: { user: any }) {
   const { colors } = useTheme();
-  const [mode, setMode]         = useState<'login' | 'signup'>('login');
-  const [email, setEmail]       = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState('');
+  const [mode, setMode]               = useState<'login' | 'signup'>('login');
+  const [email, setEmail]             = useState('');
+  const [password, setPassword]       = useState('');
+  const [loading, setLoading]         = useState(false);
+  const [error, setError]             = useState('');
+  const [success, setSuccess]         = useState('');
+
+  // Change password state
+  const [showChangePw, setShowChangePw]   = useState(false);
+  const [currentPw, setCurrentPw]         = useState('');
+  const [newPw, setNewPw]                 = useState('');
+  const [confirmPw, setConfirmPw]         = useState('');
+  const [pwLoading, setPwLoading]         = useState(false);
+  const [pwError, setPwError]             = useState('');
+  const [pwSuccess, setPwSuccess]         = useState('');
+
+  const { setPremiumPaid } = useSubscriptionStore();
 
   const handleAuth = async () => {
     if (!email.trim() || !password.trim()) { setError('Please enter email and password.'); return; }
@@ -80,6 +95,8 @@ function AccountSection({ user }: { user: any }) {
     try {
       if (mode === 'login') {
         await signIn(email.trim(), password);
+        // Firebase override: if Firestore marks this user as premium, grant it regardless of Play Store
+        checkFirebasePremium().then(isOverride => { if (isOverride) setPremiumPaid(true); }).catch(() => {});
       } else {
         await signUp(email.trim(), password);
       }
@@ -88,6 +105,36 @@ function AccountSection({ user }: { user: any }) {
       setError(e.message ?? 'Authentication failed.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email.trim()) { setError('Enter your email above first.'); return; }
+    setLoading(true); setError(''); setSuccess('');
+    try {
+      await sendPasswordReset(email.trim());
+      setSuccess('Reset email sent. Check your inbox.');
+    } catch (e: any) {
+      setError(e.message ?? 'Could not send reset email.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!currentPw || !newPw || !confirmPw) { setPwError('All fields are required.'); return; }
+    if (newPw.length < 6) { setPwError('New password must be at least 6 characters.'); return; }
+    if (newPw !== confirmPw) { setPwError('New passwords do not match.'); return; }
+    setPwLoading(true); setPwError(''); setPwSuccess('');
+    try {
+      await changePassword(currentPw, newPw);
+      setPwSuccess('Password updated successfully.');
+      setCurrentPw(''); setNewPw(''); setConfirmPw('');
+      setTimeout(() => { setShowChangePw(false); setPwSuccess(''); }, 1500);
+    } catch (e: any) {
+      setPwError(e.message ?? 'Could not update password.');
+    } finally {
+      setPwLoading(false);
     }
   };
 
@@ -108,13 +155,38 @@ function AccountSection({ user }: { user: any }) {
             <Text style={[s.avatarEmail, { color: colors.textMuted }]}>{user.email}</Text>
           </View>
         </View>
-        <PressBtn
-          style={[s.signOutBtn, { borderColor: colors.red }]}
-          onPress={handleSignOut}
-          activeOpacity={0.75}
-        >
-          <Text style={[s.signOutBtnText, { color: colors.red }]}>Sign Out</Text>
-        </PressBtn>
+
+        {!showChangePw ? (
+          <>
+            <TouchableOpacity onPress={() => { setShowChangePw(true); setPwError(''); setPwSuccess(''); }} activeOpacity={0.7} style={s.changePwLink}>
+              <Text style={[s.changePwLinkText, { color: colors.red }]}>Change Password</Text>
+            </TouchableOpacity>
+            <PressBtn style={[s.signOutBtn, { borderColor: colors.red }]} onPress={handleSignOut} activeOpacity={0.75}>
+              <Text style={[s.signOutBtnText, { color: colors.red }]}>Sign Out</Text>
+            </PressBtn>
+          </>
+        ) : (
+          <>
+            <FieldLabel text="Current password" />
+            <StyledInput value={currentPw} onChangeText={setCurrentPw} placeholder="Current password" secureTextEntry />
+            <FieldLabel text="New password" />
+            <StyledInput value={newPw} onChangeText={setNewPw} placeholder="New password (6+ characters)" secureTextEntry />
+            <FieldLabel text="Confirm new password" />
+            <StyledInput value={confirmPw} onChangeText={setConfirmPw} placeholder="Repeat new password" secureTextEntry />
+            {!!pwError   && <Text style={{ fontSize: 12, color: '#e53935', marginTop: 4, textAlign: 'center' }}>{pwError}</Text>}
+            {!!pwSuccess && <Text style={{ fontSize: 12, color: '#2e7d32', marginTop: 4, textAlign: 'center' }}>{pwSuccess}</Text>}
+            <PressBtn
+              style={[s.authBtn, { backgroundColor: pwLoading ? colors.border : colors.red }, s.primaryBtnShadow]}
+              onPress={handleChangePassword}
+              activeOpacity={0.75}
+            >
+              <Text style={s.authBtnText}>{pwLoading ? 'Updating...' : 'Update Password'}</Text>
+            </PressBtn>
+            <TouchableOpacity onPress={() => { setShowChangePw(false); setCurrentPw(''); setNewPw(''); setConfirmPw(''); setPwError(''); }} activeOpacity={0.7} style={s.changePwLink}>
+              <Text style={[s.changePwLinkText, { color: colors.textMuted }]}>Cancel</Text>
+            </TouchableOpacity>
+          </>
+        )}
       </SectionCard>
     );
   }
@@ -125,7 +197,7 @@ function AccountSection({ user }: { user: any }) {
       <View style={{ flexDirection: 'row', marginBottom: 12, borderRadius: 8, borderWidth: 1.5, borderColor: colors.red, overflow: 'hidden' }}>
         {(['login', 'signup'] as const).map((m) => (
           <TouchableOpacity key={m} style={{ flex: 1, paddingVertical: 8, alignItems: 'center', backgroundColor: mode === m ? colors.red : 'transparent' }}
-            onPress={() => { setMode(m); setError(''); }} activeOpacity={0.8}>
+            onPress={() => { setMode(m); setError(''); setSuccess(''); }} activeOpacity={0.8}>
             <Text style={{ fontSize: 13, fontWeight: '600', color: mode === m ? '#fff' : colors.red }}>
               {m === 'login' ? 'Sign In' : 'Sign Up'}
             </Text>
@@ -136,7 +208,8 @@ function AccountSection({ user }: { user: any }) {
       <StyledInput value={email} onChangeText={setEmail} placeholder="your@email.com" keyboardType="email-address" autoCapitalize="none" />
       <FieldLabel text="Password" />
       <StyledInput value={password} onChangeText={setPassword} placeholder="Password" secureTextEntry />
-      {!!error && <Text style={{ fontSize: 12, color: '#e53935', marginTop: 4, textAlign: 'center' }}>{error}</Text>}
+      {!!error   && <Text style={{ fontSize: 12, color: '#e53935', marginTop: 4, textAlign: 'center' }}>{error}</Text>}
+      {!!success && <Text style={{ fontSize: 12, color: '#2e7d32', marginTop: 4, textAlign: 'center' }}>{success}</Text>}
       <PressBtn
         style={[s.authBtn, { backgroundColor: loading ? colors.border : colors.red }, s.primaryBtnShadow]}
         onPress={handleAuth}
@@ -144,6 +217,11 @@ function AccountSection({ user }: { user: any }) {
       >
         <Text style={s.authBtnText}>{loading ? 'Please wait...' : mode === 'login' ? 'Sign In' : 'Create Account'}</Text>
       </PressBtn>
+      {mode === 'login' && (
+        <TouchableOpacity onPress={handleForgotPassword} activeOpacity={0.7} style={s.changePwLink}>
+          <Text style={[s.forgotLink, { color: colors.textMuted }]}>Forgot password?</Text>
+        </TouchableOpacity>
+      )}
     </SectionCard>
   );
 }
@@ -157,6 +235,7 @@ function ProfileTab() {
   const [user,  setUser]  = useState<any>(null);
   const [draft, setDraft] = useState({ ...profile });
   const [saved, setSaved] = useState(false);
+  const [showDiagnosisPicker, setShowDiagnosisPicker] = useState(false);
 
   useEffect(() => {
     const unsub = onAuthStateChanged((u) => setUser(u));
@@ -197,7 +276,70 @@ function ProfileTab() {
           })}
         </View>
         <FieldLabel text="Diagnosis date (MM/YYYY)" />
-        <StyledInput value={draft.diagnosisDate} onChangeText={(v) => set({ diagnosisDate: v })} placeholder="e.g. 03/2018" keyboardType="numbers-and-punctuation" />
+        <TouchableOpacity
+          style={[s.input, s.datePickerBtn, { borderColor: colors.border, backgroundColor: colors.inputBg }]}
+          onPress={() => setShowDiagnosisPicker(true)}
+          activeOpacity={0.75}
+        >
+          <Text style={{ color: draft.diagnosisDate ? colors.text : colors.placeholder, fontSize: 15 }}>
+            {draft.diagnosisDate || 'e.g. 03/2018'}
+          </Text>
+        </TouchableOpacity>
+        {showDiagnosisPicker && (
+          Platform.OS === 'ios' ? (
+            <Modal transparent animationType="fade" onRequestClose={() => setShowDiagnosisPicker(false)}>
+              <View style={s.dateModalOverlay}>
+                <View style={[s.dateModalSheet, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                  <DateTimePicker
+                    value={(() => {
+                      if (draft.diagnosisDate) {
+                        const [m, y] = draft.diagnosisDate.split('/');
+                        const d = new Date(parseInt(y, 10), parseInt(m, 10) - 1, 1);
+                        return isNaN(d.getTime()) ? new Date() : d;
+                      }
+                      return new Date();
+                    })()}
+                    mode="date"
+                    display="spinner"
+                    maximumDate={new Date()}
+                    onChange={(_, date) => {
+                      if (date) {
+                        const mm = String(date.getMonth() + 1).padStart(2, '0');
+                        const yyyy = String(date.getFullYear());
+                        set({ diagnosisDate: `${mm}/${yyyy}` });
+                      }
+                    }}
+                  />
+                  <TouchableOpacity style={[s.dateModalDone, { backgroundColor: colors.red }]} onPress={() => setShowDiagnosisPicker(false)}>
+                    <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Done</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </Modal>
+          ) : (
+            <DateTimePicker
+              value={(() => {
+                if (draft.diagnosisDate) {
+                  const [m, y] = draft.diagnosisDate.split('/');
+                  const d = new Date(parseInt(y, 10), parseInt(m, 10) - 1, 1);
+                  return isNaN(d.getTime()) ? new Date() : d;
+                }
+                return new Date();
+              })()}
+              mode="date"
+              display="spinner"
+              maximumDate={new Date()}
+              onChange={(_, date) => {
+                setShowDiagnosisPicker(false);
+                if (date) {
+                  const mm = String(date.getMonth() + 1).padStart(2, '0');
+                  const yyyy = String(date.getFullYear());
+                  set({ diagnosisDate: `${mm}/${yyyy}` });
+                }
+              }}
+            />
+          )
+        )}
         <FieldLabel text="Doctor / specialist name" />
         <StyledInput value={draft.doctorName} onChangeText={(v) => set({ doctorName: v })} placeholder="e.g. Dr. Smith" />
         <FieldLabel text="Clinic / hospital" />
@@ -400,6 +542,14 @@ function SettingsTab() {
           ))}
         </View>
 
+        <PressBtn
+          style={[s.authBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]}
+          onPress={() => setSettings({ insulinParamsSet: true })}
+          activeOpacity={0.8}
+        >
+          <Text style={s.authBtnText}>Save Parameters</Text>
+        </PressBtn>
+
         <TouchableOpacity
           style={[s.trainingBtn, { borderColor: colors.red }]}
           onPress={() => setShowTraining(true)}
@@ -579,7 +729,14 @@ const s = StyleSheet.create({
   authToggleRow:  { flexDirection: 'row', justifyContent: 'center', marginTop: 10 },
   authToggleText: { fontSize: 13 },
   authToggleLink: { fontSize: 13, fontWeight: '700' },
-  forgotLink:     { fontSize: 13, textDecorationLine: 'underline' },
+  forgotLink:       { fontSize: 13, textDecorationLine: 'underline' },
+  changePwLink:     { alignItems: 'center', marginTop: 10 },
+  changePwLinkText: { fontSize: 13, textDecorationLine: 'underline' },
+
+  datePickerBtn:    { justifyContent: 'center', paddingHorizontal: 14 },
+  dateModalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' },
+  dateModalSheet:   { borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, borderTopWidth: 1 },
+  dateModalDone:    { borderRadius: 10, paddingVertical: 13, alignItems: 'center', marginTop: 12 },
 
   avatarRow:   { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 4 },
   avatar:      { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },

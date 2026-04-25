@@ -266,7 +266,8 @@ export default function FoodGuideScreen() {
   const [expandedGroup,  setExpandedGroup]  = useState<string | null>(null);
   const [currentMeal,    setCurrentMeal]    = useState<MealItem[]>([]);
   const [savedMeals,     setSavedMeals]     = useState<SavedMeal[]>([]);
-  const [expandedMealId, setExpandedMealId] = useState<string | null>(null);
+  const [expandedMealId,    setExpandedMealId]    = useState<string | null>(null);
+  const [localGlucoseInput, setLocalGlucoseInput] = useState('');
 
   const scrollRef  = useRef<ScrollView>(null);
   const mealYRef   = useRef<number>(0);
@@ -275,10 +276,16 @@ export default function FoodGuideScreen() {
   const totals  = useMemo(() => calcTotals(currentMeal), [currentMeal]);
   const hasMeal = currentMeal.length > 0;
 
+  const effectiveGlucose = useMemo(() => {
+    if (glucoseValue !== null) return glucoseValue;
+    const parsed = parseFloat(localGlucoseInput);
+    return !isNaN(parsed) && parsed > 0 ? parsed : null;
+  }, [glucoseValue, localGlucoseInput]);
+
   const postMeal = useMemo(() => {
-    if (glucoseValue === null || !hasMeal) return null;
-    return estimatePostMeal(glucoseValue, unit ?? 'mg/dL', currentMeal);
-  }, [glucoseValue, unit, currentMeal]);
+    if (effectiveGlucose === null || !hasMeal) return null;
+    return estimatePostMeal(effectiveGlucose, unit ?? 'mg/dL', currentMeal);
+  }, [effectiveGlucose, unit, currentMeal]);
 
   const allItems = useMemo<FoodItem[]>(() => {
     if (!foodAction) return [];
@@ -312,7 +319,7 @@ export default function FoodGuideScreen() {
       id: generateId(), date: formatNow(), action: foodAction,
       items: currentMeal.flatMap(({ uniqueId: _u, quantity: q, ...rest }) => Array.from({ length: q }, () => ({ ...rest }))),
       totals, estimatedGlycemia: postMeal?.value ?? null,
-      currentGlucose: glucoseValue, unit: unit ?? 'mg/dL',
+      currentGlucose: effectiveGlucose, unit: unit ?? 'mg/dL',
     }, ...prev]);
     setTotalCarbs(totals.carbs);
     setCurrentMeal([]);
@@ -340,20 +347,34 @@ export default function FoodGuideScreen() {
 
   const renderPlanner = () => (
     <>
-      {glucoseValue === null ? (
-        <View style={[s.emptyCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-          <Text style={s.emptyIcon}>🩸</Text>
-          <Text style={[s.emptyTitle, { color: colors.text }]}>No reading logged yet</Text>
-          <Text style={[s.emptyText, { color: colors.textMuted }]}>Enter a blood sugar value on the Home tab to get personalised food recommendations.</Text>
+      {glucoseValue !== null ? (
+        <View style={[s.readingCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+          <Text style={[s.readingLabel, { color: colors.textMuted }]}>Current glycemia</Text>
+          <Text style={[s.readingValue, { color: colors.red }]}>{glucoseValue} {unit}</Text>
         </View>
       ) : (
-        <>
-          <View style={[s.readingCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-            <Text style={[s.readingLabel, { color: colors.textMuted }]}>Current glycemia</Text>
-            <Text style={[s.readingValue, { color: colors.red }]}>{glucoseValue} {unit}</Text>
+        <View style={[s.localGlucoseCard, { backgroundColor: colors.bgCard, borderColor: localGlucoseInput ? colors.red : colors.border }]}>
+          <Text style={[s.readingLabel, { color: colors.textMuted }]}>Current blood sugar (optional)</Text>
+          <View style={s.localGlucoseRow}>
+            <TextInput
+              style={[s.localGlucoseInput, { color: colors.text, backgroundColor: colors.inputBg }]}
+              placeholder="e.g. 120"
+              placeholderTextColor="#aaa"
+              keyboardType="decimal-pad"
+              value={localGlucoseInput}
+              onChangeText={setLocalGlucoseInput}
+            />
+            <Text style={[s.localGlucoseUnit, { color: colors.textMuted }]}>mg/dL</Text>
           </View>
+          {!localGlucoseInput && (
+            <Text style={{ color: colors.textFaint, fontSize: 11, marginTop: 4 }}>
+              Enter your glucose for a post-meal estimate, or log on Home.
+            </Text>
+          )}
+        </View>
+      )}
 
-          {(() => {
+          {glucoseValue !== null && (() => {
             const mgdl = unit === 'mmol/L' ? glucoseValue! * 18.0182 : glucoseValue!;
             if (mgdl <= settings.targetGlucose) return null;
             const mmolEq  = (mgdl / 18).toFixed(1);
@@ -480,7 +501,7 @@ export default function FoodGuideScreen() {
                     <View style={s.glycemiaRow}>
                       <View style={{ flex: 1 }}>
                         <Text style={[s.glycemiaLabel, { color: colors.text }]}>Estimated post-meal glycemia</Text>
-                        <Text style={[s.glycemiaSub, { color: colors.textMuted }]}>{totals.carbs.toFixed(1)}g carbs · current {glucoseValue} {unit}</Text>
+                        <Text style={[s.glycemiaSub, { color: colors.textMuted }]}>{totals.carbs.toFixed(1)}g carbs · before: {effectiveGlucose} {unit ?? 'mg/dL'}</Text>
                       </View>
                       <View style={s.glycemiaRight}>
                         <Text style={[s.glycemiaValue, { color: col }]}>{postMeal.value}</Text>
@@ -525,8 +546,6 @@ export default function FoodGuideScreen() {
               </PressBtn>
             </>
           )}
-        </>
-      )}
     </>
   );
 
@@ -659,6 +678,11 @@ const s = StyleSheet.create({
   readingCard:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderRadius: 10, borderWidth: 1, paddingHorizontal: 16, paddingVertical: 10, marginBottom: 14 },
   readingLabel: { fontSize: 13 },
   readingValue: { fontSize: 16, fontWeight: '800' },
+
+  localGlucoseCard:  { borderRadius: 10, borderWidth: 1.5, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 14 },
+  localGlucoseRow:   { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
+  localGlucoseInput: { flex: 1, borderWidth: 1.5, borderRadius: 6, paddingHorizontal: 10, paddingVertical: Platform.OS === 'ios' ? 8 : 5, fontSize: 16, fontWeight: '700' },
+  localGlucoseUnit:  { fontSize: 13, fontWeight: '600' },
 
   sectionLabel: { fontSize: 13, textAlign: 'center', marginBottom: 10, lineHeight: 18 },
   pillRow:      { flexDirection: 'row', justifyContent: 'center', gap: 10, marginBottom: 14 },

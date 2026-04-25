@@ -541,17 +541,19 @@ function LogTab() {
 // ─── Reminders Tab ────────────────────────────────────────────────────────────
 
 function ReminderForm({
-  title, label, setLabel, timeDate, setTimeDate, rType, setRType,
-  rUnits, setRUnits, onSave, onCancel, colors,
+  title, label, setLabel, timeDate, setTimeDate, days, setDays,
+  rType, setRType, rUnits, setRUnits, onSave, onCancel, colors,
 }: {
   title: string; label: string; setLabel: (v: string) => void;
   timeDate: Date; setTimeDate: (d: Date) => void;
+  days: string; setDays: (v: string) => void;
   rType: InsulinType; setRType: (t: InsulinType) => void;
   rUnits: number; setRUnits: (n: number) => void;
   onSave: () => void; onCancel: () => void; colors: any;
 }) {
   const [labelFocus,     setLabelFocus]     = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const formatTime = (d: Date) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
 
   return (
@@ -571,6 +573,44 @@ function ReminderForm({
       {showTimePicker && (
         <DateTimePicker value={timeDate} mode="time" display="default"
           onChange={(event, date) => { setShowTimePicker(false); if (event.type === 'set' && date) setTimeDate(date); }} />
+      )}
+
+      <Text style={[s.fieldLabel, { color: colors.textMuted }]}>Schedule</Text>
+      <View style={s.scheduleRow}>
+        <TouchableOpacity
+          style={[s.schedulePill, { borderColor: colors.red }, days !== 'everyday' && { backgroundColor: colors.red }]}
+          onPress={() => setShowDatePicker(true)}
+          activeOpacity={0.75}
+        >
+          <Text style={[s.schedulePillText, { color: days !== 'everyday' ? '#fff' : colors.textMuted }]}>
+            {days !== 'everyday' ? formatDateDisplay(days) : '📅 Pick date'}
+          </Text>
+        </TouchableOpacity>
+        <Text style={[s.scheduleOrText, { color: colors.textMuted }]}>or</Text>
+        <TouchableOpacity
+          style={[s.schedulePill, { borderColor: colors.red }, days === 'everyday' && { backgroundColor: colors.red }]}
+          onPress={() => setDays('everyday')}
+          activeOpacity={0.75}
+        >
+          <Text style={[s.schedulePillText, { color: days === 'everyday' ? '#fff' : colors.textMuted }]}>Everyday</Text>
+        </TouchableOpacity>
+      </View>
+      {showDatePicker && (
+        <DateTimePicker
+          value={days !== 'everyday' ? new Date(days) : new Date()}
+          mode="date"
+          display="default"
+          minimumDate={new Date()}
+          onChange={(event, date) => {
+            setShowDatePicker(false);
+            if (event.type === 'set' && date) {
+              const yyyy = date.getFullYear();
+              const mm = String(date.getMonth() + 1).padStart(2, '0');
+              const dd = String(date.getDate()).padStart(2, '0');
+              setDays(`${yyyy}-${mm}-${dd}`);
+            }
+          }}
+        />
       )}
 
       <Text style={[s.fieldLabel, { color: colors.textMuted }]}>Insulin type</Text>
@@ -623,6 +663,11 @@ function timeStringToDate(time: string): Date {
   return d;
 }
 
+function formatDateDisplay(iso: string): string {
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
 function RemindersTab() {
   const { colors } = useTheme();
   const { reminders, addReminder, updateReminder, deleteReminder, settings } = useGlucoseStore();
@@ -633,12 +678,14 @@ function RemindersTab() {
   // Add form state
   const [addLabel,    setAddLabel]    = useState('');
   const [addTimeDate, setAddTimeDate] = useState(new Date());
+  const [addDays,     setAddDays]     = useState('everyday');
   const [addType,     setAddType]     = useState<InsulinType>('Rapid-acting');
   const [addUnits,    setAddUnits]    = useState(1);
 
   // Edit form state
   const [editLabel,    setEditLabel]    = useState('');
   const [editTimeDate, setEditTimeDate] = useState(new Date());
+  const [editDays,     setEditDays]     = useState('everyday');
   const [editType,     setEditType]     = useState<InsulinType>('Rapid-acting');
   const [editUnits,    setEditUnits]    = useState(1);
 
@@ -646,10 +693,10 @@ function RemindersTab() {
 
   const handleAdd = () => {
     if (!addLabel.trim()) { Alert.alert('Missing info', 'Please fill in a label.'); return; }
-    const newReminder = { id: generateId(), label: addLabel.trim(), time: formatTime(addTimeDate), type: addType, units: addUnits, active: true };
+    const newReminder = { id: generateId(), label: addLabel.trim(), time: formatTime(addTimeDate), days: addDays, type: addType, units: addUnits, active: true };
     addReminder(newReminder);
     if (settings.notificationsEnabled) scheduleReminder(newReminder, settings);
-    setAddLabel(''); setAddTimeDate(new Date()); setAddType('Rapid-acting'); setAddUnits(1);
+    setAddLabel(''); setAddTimeDate(new Date()); setAddDays('everyday'); setAddType('Rapid-acting'); setAddUnits(1);
     setShowAddForm(false);
   };
 
@@ -657,13 +704,14 @@ function RemindersTab() {
     setEditingId(r.id);
     setEditLabel(r.label);
     setEditTimeDate(timeStringToDate(r.time));
+    setEditDays(r.days ?? 'everyday');
     setEditType(r.type as InsulinType);
     setEditUnits(r.units);
   };
 
   const handleSaveEdit = () => {
     if (!editLabel.trim()) { Alert.alert('Missing info', 'Please fill in a label.'); return; }
-    const updated = { label: editLabel.trim(), time: formatTime(editTimeDate), type: editType, units: editUnits };
+    const updated = { label: editLabel.trim(), time: formatTime(editTimeDate), days: editDays, type: editType, units: editUnits };
     updateReminder(editingId!, updated);
     if (settings.notificationsEnabled) {
       cancelReminder(editingId!);
@@ -696,6 +744,7 @@ function RemindersTab() {
               title="Edit Reminder"
               label={editLabel}    setLabel={setEditLabel}
               timeDate={editTimeDate} setTimeDate={setEditTimeDate}
+              days={editDays}      setDays={setEditDays}
               rType={editType}     setRType={setEditType}
               rUnits={editUnits}   setRUnits={setEditUnits}
               onSave={handleSaveEdit}
@@ -707,7 +756,7 @@ function RemindersTab() {
               <View style={s.reminderLeft}>
                 <Text style={[s.reminderLabel, { color: colors.text }, !r.active && s.reminderLabelInactive]}>{r.label}</Text>
                 <Text style={[s.reminderSub, { color: colors.textMuted }]}>
-                  {r.time} · {r.type === 'Rapid-acting'
+                  {(r.days ?? 'everyday') === 'everyday' ? 'Everyday' : formatDateDisplay(r.days!)} · {r.time} · {r.type === 'Rapid-acting'
                     ? getAnalogByType(settings.insulinAnalogType).sublabel
                     : getLongActingByType(settings.longActingInsulinType).sublabel} · {r.units}u
                 </Text>
@@ -729,7 +778,7 @@ function RemindersTab() {
                   <Text style={[s.editBtnText, { color: colors.red }]}>Edit</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={s.deleteBtn} onPress={() => { cancelReminder(r.id); deleteReminder(r.id); }} activeOpacity={0.75}>
-                  <Text style={s.deleteBtnText}>✕</Text>
+                  <Text style={[s.deleteBtnText, { color: colors.red }]}>✕</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -742,10 +791,11 @@ function RemindersTab() {
           title="New Reminder"
           label={addLabel}    setLabel={setAddLabel}
           timeDate={addTimeDate} setTimeDate={setAddTimeDate}
+          days={addDays}      setDays={setAddDays}
           rType={addType}     setRType={setAddType}
           rUnits={addUnits}   setRUnits={setAddUnits}
           onSave={handleAdd}
-          onCancel={() => setShowAddForm(false)}
+          onCancel={() => { setShowAddForm(false); setAddDays('everyday'); }}
           colors={colors}
         />
       )}
@@ -874,6 +924,11 @@ const s = StyleSheet.create({
   timeInput:       { borderWidth: 1.5, borderColor: '#e0e0e0', borderRadius: 6, paddingVertical: Platform.OS === 'ios' ? 9 : 7, paddingHorizontal: 12, fontSize: 14, marginBottom: 4 },
   timePickerBtn:   { justifyContent: 'center' },
   timePickerBtnText:{ fontSize: 15, fontWeight: '700' },
+
+  scheduleRow:     { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
+  schedulePill:    { flex: 1, paddingVertical: 8, borderRadius: 8, borderWidth: 1.5, alignItems: 'center', backgroundColor: 'transparent' },
+  schedulePillText:{ fontSize: 13, fontWeight: '600' },
+  scheduleOrText:  { fontSize: 12, fontWeight: '500' },
 
   addEntryBtn:     { borderRadius: 8, paddingVertical: 11, alignItems: 'center', marginTop: 10 },
   addEntryBtnText: { fontSize: 14, color: '#fff', fontWeight: '700', backgroundColor: 'transparent' },

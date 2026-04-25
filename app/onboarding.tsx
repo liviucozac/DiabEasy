@@ -588,6 +588,7 @@ export default function OnboardingScreen() {
 
   const isParamStep    = page === SLIDES.length;
   const isSecurityStep = page === SLIDES.length + 1;
+  const rec = RECOMMENDED[profile.diabetesType] ?? RECOMMENDED[''];
 
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
@@ -598,6 +599,7 @@ export default function OnboardingScreen() {
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         scrollEventThrottle={16}
+        style={{ flex: 1 }}
         onMomentumScrollEnd={(e) => {
           setPage(Math.round(e.nativeEvent.contentOffset.x / width));
         }}
@@ -657,33 +659,30 @@ export default function OnboardingScreen() {
         ))}
       </View>
 
-      {/* Navigation — hidden on param and security steps (they have their own confirm buttons) */}
-      {!isParamStep && !isSecurityStep && (
-        <View style={styles.navRow}>
-          {page < SLIDES.length - 1 ? (
-            <>
-              <TouchableOpacity onPress={finish} activeOpacity={0.7}>
-                <Text style={[styles.skipText, { color: colors.textMuted }]}>Skip</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.nextBtn, { backgroundColor: colors.red }]}
-                onPress={() => goTo(page + 1)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.nextBtnText}>Next →</Text>
-              </TouchableOpacity>
-            </>
-          ) : (
-            <TouchableOpacity
-              style={[styles.nextBtn, { backgroundColor: colors.red, flex: 1 }]}
-              onPress={() => goTo(SLIDES.length)}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.nextBtnText}>Next →</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      )}
+      {/* Navigation — always visible */}
+      <View style={styles.navRow}>
+        <TouchableOpacity
+          onPress={() => {
+            if (isSecurityStep) handleSecurityConfirm('none', '');
+            else if (isParamStep) handleParamConfirm(rec.isf, rec.carbRatio, rec.target);
+            else finish();
+          }}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.skipText, { color: colors.textMuted }]}>
+            {(isParamStep || isSecurityStep) ? 'Skip setup' : 'Skip'}
+          </Text>
+        </TouchableOpacity>
+        {!isParamStep && !isSecurityStep && (
+          <TouchableOpacity
+            style={[styles.nextBtn, { backgroundColor: colors.red }]}
+            onPress={() => page === SLIDES.length - 1 ? goTo(SLIDES.length) : goTo(page + 1)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.nextBtnText}>Next →</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 }

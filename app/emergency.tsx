@@ -39,8 +39,51 @@ function Divider() {
   return <View style={s.divider} />;
 }
 
+const EMERGENCY_MAP: Record<string, string> = {
+  US: '911', CA: '911', MX: '911',
+  AU: '000', NZ: '111',
+  GB: '999', IE: '999',
+  IN: '112', JP: '119', CN: '120', KR: '119',
+};
+
+function getLocaleEmergencyNumber(): string {
+  try {
+    const locale = Intl.DateTimeFormat().resolvedOptions().locale;
+    const region = locale.split('-').pop()?.toUpperCase() ?? '';
+    return EMERGENCY_MAP[region] ?? '112';
+  } catch {
+    return '112';
+  }
+}
+
 export default function EmergencyScreen() {
   const { colors } = useTheme();
+
+  const [emergencyNumber,  setEmergencyNumber]  = useState(() => getLocaleEmergencyNumber());
+  const [locationAddress,  setLocationAddress]  = useState('');
+  const [locationLoading,  setLocationLoading]  = useState(true);
+
+  const fetchLocation = async () => {
+    setLocationLoading(true);
+    setLocationAddress('');
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') { setLocationLoading(false); return; }
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const [place] = await Location.reverseGeocodeAsync(loc.coords);
+      if (place) {
+        const countryCode = place.isoCountryCode?.toUpperCase() ?? '';
+        setEmergencyNumber(EMERGENCY_MAP[countryCode] ?? '112');
+        const streetFull = [place.streetNumber, place.street].filter(Boolean).join(' ');
+        const raw = [streetFull, place.city, place.region, place.country].filter(Boolean);
+        const deduped = raw.filter((v, i) => v !== raw[i - 1]);
+        setLocationAddress(deduped.join(', '));
+      }
+    } catch {}
+    setLocationLoading(false);
+  };
+
+  useEffect(() => { fetchLocation(); }, []);
 
   const pulseAnim = useRef(new Animated.Value(1)).current;
   useEffect(() => {
@@ -63,8 +106,6 @@ export default function EmergencyScreen() {
   const [nameFocus,     setNameFocus]     = useState(false);
   const [phoneFocus,    setPhoneFocus]    = useState(false);
   const [relationFocus, setRelationFocus] = useState(false);
-  const [address,       setAddress]       = useState('');
-  const [addrFocus,     setAddrFocus]     = useState(false);
   const [hypoOpen,      setHypoOpen]      = useState(false);
   const [hyperOpen,     setHyperOpen]     = useState(false);
   const [dosOpen,       setDosOpen]       = useState(false);
@@ -107,7 +148,7 @@ export default function EmergencyScreen() {
   // ── Regular handlers ────────────────────────────────────────────────────────
   const callEmergency = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    Linking.openURL('tel:112');
+    Linking.openURL(`tel:${emergencyNumber}`);
   };
 
   const callContact = (phone: string, name: string) => {
@@ -139,26 +180,8 @@ export default function EmergencyScreen() {
   };
 
   const searchHospitals = () => {
-    const query = address.trim() ? `hospitals near ${encodeURIComponent(address)}` : 'hospitals nearby';
+    const query = locationAddress ? `hospitals near ${encodeURIComponent(locationAddress)}` : 'hospitals nearby';
     Linking.openURL(`https://www.google.com/maps/search/${query}`);
-  };
-
-  const useMyLocation = async () => {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') { Alert.alert('Permission denied', 'Location access was denied.'); return; }
-    let coords: { latitude: number; longitude: number };
-    try {
-      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      coords = loc.coords;
-    } catch { Alert.alert('Error', 'Unable to retrieve your location.'); return; }
-    try {
-      const [place] = await Location.reverseGeocodeAsync(coords);
-      if (place) {
-        const parts = [place.street, place.city, place.region, place.country].filter(Boolean);
-        setAddress(parts.join(', '));
-      }
-    } catch {}
-    Linking.openURL(`https://www.google.com/maps/search/hospitals/@${coords.latitude},${coords.longitude},14z`);
   };
 
   const HYPO_SYMPTOMS = [
@@ -185,7 +208,7 @@ export default function EmergencyScreen() {
     { do: true,  text: 'Recheck blood sugar after 15 minutes' },
     { do: true,  text: 'Tell someone nearby what is happening' },
     { do: true,  text: 'Use glucagon kit if unconscious and one is available' },
-    { do: true,  text: 'Call 112 if you feel it is a genuine emergency' },
+    { do: true,  text: `Call ${emergencyNumber} if you feel it is a genuine emergency` },
     { do: false, text: 'Do NOT drive if blood sugar is low' },
     { do: false, text: 'Do NOT take insulin if already hypoglycemic' },
     { do: false, text: 'Do NOT eat large meals to treat a low — use fast carbs only' },
@@ -251,44 +274,34 @@ export default function EmergencyScreen() {
             onPress={callEmergency}
           >
             <Text style={s.callBtnIcon}>📞</Text>
-            <Text style={s.callBtnText}>Call 112 — Emergency Services</Text>
+            <Text style={s.callBtnText}>Call {emergencyNumber} — Emergency Services</Text>
           </PressBtn>
         </Animated.View>
-        <Text style={[s.emergencyCallNote, { color: colors.textFaint }]}>
-          Never ignore the warning signs of a diabetic emergency.
-        </Text>
+        {(locationLoading || locationAddress !== '') && (
+          <View style={s.locationBlock}>
+            <Text style={[s.locationLabel, { color: colors.textMuted }]}>Your address is</Text>
+            <Text style={[s.locationLine, { color: colors.text }]}>
+              {locationLoading ? '📍 Detecting your location…' : `📍 ${locationAddress}`}
+            </Text>
+            {!locationLoading && (
+              <TouchableOpacity onPress={fetchLocation} activeOpacity={0.7} style={s.refreshBtn}>
+                <Text style={[s.refreshBtnText, { color: colors.textMuted }]}>🔄 Refresh location</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+        {!locationLoading && (
+          <TouchableOpacity
+            style={[s.hospitalBtn, { borderColor: colors.red }]}
+            onPress={searchHospitals}
+            activeOpacity={0.75}
+          >
+            <Text style={[s.hospitalBtnText, { color: colors.red }]}>🏥 Find a Nearby Hospital</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
-      {/* ── 2. HOSPITAL FINDER ── */}
-      <SectionCard>
-        <SectionTitle text="Find Nearby Hospitals" />
-        <TextInput
-          style={[s.input, { borderColor: addrFocus ? colors.red : colors.border, color: colors.text, backgroundColor: colors.inputBg }]}
-          placeholder="Enter your location (or leave empty)" placeholderTextColor="#aaa"
-          value={address} onChangeText={setAddress}
-          onFocus={() => setAddrFocus(true)} onBlur={() => setAddrFocus(false)} returnKeyType="search"
-        />
-        <View style={s.mapBtnRow}>
-          <View style={{ flex: 1 }}>
-            <PressBtn
-              style={[s.mapBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]}
-              onPress={searchHospitals}
-            >
-              <Text style={s.mapBtnText}>🔍 Search</Text>
-            </PressBtn>
-          </View>
-          <View style={{ flex: 1 }}>
-            <PressBtn
-              style={[s.mapBtn, s.mapBtnOutline, { borderColor: colors.red, backgroundColor: 'transparent' }]}
-              onPress={useMyLocation} activeOpacity={0.75}
-            >
-              <Text style={[s.mapBtnOutlineText, { color: colors.text }]}>📍 Use My Location</Text>
-            </PressBtn>
-          </View>
-        </View>
-      </SectionCard>
-
-      {/* ── 3. EMERGENCY CONTACTS ── */}
+      {/* ── 2. EMERGENCY CONTACTS ── */}
       <SectionCard>
         <View style={s.rowBetween}>
           <SectionTitle text="Emergency Contacts" />
@@ -391,7 +404,7 @@ export default function EmergencyScreen() {
             <Text style={[s.actionItem, { color: colors.textMuted }]}>2. Wait 15 minutes and recheck blood sugar</Text>
             <Text style={[s.actionItem, { color: colors.textMuted }]}>3. If still low, repeat step 1</Text>
             <Text style={[s.actionItem, { color: colors.textMuted }]}>4. Once normal, eat a small snack to prevent another dip</Text>
-            <Text style={[s.actionItem, { color: colors.textMuted }]}>5. If unconscious or unable to swallow — call 112 immediately</Text>
+            <Text style={[s.actionItem, { color: colors.textMuted }]}>5. If unconscious or unable to swallow — call {emergencyNumber} immediately</Text>
           </>
         )}
       </SectionCard>
@@ -464,7 +477,13 @@ const s = StyleSheet.create({
   callBtn:           { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 13, marginBottom: 10 },
   callBtnIcon:       { fontSize: 18 },
   callBtnText:       { fontSize: 16, fontWeight: '800', color: '#fff', backgroundColor: 'transparent' },
-  emergencyCallNote: { fontSize: 11, textAlign: 'center' },
+  locationBlock:     { marginTop: 14, alignItems: 'center' },
+  locationLabel:     { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 4 },
+  locationLine:      { fontSize: 13, textAlign: 'center', lineHeight: 18 },
+  hospitalBtn:       { marginTop: 14, borderWidth: 1.5, borderRadius: 10, paddingVertical: 10, paddingHorizontal: 20, alignItems: 'center' },
+  hospitalBtnText:   { fontSize: 13, fontWeight: '700' },
+  refreshBtn:        { marginTop: 8, paddingVertical: 4, paddingHorizontal: 12 },
+  refreshBtnText:    { fontSize: 12, fontWeight: '600' },
 
   sectionCard:  { borderRadius: 12, borderWidth: 1, padding: 14, marginBottom: 12 },
   sectionTitle: { fontSize: 13, fontWeight: '700', marginBottom: 8 },

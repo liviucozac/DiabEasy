@@ -10,6 +10,10 @@ import { useTheme } from '../context/AppContext';
 import { PressBtn } from '../components/PressBtn';
 import { ShadowBtn } from '../components/ShadowBtn';
 import { BleGlucometerScanner } from '../components/BleGlucometerScanner';
+import { GuidedFlowModal } from '../components/GuidedFlowModal';
+import { TrialBanner } from '../components/TrialBanner';
+import { UpgradeModal } from '../components/UpgradeModal';
+import { useSubscription } from '../hooks/useSubscription';
 import type { GlucoseReading } from '../utils/bleGlucometerService';
 
 type Unit = 'mg/dL' | 'mmol/L';
@@ -223,6 +227,12 @@ export default function HomeScreen() {
   const [showHypoPopup, setShowHypoPopup]   = useState(false);
   const [showHyperPopup, setShowHyperPopup] = useState(false);
   const [showBleScanner, setShowBleScanner] = useState(false);
+  const [showCompatibleDevices, setShowCompatibleDevices] = useState(false);
+  const [showGuidedFlow, setShowGuidedFlow] = useState(false);
+  const [guidedFlowType, setGuidedFlowType] = useState<'hypo' | 'hyper'>('hypo');
+  const [showUpgrade, setShowUpgrade] = useState(false);
+
+  const { canUseBle } = useSubscription();
 
   const submitScale = useRef(new Animated.Value(1)).current;
   const resultScale = useRef(new Animated.Value(0)).current;
@@ -249,11 +259,13 @@ export default function HomeScreen() {
     resultScale.setValue(0);
     Animated.spring(resultScale, { toValue: 1, useNativeDriver: true, tension: 180, friction: 7 }).start();
 
+    // Manual mode — keeps existing simple popups
     if (colorClass === 'low')       setShowHypoPopup(true);
     else if (colorClass === 'high') setShowHyperPopup(true);
     setInputValue(''); setSymptoms(''); setFasting('');
   };
 
+  // BLE mode — triggers guided multi-slide flow
   const handleBleReading = (reading: GlucoseReading) => {
     const interpretation = getInterpretation(reading.value, reading.unit, settings.glucoseLow, settings.glucoseHigh);
     const colorClass     = getColorClass(reading.value, reading.unit, settings.glucoseLow, settings.glucoseHigh);
@@ -264,8 +276,14 @@ export default function HomeScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     resultScale.setValue(0);
     Animated.spring(resultScale, { toValue: 1, useNativeDriver: true, tension: 180, friction: 7 }).start();
-    if (colorClass === 'low')       setShowHypoPopup(true);
-    else if (colorClass === 'high') setShowHyperPopup(true);
+
+    if (colorClass === 'low') {
+      setGuidedFlowType('hypo');
+      setShowGuidedFlow(true);
+    } else if (colorClass === 'high') {
+      setGuidedFlowType('hyper');
+      setShowGuidedFlow(true);
+    }
   };
 
   const cls = glucoseValue !== null ? getColorClass(glucoseValue, unit, settings.glucoseLow, settings.glucoseHigh) : null;
@@ -297,20 +315,34 @@ export default function HomeScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          <TrialBanner />
+
           <Text style={[styles.appDescription, { color: colors.textMuted }]}>
             Your simple and helpful companion for{'\n'}tracking{' '}
             <Text style={[styles.highlight, { color: colors.red }]}>type 1 diabetes</Text>
           </Text>
 
-          {/* BLE glucometer button */}
+          {/* BLE glucometer button — Premium feature */}
           <TouchableOpacity
-            style={[styles.bleBtn, { borderColor: colors.red, backgroundColor: colors.bgCard }]}
-            onPress={() => setShowBleScanner(true)}
+            style={[styles.bleBtn, {
+              borderColor: canUseBle ? colors.red : colors.border,
+              backgroundColor: colors.bgCard,
+              opacity: canUseBle ? 1 : 0.75,
+            }]}
+            onPress={() => canUseBle ? setShowBleScanner(true) : setShowUpgrade(true)}
             activeOpacity={0.8}
           >
-            <Text style={styles.bleBtnIcon}>🔵</Text>
-            <Text style={[styles.bleBtnText, { color: colors.red }]}>Connect Glucometer</Text>
+            <Text style={styles.bleBtnIcon}>{canUseBle ? '🔵' : '🔒'}</Text>
+            <Text style={[styles.bleBtnText, { color: canUseBle ? colors.red : colors.textMuted }]}>
+              Connect Glucometer{canUseBle ? '' : ' — Premium'}
+            </Text>
           </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => setShowCompatibleDevices(true)} activeOpacity={0.7} style={styles.compatLink}>
+            <Text style={[styles.compatLinkText, { color: colors.textMuted }]}>Compatible devices</Text>
+          </TouchableOpacity>
+
+          <View style={[styles.divider, { backgroundColor: isDark ? '#7a1c1a' : '#f2c0c0' }]} />
 
           <Text style={[styles.instruction, { color: colors.textMuted }]}>
             Or enter manually:
@@ -457,9 +489,55 @@ export default function HomeScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
+      {/* Manual mode popups */}
       <HypoPopup  visible={showHypoPopup}  glucoseValue={glucoseValue!} unit={unit} onClose={() => setShowHypoPopup(false)} />
       <HyperPopup visible={showHyperPopup} glucoseValue={glucoseValue!} unit={unit} onClose={() => setShowHyperPopup(false)} />
+
+      {/* BLE mode — guided flow modal */}
+      <GuidedFlowModal
+        visible={showGuidedFlow}
+        glucoseValue={glucoseValue ?? 0}
+        unit={unit}
+        flowType={guidedFlowType}
+        onClose={() => setShowGuidedFlow(false)}
+      />
+
       <BleGlucometerScanner visible={showBleScanner} onClose={() => setShowBleScanner(false)} onReading={handleBleReading} />
+
+      {/* Compatible devices sheet */}
+      <Modal visible={showCompatibleDevices} transparent animationType="slide" onRequestClose={() => setShowCompatibleDevices(false)}>
+        <View style={[styles.overlayBg, { backgroundColor: colors.overlay }]}>
+          <View style={[styles.compatSheet, { backgroundColor: colors.bg }]}>
+            <Text style={[styles.compatTitle, { color: colors.text }]}>Compatible Glucometers</Text>
+            <Text style={[styles.compatSubtitle, { color: colors.textMuted }]}>
+              Any Bluetooth glucometer supporting the standard Glucose Profile works with DiabEasy.
+            </Text>
+            {[
+              { brand: 'Accu-Chek',  models: 'Instant · Guide · Active' },
+              { brand: 'Contour',    models: 'Next One · Plus One' },
+              { brand: 'OneTouch',   models: 'Verio Flex · Verio Reflect' },
+              { brand: 'Beurer',     models: 'GL50 evo' },
+            ].map(({ brand, models }) => (
+              <View key={brand} style={[styles.compatRow, { borderBottomColor: colors.borderLight }]}>
+                <View style={[styles.compatDot, { backgroundColor: colors.normal }]} />
+                <View>
+                  <Text style={[styles.compatBrand, { color: colors.text }]}>{brand}</Text>
+                  <Text style={[styles.compatModels, { color: colors.textMuted }]}>{models}</Text>
+                </View>
+              </View>
+            ))}
+            <TouchableOpacity
+              style={[styles.compatBtn, { backgroundColor: colors.red }]}
+              onPress={() => setShowCompatibleDevices(false)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.compatBtnText}>Got it</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <UpgradeModal visible={showUpgrade} onClose={() => setShowUpgrade(false)} />
 
     </View>
   );
@@ -471,7 +549,6 @@ const styles = StyleSheet.create({
   appDescription: { textAlign: 'center', fontSize: 14, lineHeight: 20, marginBottom: 10 },
   highlight:      { fontWeight: '600' },
   instruction:    { textAlign: 'center', fontSize: 13, lineHeight: 20, marginBottom: 6, color: '#aaa' },
-
 
   unitToggleRow:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 8 },
   unitLabel:      { fontSize: 15, fontWeight: 'bold', paddingHorizontal: 4 },
@@ -519,5 +596,17 @@ const styles = StyleSheet.create({
   howToBtnText: { fontSize: 14, fontWeight: '600' },
   bleBtn:       { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 20, paddingVertical: 12, marginBottom: 14, width: '85%', justifyContent: 'center' },
   bleBtnIcon:   { fontSize: 18 },
-  bleBtnText:   { fontSize: 15, fontWeight: '700' },
+  bleBtnText:      { fontSize: 15, fontWeight: '700' },
+  compatLink:      { marginBottom: 14 },
+  compatLinkText:  { fontSize: 12, textDecorationLine: 'underline' },
+  compatSheet:     { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 28, paddingBottom: 40 },
+  compatTitle:     { fontSize: 18, fontWeight: '800', marginBottom: 6, textAlign: 'center' },
+  compatSubtitle:  { fontSize: 13, lineHeight: 19, textAlign: 'center', marginBottom: 20 },
+  compatRow:       { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1 },
+  compatDot:       { width: 10, height: 10, borderRadius: 5 },
+  compatBrand:     { fontSize: 14, fontWeight: '700' },
+  compatModels:    { fontSize: 12, marginTop: 2 },
+  compatBtn:       { borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginTop: 20 },
+  compatBtnText:   { fontSize: 15, fontWeight: '700', color: '#fff' },
+  divider:         { height: 1, width: '75%', marginBottom: 14 },
 });

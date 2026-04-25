@@ -83,7 +83,16 @@ export function BleGlucometerScanner({ visible, onClose, onReading }: Props) {
       {
         onStatus: (s, msg) => { setStatus(s); if (msg) setMessage(msg); },
         onReading: (r)     => { setReading(r); setStatus('done'); },
-        onError:   (msg)   => { setError(msg); setStatus('error'); },
+        onError:   (msg)   => {
+          // Pairing/passkey errors mean stale bond — clear saved ID so next
+          // attempt does a fresh scan instead of failing on direct connect
+          if (msg.toLowerCase().includes('pin') || msg.toLowerCase().includes('passkey') || msg.toLowerCase().includes('pair')) {
+            knownDeviceId.current = null;
+            AsyncStorage.removeItem(BLE_DEVICE_KEY);
+          }
+          setError(msg);
+          setStatus('error');
+        },
       },
       knownDeviceId.current ?? undefined,
     );
