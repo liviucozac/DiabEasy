@@ -12,6 +12,7 @@ import { useTheme } from '../context/AppContext';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { PressBtn } from '../components/PressBtn';
 import { ParamTrainingModal } from '../components/ParamTrainingModal';
+import { useTranslation } from '../hooks/useTranslation';
 
 
 const RED = '#EC5557';
@@ -130,6 +131,7 @@ function InsulinDropdown<T extends string>({
 function CalculatorTab() {
   const { glucoseValue, unit, totalCarbs, settings, insulinEntries, setSettings } = useGlucoseStore();
   const { colors } = useTheme();
+  const t = useTranslation();
   const [showTraining, setShowTraining] = useState(false);
   const [limitLowInput,  setLimitLowInput]  = useState(String(settings.glucoseLow));
   const [limitHighInput, setLimitHighInput] = useState(String(settings.glucoseHigh));
@@ -169,20 +171,20 @@ function CalculatorTab() {
   return (
     <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 32 }}>
       <SectionCard>
-        <SectionTitle text="Current Values" />
-        <InfoRow label="Blood glucose" value={glucoseValue !== null ? `${glucoseValue} ${unit}` : 'Not logged — go to Home tab'} valueColor={glucoseValue !== null ? glucoseColor : '#aaa'} />
+        <SectionTitle text={t.currentValues} />
+        <InfoRow label={t.bloodGlucose} value={glucoseValue !== null ? `${glucoseValue} ${unit}` : t.notLoggedGoHome} valueColor={glucoseValue !== null ? glucoseColor : '#aaa'} />
         <View style={s.divider} />
-        <InfoRow label="Meal carbs" value={totalCarbs > 0 ? `${totalCarbs} g` : 'No meal planned — go to Food Guide'} valueColor={totalCarbs > 0 ? '#222' : '#aaa'} />
+        <InfoRow label={t.mealCarbs} value={totalCarbs > 0 ? `${totalCarbs} g` : t.noMealGoFoodGuide} valueColor={totalCarbs > 0 ? '#222' : '#aaa'} />
       </SectionCard>
 
       <SectionCard>
-        <SectionTitle text="Glucose Limits" />
+        <SectionTitle text={t.glucoseLimits} />
         <Text style={[s.paramHint, { color: colors.textMuted }]}>
-          Readings outside these limits are flagged Low or High across the entire app.
+          {t.glucoseLimitsHint}
         </Text>
         <View style={s.limitsRow}>
           <View style={s.limitField}>
-            <Text style={[s.limitLabel, { color: colors.textMuted }]}>Low threshold (mg/dL)</Text>
+            <Text style={[s.limitLabel, { color: colors.textMuted }]}>{t.lowThreshold}</Text>
             <TextInput
               style={[s.limitInput, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]}
               value={limitLowInput}
@@ -201,7 +203,7 @@ function CalculatorTab() {
             />
           </View>
           <View style={s.limitField}>
-            <Text style={[s.limitLabel, { color: colors.textMuted }]}>High threshold (mg/dL)</Text>
+            <Text style={[s.limitLabel, { color: colors.textMuted }]}>{t.highThreshold}</Text>
             <TextInput
               style={[s.limitInput, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]}
               value={limitHighInput}
@@ -221,25 +223,25 @@ function CalculatorTab() {
           </View>
         </View>
         <Text style={[s.limitHint, { color: colors.textFaint }]}>
-          Below {settings.glucoseLow} = Low · Above {settings.glucoseHigh} = High
+          {t.glucoseLimitsFooter(settings.glucoseLow, settings.glucoseHigh)}
         </Text>
       </SectionCard>
 
       <SectionCard>
-        <SectionTitle text="Your Parameters" />
-        <Text style={[s.paramHint, { color: colors.textMuted }]}>Edit your personal values in the Profile tab → Settings → Insulin Calculator Defaults.</Text>
+        <SectionTitle text={t.yourParameters} />
+        <Text style={[s.paramHint, { color: colors.textMuted }]}>{t.yourParametersHint}</Text>
         <View style={s.paramGrid}>
           <View style={s.paramReadItem}>
             <Text style={[s.paramReadValue, { color: colors.text }]}>{settings.targetGlucose}</Text>
-            <Text style={[s.paramReadLabel, { color: colors.textMuted }]}>Target{'\n'}(mg/dL)</Text>
+            <Text style={[s.paramReadLabel, { color: colors.textMuted }]}>{t.targetLabel}</Text>
           </View>
           <View style={[s.paramReadItem, s.paramReadBorder]}>
             <Text style={[s.paramReadValue, { color: colors.text }]}>{settings.isf}</Text>
-            <Text style={[s.paramReadLabel, { color: colors.textMuted }]}>ISF{'\n'}(mg/dL/u)</Text>
+            <Text style={[s.paramReadLabel, { color: colors.textMuted }]}>{t.isfLabel}</Text>
           </View>
           <View style={[s.paramReadItem, s.paramReadBorder]}>
             <Text style={[s.paramReadValue, { color: colors.text }]}>1:{settings.carbRatio}</Text>
-            <Text style={[s.paramReadLabel, { color: colors.textMuted }]}>Carb{'\n'}ratio</Text>
+            <Text style={[s.paramReadLabel, { color: colors.textMuted }]}>{t.carbRatioLabel}</Text>
           </View>
           <View style={[s.paramReadItem, s.paramReadBorder]}>
             <Text style={[s.paramReadValue, { color: colors.text }]}>{settings.dia}h</Text>
@@ -252,23 +254,23 @@ function CalculatorTab() {
           onPress={() => setShowTraining(true)}
           activeOpacity={0.75}
         >
-          <Text style={[s.trainingBtnText, { color: RED }]}>🎓 What do ISF, carb ratio, and DIA mean?</Text>
+          <Text style={[s.trainingBtnText, { color: RED }]}>{t.whatDoParamsMean}</Text>
         </TouchableOpacity>
 
         <ParamTrainingModal visible={showTraining} onClose={() => setShowTraining(false)} />
       </SectionCard>
 
       <SectionCard>
-        <SectionTitle text="Your Insulin" />
-        <Text style={[s.paramHint, { color: colors.textMuted }]}>Select once — used across the calculator, log, and reminders. Change anytime in Profile → Settings.</Text>
+        <SectionTitle text={t.yourInsulin} />
+        <Text style={[s.paramHint, { color: colors.textMuted }]}>{t.yourInsulinHint}</Text>
         <InsulinDropdown<InsulinAnalogType>
-          label="Rapid-acting insulin"
+          label={t.rapidActingInsulin}
           selected={settings.insulinAnalogType}
           options={INSULIN_ANALOGS}
           onSelect={(v) => setSettings({ insulinAnalogType: v, dia: INSULIN_ANALOGS.find(a => a.value === v)?.defaultDia ?? settings.dia })}
         />
         <InsulinDropdown<LongActingInsulinType>
-          label="Long-acting (basal) insulin"
+          label={t.longActingInsulin}
           selected={settings.longActingInsulinType}
           options={LONG_ACTING_INSULINS}
           onSelect={(v) => setSettings({ longActingInsulinType: v })}
@@ -278,64 +280,58 @@ function CalculatorTab() {
       {!settings.insulinParamsSet ? (
         <View style={[s.emptyCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
           <Text style={s.emptyIcon}>🔒</Text>
-          <Text style={[s.emptyTitle, { color: colors.text }]}>Parameters not set</Text>
-          <Text style={[s.emptyText, { color: colors.textMuted }]}>
-            Set your ISF, carb ratio, and target glucose in{' '}
-            <Text style={{ fontWeight: '700', color: colors.red }}>Profile → Settings → Insulin Calculator Defaults</Text>
-            {' '}to unlock the dose calculator.
-          </Text>
+          <Text style={[s.emptyTitle, { color: colors.text }]}>{t.paramsNotSet}</Text>
+          <Text style={[s.emptyText, { color: colors.textMuted }]}>{t.paramsNotSetText}</Text>
         </View>
       ) : glucoseValue === null ? (
         <View style={[s.emptyCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
           <Text style={s.emptyIcon}>🩸</Text>
-          <Text style={[s.emptyTitle, { color: colors.text }]}>No glucose reading</Text>
-          <Text style={[s.emptyText, { color: colors.textMuted }]}>Log a blood sugar value on the Home tab to calculate your dose.</Text>
+          <Text style={[s.emptyTitle, { color: colors.text }]}>{t.noGlucoseReading}</Text>
+          <Text style={[s.emptyText, { color: colors.textMuted }]}>{t.noGlucoseReadingText}</Text>
         </View>
       ) : currentMgDl !== null && targetMgDl > currentMgDl ? (
         <View style={[s.warningBanner, { borderColor: '#2e7d32', backgroundColor: colors.normalBg, marginBottom: 10 }]}>
-          <Text style={[s.warningText, { color: colors.normal }]}>🏃 Your target glycemia ({settings.targetGlucose} mg/dL) is higher than your current reading ({glucoseValue} {unit}).</Text>
-          <Text style={[s.warningText, { color: colors.normal, marginTop: 6, fontWeight: '400' }]}>No insulin needed. Consider light physical activity such as a 20-minute walk.</Text>
+          <Text style={[s.warningText, { color: colors.normal }]}>{t.targetBelowCurrent(settings.targetGlucose, glucoseValue!, unit)}</Text>
+          <Text style={[s.warningText, { color: colors.normal, marginTop: 6, fontWeight: '400' }]}>{t.noInsulinNeeded}</Text>
         </View>
       ) : (
         <SectionCard>
-          <SectionTitle text="Insulin Units Needed" />
-          <Text style={s.resultsMayVary}>Results may vary slightly depending on individual response.</Text>
+          <SectionTitle text={t.insulinUnitsNeeded} />
+          <Text style={s.resultsMayVary}>{t.resultsMayVary}</Text>
           <View style={s.doseGrid}>
             <View style={s.doseItem}>
               <Text style={[s.doseNumber, { color: colors.text }]}>{result?.meal ?? '—'}</Text>
-              <Text style={[s.doseLabel, { color: colors.textMuted }]}>Meal dose</Text>
-              <Text style={[s.doseUnit, { color: colors.textFaint }]}>units</Text>
+              <Text style={[s.doseLabel, { color: colors.textMuted }]}>{t.mealDose}</Text>
+              <Text style={[s.doseUnit, { color: colors.textFaint }]}>{t.units}</Text>
             </View>
             <View style={[s.doseItem, s.doseItemBorder]}>
               <Text style={[s.doseNumber, result && result.correction > 0 ? { color: colors.high } : result && result.correction < 0 ? { color: colors.normal } : { color: colors.text }]}>
                 {result ? (result.correction >= 0 ? '+' : '') + result.correction : '—'}
               </Text>
-              <Text style={[s.doseLabel, { color: colors.textMuted }]}>Correction</Text>
-              <Text style={[s.doseUnit, { color: colors.textFaint }]}>units</Text>
+              <Text style={[s.doseLabel, { color: colors.textMuted }]}>{t.correction}</Text>
+              <Text style={[s.doseUnit, { color: colors.textFaint }]}>{t.units}</Text>
             </View>
             <View style={[s.doseItem, s.doseItemBorder]}>
               <Text style={[s.doseNumber, { color: result && result.iob > 0 ? colors.normal : colors.text }]}>
                 {result ? `-${result.iob}` : '—'}
               </Text>
-              <Text style={[s.doseLabel, { color: colors.textMuted }]}>IOB</Text>
-              <Text style={[s.doseUnit, { color: colors.textFaint }]}>units</Text>
+              <Text style={[s.doseLabel, { color: colors.textMuted }]}>{t.iob}</Text>
+              <Text style={[s.doseUnit, { color: colors.textFaint }]}>{t.units}</Text>
             </View>
             <View style={[s.doseItem, s.doseItemBorder]}>
               <Text style={[s.doseNumber, s.doseTotalNumber, { color: colors.red }]}>{result?.total ?? '—'}</Text>
-              <Text style={[s.doseLabel, { color: colors.textMuted }]}>Total</Text>
-              <Text style={[s.doseUnit, { color: colors.textFaint }]}>units</Text>
+              <Text style={[s.doseLabel, { color: colors.textMuted }]}>{t.total}</Text>
+              <Text style={[s.doseUnit, { color: colors.textFaint }]}>{t.units}</Text>
             </View>
           </View>
           {result && result.iob > 0 && (
             <View style={[s.warningBanner, { borderColor: colors.normal, backgroundColor: colors.normalBg, marginBottom: 10 }]}>
-              <Text style={[s.warningText, { color: colors.normal }]}>
-                💉 {result.iob}u still active from a recent dose (IOB). Subtracted from total.
-              </Text>
+              <Text style={[s.warningText, { color: colors.normal }]}>{t.iobActive(result.iob)}</Text>
             </View>
           )}
           {currentMgDl !== null && currentMgDl < 75 && (
             <View style={[s.warningBanner, { borderColor: '#e53935', backgroundColor: colors.lowBg }]}>
-              <Text style={[s.warningText, { color: colors.low }]}>⚠️ Blood sugar is low. Treat hypoglycemia before taking any insulin.</Text>
+              <Text style={[s.warningText, { color: colors.low }]}>{t.bloodSugarLowNoInsulin}</Text>
             </View>
           )}
           {currentMgDl !== null && currentMgDl > settings.targetGlucose && (() => {
@@ -344,23 +340,22 @@ function CalculatorTab() {
             return (
               <View style={[s.warningBanner, { borderColor: '#ef6c00', backgroundColor: colors.highBg }]}>
                 <Text style={[s.warningText, { color: colors.high }]}>
-                  💉 High blood sugar — correction dose: <Text style={{ fontWeight: '800' }}>{rawDose} unit{rawDose !== 1 ? 's' : ''} of {getAnalogByType(settings.insulinAnalogType).label.toLowerCase()} insulin</Text>
-                  {currentMgDl > 250 ? ' — consider delaying food until levels improve.' : '.'}
+                  {t.highCorrectionDose(rawDose, getAnalogByType(settings.insulinAnalogType).label, currentMgDl > 250)}
                 </Text>
               </View>
             );
           })()}
-          <Text style={s.disclaimer}>⚠️ Estimate only. Always confirm doses with your healthcare provider.</Text>
+          <Text style={s.disclaimer}>{t.estimateOnly}</Text>
         </SectionCard>
       )}
 
       <SectionCard>
-        <SectionTitle text="Quick Reference" />
+        <SectionTitle text={t.quickReference} />
         {[
-          { emoji: '🍬', title: 'Low (<75 mg/dL / <4.2 mmol/L)',           body: 'Eat 15–20g fast carbs. Recheck in 15 min. Do not take insulin.' },
-          { emoji: '✅', title: 'Normal (75–150 mg/dL / 4.2–8.3 mmol/L)', body: 'On target. Take calculated dose with your meal.' },
-          { emoji: '💧', title: 'High (>150 mg/dL / >8.3 mmol/L)',         body: 'Drink water, consider light activity. Apply correction dose as calculated.' },
-          { emoji: '🚨', title: 'Very high (>250 mg/dL / >13.9 mmol/L)',   body: 'Check for ketones. Delay food. Contact your care team if levels persist.' },
+          { emoji: '🍬', title: t.qrLow.title,     body: t.qrLow.body },
+          { emoji: '✅', title: t.qrNormal.title,  body: t.qrNormal.body },
+          { emoji: '💧', title: t.qrHigh.title,    body: t.qrHigh.body },
+          { emoji: '🚨', title: t.qrVeryHigh.title, body: t.qrVeryHigh.body },
         ].map((ref, i, arr) => (
           <View key={i}>
             <View style={s.refRow}>
@@ -383,6 +378,7 @@ function CalculatorTab() {
 function LogTab() {
   const { insulinEntries, addInsulinEntry, clearInsulinLog, settings, glucoseValue, unit } = useGlucoseStore();
   const { colors } = useTheme();
+  const t = useTranslation();
 
   const [insulinType,    setInsulinType]    = useState<InsulinType>('Rapid-acting');
   const [units,          setUnits]          = useState(0);
@@ -408,14 +404,14 @@ function LogTab() {
   })();
 
   const handleAdd = () => {
-    if (units <= 0) { Alert.alert('Missing info', 'Please set at least 1 unit.'); return; }
-  addInsulinEntry({ id: generateId(), units, time: formatTime(timeDate), type: insulinType, timestamp: new Date().toISOString() });    setUnits(0); setTimeDate(new Date());
+    if (units <= 0) { Alert.alert(t.missingInfo, t.pleaseSetUnit); return; }
+    addInsulinEntry({ id: generateId(), units, time: formatTime(timeDate), type: insulinType, timestamp: new Date().toISOString() });    setUnits(0); setTimeDate(new Date());
   };
 
   const handleClear = () => {
-    Alert.alert('Clear log', 'Are you sure you want to delete all insulin log entries?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Clear', style: 'destructive', onPress: clearInsulinLog },
+    Alert.alert(t.clearLog, t.clearLogConfirm, [
+      { text: t.cancel, style: 'cancel' },
+      { text: t.clear, style: 'destructive', onPress: clearInsulinLog },
     ]);
   };
 
@@ -424,48 +420,43 @@ function LogTab() {
 
       {glucoseWarning?.kind === 'low' && (
         <View style={[s.infoCard, { backgroundColor: colors.lowBg, borderColor: colors.low, marginBottom: 4 }]}>
-          <Text style={[s.infoCardTitle, { color: colors.low }]}>⚠️ Blood sugar too low — do not inject insulin</Text>
+          <Text style={[s.infoCardTitle, { color: colors.low }]}>{t.bloodSugarTooLow}</Text>
           <Text style={[s.infoCardBody, { color: colors.textMuted }]}>
-            Your current reading is {glucoseValue} {unit}. Injecting insulin now is dangerous.{'\n'}
-            Eat 15–20 g of fast-acting carbs (juice, glucose tabs), wait 15 minutes, then recheck before considering any dose.
+            {t.bloodSugarTooLowBody(glucoseValue!, unit ?? 'mg/dL')}
           </Text>
         </View>
       )}
 
       {glucoseWarning?.kind === 'high' && (
         <View style={[s.infoCard, { backgroundColor: colors.highBg, borderColor: colors.high, marginBottom: 4 }]}>
-          <Text style={[s.infoCardTitle, { color: colors.high }]}>📊 Blood sugar elevated — correction suggested</Text>
+          <Text style={[s.infoCardTitle, { color: colors.high }]}>{t.bloodSugarElevated}</Text>
           <Text style={[s.infoCardBody, { color: colors.textMuted }]}>
-            Current: {glucoseValue} {unit}. A correction dose of{' '}
-            <Text style={{ fontWeight: '700', color: colors.high }}>{glucoseWarning.net.toFixed(1)} u</Text>
-            {' '}of {glucoseWarning.analog.toLowerCase()} insulin is suggested based on your ISF and target.
-            {glucoseWarning.iob > 0
-              ? ` (${glucoseWarning.iob.toFixed(1)} u IOB already subtracted.)`
-              : ''}
+            {t.bloodSugarElevatedBody(glucoseValue!, unit ?? 'mg/dL', glucoseWarning.net, glucoseWarning.analog, glucoseWarning.iob)}
           </Text>
           <Text style={[s.infoCardBody, { color: colors.textFaint, marginTop: 4, fontStyle: 'italic' }]}>
-            Always confirm doses with your healthcare provider.
+            {t.confirmWithProvider}
           </Text>
         </View>
       )}
 
       <SectionCard>
-        <SectionTitle text="New Entry" />
-        <Text style={[s.fieldLabel, { color: colors.textMuted }]}>Insulin type</Text>
+        <SectionTitle text={t.newEntry} />
+        <Text style={[s.fieldLabel, { color: colors.textMuted }]}>{t.insulinType}</Text>
         <View style={s.typeRow}>
-          {(['Rapid-acting', 'Long-acting'] as InsulinType[]).map((t) => {
-            const active = insulinType === t;
+          {(['Rapid-acting', 'Long-acting'] as InsulinType[]).map((tp) => {
+            const active = insulinType === tp;
+            const label = tp === 'Rapid-acting' ? t.rapidActing : t.longActing;
             return (
-              <TouchableOpacity key={t}
+              <TouchableOpacity key={tp}
                 style={[s.typePill, active ? s.primaryBtnShadow : null, { borderColor: colors.red, backgroundColor: active ? colors.red : 'transparent' }]}
-                onPress={() => setInsulinType(t)} activeOpacity={0.75}>
-                <Text style={[s.typePillText, { color: colors.red }, active && s.typePillTextActive]}>{t}</Text>
+                onPress={() => setInsulinType(tp)} activeOpacity={0.75}>
+                <Text style={[s.typePillText, { color: colors.red }, active && s.typePillTextActive]}>{label}</Text>
               </TouchableOpacity>
             );
           })}
         </View>
 
-        <Text style={[s.fieldLabel, { color: colors.textMuted }]}>Units</Text>
+        <Text style={[s.fieldLabel, { color: colors.textMuted }]}>{t.unitsLabel}</Text>
         <View style={s.stepperRow}>
           <PressBtn style={[s.stepperBtn, { borderColor: colors.red, backgroundColor: colors.red }, s.primaryBtnShadow]}
             onPress={() => setUnits((u) => Math.max(u - 1, 0))} activeOpacity={0.75}>
@@ -478,7 +469,7 @@ function LogTab() {
           </PressBtn>
         </View>
 
-        <Text style={[s.fieldLabel, { color: colors.textMuted }]}>Time taken</Text>
+        <Text style={[s.fieldLabel, { color: colors.textMuted }]}>{t.timeTaken}</Text>
         <TouchableOpacity style={[s.timeInput, s.timePickerBtn, s.outlineBtnShadow, { backgroundColor: colors.bgCard }]} onPress={() => setShowTimePicker(true)} activeOpacity={0.75}>
           <Text style={[s.timePickerBtnText, { color: colors.text }]}>{formatTime(timeDate)}</Text>
         </TouchableOpacity>
@@ -487,29 +478,25 @@ function LogTab() {
             onChange={(event, date) => { setShowTimePicker(false); if (event.type === 'set' && date) setTimeDate(date); }} />
         )}
         <PressBtn style={[s.addEntryBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={handleAdd}>
-          <Text style={s.addEntryBtnText}>Add to Log</Text>
+          <Text style={s.addEntryBtnText}>{t.addToLog}</Text>
         </PressBtn>
       </SectionCard>
 
       <SectionCard>
         <View style={s.logHeader}>
-          <SectionTitle text="Insulin Log" />
+          <SectionTitle text={t.insulinLog} />
           {insulinEntries.length > 0 && (
             <PressBtn onPress={handleClear} activeOpacity={0.75}>
-              <Text style={[s.clearLogText, { color: colors.red }]}>Clear all</Text>
+              <Text style={[s.clearLogText, { color: colors.red }]}>{t.clearAll}</Text>
             </PressBtn>
           )}
         </View>
         {insulinEntries.length === 0 ? (
           <>
-            <Text style={s.emptyLogText}>No entries yet. Add one above.</Text>
+            <Text style={s.emptyLogText}>{t.noEntriesYet}</Text>
             <View style={[s.infoCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-              <Text style={[s.infoCardTitle, { color: colors.text }]}>📋 Why log your insulin?</Text>
-              {['Tracking doses over time helps you and your doctor spot patterns and adjust your regimen.',
-                'Logging the time helps identify if a dose was missed or taken too late relative to a meal.',
-                'Rapid-acting insulin typically peaks 1–3 hours after injection. Long-acting works over 12–24 hours.',
-                'Never double-dose if you think you missed one — check your log first.',
-              ].map((tip, i) => (
+              <Text style={[s.infoCardTitle, { color: colors.text }]}>{t.whyLogInsulin}</Text>
+              {[t.logTip1, t.logTip2, t.logTip3, t.logTip4].map((tip, i) => (
                 <View key={i} style={s.infoCardRow}>
                   <Text style={[s.infoCardBullet, { color: colors.red }]}>•</Text>
                   <Text style={[s.infoCardBody, { color: colors.textMuted }]}>{tip}</Text>
@@ -526,7 +513,7 @@ function LogTab() {
               <View key={idx} style={[s.logRow, idx < insulinEntries.length - 1 && s.logRowBorder, { backgroundColor: colors.bgCard }]}>
                 <View style={s.logLeft}>
                   <Text style={[s.logType, { color: colors.text }]}>{entry.type}</Text>
-                  <Text style={[s.logTime, { color: colors.textMuted }]}>{brandName}  ·  at {entry.time}</Text>
+                  <Text style={[s.logTime, { color: colors.textMuted }]}>{brandName}  ·  {t.at} {entry.time}</Text>
                 </View>
                 <Text style={[s.logUnits, { color: colors.red }]}>{entry.units}u</Text>
               </View>
@@ -551,6 +538,7 @@ function ReminderForm({
   rUnits: number; setRUnits: (n: number) => void;
   onSave: () => void; onCancel: () => void; colors: any;
 }) {
+  const t = useTranslation();
   const [labelFocus,     setLabelFocus]     = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -559,14 +547,14 @@ function ReminderForm({
   return (
     <SectionCard>
       <SectionTitle text={title} />
-      <Text style={[s.fieldLabel, { color: colors.textMuted }]}>Label</Text>
+      <Text style={[s.fieldLabel, { color: colors.textMuted }]}>{t.label}</Text>
       <TextInput
         style={[s.timeInput, labelFocus && { borderColor: colors.red }, { backgroundColor: colors.inputBg, color: colors.text }]}
-        placeholder="e.g. Morning rapid insulin" placeholderTextColor="#aaa"
+        placeholder={t.reminderLabelPlaceholder} placeholderTextColor="#aaa"
         value={label} onChangeText={setLabel}
         onFocus={() => setLabelFocus(true)} onBlur={() => setLabelFocus(false)} returnKeyType="done" />
 
-      <Text style={[s.fieldLabel, { color: colors.textMuted }]}>Time</Text>
+      <Text style={[s.fieldLabel, { color: colors.textMuted }]}>{t.time}</Text>
       <TouchableOpacity style={[s.timeInput, s.timePickerBtn, s.outlineBtnShadow, { backgroundColor: colors.bgCard }]} onPress={() => setShowTimePicker(true)} activeOpacity={0.75}>
         <Text style={[s.timePickerBtnText, { color: colors.text }]}>{formatTime(timeDate)}</Text>
       </TouchableOpacity>
@@ -575,7 +563,7 @@ function ReminderForm({
           onChange={(event, date) => { setShowTimePicker(false); if (event.type === 'set' && date) setTimeDate(date); }} />
       )}
 
-      <Text style={[s.fieldLabel, { color: colors.textMuted }]}>Schedule</Text>
+      <Text style={[s.fieldLabel, { color: colors.textMuted }]}>{t.schedule}</Text>
       <View style={s.scheduleRow}>
         <TouchableOpacity
           style={[s.schedulePill, { borderColor: colors.red }, days !== 'everyday' && { backgroundColor: colors.red }]}
@@ -583,7 +571,7 @@ function ReminderForm({
           activeOpacity={0.75}
         >
           <Text style={[s.schedulePillText, { color: days !== 'everyday' ? '#fff' : colors.textMuted }]}>
-            {days !== 'everyday' ? formatDateDisplay(days) : '📅 Pick date'}
+            {days !== 'everyday' ? formatDateDisplay(days) : t.pickDate}
           </Text>
         </TouchableOpacity>
         <Text style={[s.scheduleOrText, { color: colors.textMuted }]}>or</Text>
@@ -592,7 +580,7 @@ function ReminderForm({
           onPress={() => setDays('everyday')}
           activeOpacity={0.75}
         >
-          <Text style={[s.schedulePillText, { color: days === 'everyday' ? '#fff' : colors.textMuted }]}>Everyday</Text>
+          <Text style={[s.schedulePillText, { color: days === 'everyday' ? '#fff' : colors.textMuted }]}>{t.everyday}</Text>
         </TouchableOpacity>
       </View>
       {showDatePicker && (
@@ -613,21 +601,22 @@ function ReminderForm({
         />
       )}
 
-      <Text style={[s.fieldLabel, { color: colors.textMuted }]}>Insulin type</Text>
+      <Text style={[s.fieldLabel, { color: colors.textMuted }]}>{t.insulinType}</Text>
       <View style={s.typeRow}>
-        {(['Rapid-acting', 'Long-acting'] as InsulinType[]).map((t) => {
-          const active = rType === t;
+        {(['Rapid-acting', 'Long-acting'] as InsulinType[]).map((tp) => {
+          const active = rType === tp;
+          const label = tp === 'Rapid-acting' ? t.rapidActing : t.longActing;
           return (
-            <TouchableOpacity key={t}
+            <TouchableOpacity key={tp}
               style={[s.typePill, active ? s.primaryBtnShadow : null, { borderColor: colors.red, backgroundColor: active ? colors.red : 'transparent' }]}
-              onPress={() => setRType(t)} activeOpacity={0.75}>
-              <Text style={[s.typePillText, { color: colors.red }, active && s.typePillTextActive]}>{t}</Text>
+              onPress={() => setRType(tp)} activeOpacity={0.75}>
+              <Text style={[s.typePillText, { color: colors.red }, active && s.typePillTextActive]}>{label}</Text>
             </TouchableOpacity>
           );
         })}
       </View>
 
-      <Text style={[s.fieldLabel, { color: colors.textMuted }]}>Units</Text>
+      <Text style={[s.fieldLabel, { color: colors.textMuted }]}>{t.unitsLabel}</Text>
       <View style={s.stepperRow}>
         <PressBtn style={[s.stepperBtn, { borderColor: colors.red, backgroundColor: colors.red }, s.primaryBtnShadow]}
           onPress={() => setRUnits(Math.max(rUnits - 1, 0))} activeOpacity={0.75}>
@@ -643,12 +632,12 @@ function ReminderForm({
       <View style={s.formBtnRow}>
         <View style={{ flex: 1 }}>
           <PressBtn style={[s.cancelFormBtn, s.outlineBtnShadow, { backgroundColor: colors.bgCard }]} onPress={onCancel} activeOpacity={0.75}>
-            <Text style={[s.cancelFormBtnText, { color: colors.textMuted }]}>Cancel</Text>
+            <Text style={[s.cancelFormBtnText, { color: colors.textMuted }]}>{t.cancel}</Text>
           </PressBtn>
         </View>
         <View style={{ flex: 1 }}>
           <PressBtn style={[s.saveFormBtn, { backgroundColor: colors.red, borderColor: colors.red }, s.primaryBtnShadow]} onPress={onSave}>
-            <Text style={s.saveFormBtnText}>Save</Text>
+            <Text style={s.saveFormBtnText}>{t.save}</Text>
           </PressBtn>
         </View>
       </View>
@@ -670,6 +659,7 @@ function formatDateDisplay(iso: string): string {
 
 function RemindersTab() {
   const { colors } = useTheme();
+  const t = useTranslation();
   const { reminders, addReminder, updateReminder, deleteReminder, settings } = useGlucoseStore();
 
   const [showAddForm,  setShowAddForm]  = useState(false);
@@ -692,7 +682,7 @@ function RemindersTab() {
   const formatTime = (d: Date) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
 
   const handleAdd = () => {
-    if (!addLabel.trim()) { Alert.alert('Missing info', 'Please fill in a label.'); return; }
+    if (!addLabel.trim()) { Alert.alert(t.missingInfo, t.pleaseFillLabel); return; }
     const newReminder = { id: generateId(), label: addLabel.trim(), time: formatTime(addTimeDate), days: addDays, type: addType, units: addUnits, active: true };
     addReminder(newReminder);
     if (settings.notificationsEnabled) scheduleReminder(newReminder, settings);
@@ -710,7 +700,7 @@ function RemindersTab() {
   };
 
   const handleSaveEdit = () => {
-    if (!editLabel.trim()) { Alert.alert('Missing info', 'Please fill in a label.'); return; }
+    if (!editLabel.trim()) { Alert.alert(t.missingInfo, t.pleaseFillLabel); return; }
     const updated = { label: editLabel.trim(), time: formatTime(editTimeDate), days: editDays, type: editType, units: editUnits };
     updateReminder(editingId!, updated);
     if (settings.notificationsEnabled) {
@@ -725,23 +715,21 @@ function RemindersTab() {
     <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 32 }}>
       <View style={[s.noteCard, { backgroundColor: settings.notificationsEnabled ? colors.normalBg : colors.highBg, borderColor: colors.border }]}>
         <Text style={s.noteText}>
-          {settings.notificationsEnabled
-            ? '🔔 System notifications are active. Reminders will fire even when the app is closed.'
-            : '🔕 Notifications are off. Enable them in Profile → Settings to receive reminders.'}
+          {settings.notificationsEnabled ? t.notificationsActive : t.notificationsOff}
         </Text>
       </View>
 
       {reminders.length === 0 && !showAddForm ? (
         <View style={[s.emptyCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
           <Text style={s.emptyIcon}>⏰</Text>
-          <Text style={[s.emptyTitle, { color: colors.text }]}>No reminders yet</Text>
-          <Text style={[s.emptyText, { color: colors.textMuted }]}>Tap "Add Reminder" to create your first one.</Text>
+          <Text style={[s.emptyTitle, { color: colors.text }]}>{t.noRemindersYet}</Text>
+          <Text style={[s.emptyText, { color: colors.textMuted }]}>{t.noRemindersYetText}</Text>
         </View>
       ) : (
         reminders.map((r) =>
           editingId === r.id ? (
             <ReminderForm key={r.id}
-              title="Edit Reminder"
+              title={t.editReminder}
               label={editLabel}    setLabel={setEditLabel}
               timeDate={editTimeDate} setTimeDate={setEditTimeDate}
               days={editDays}      setDays={setEditDays}
@@ -756,7 +744,7 @@ function RemindersTab() {
               <View style={s.reminderLeft}>
                 <Text style={[s.reminderLabel, { color: colors.text }, !r.active && s.reminderLabelInactive]}>{r.label}</Text>
                 <Text style={[s.reminderSub, { color: colors.textMuted }]}>
-                  {(r.days ?? 'everyday') === 'everyday' ? 'Everyday' : formatDateDisplay(r.days!)} · {r.time} · {r.type === 'Rapid-acting'
+                  {(r.days ?? 'everyday') === 'everyday' ? t.everyday : formatDateDisplay(r.days!)} · {r.time} · {r.type === 'Rapid-acting'
                     ? getAnalogByType(settings.insulinAnalogType).sublabel
                     : getLongActingByType(settings.longActingInsulinType).sublabel} · {r.units}u
                 </Text>
@@ -772,10 +760,10 @@ function RemindersTab() {
                       else cancelReminder(r.id);
                     }
                   }} activeOpacity={0.75}>
-                  <Text style={[s.toggleBtnText, r.active && { color: colors.red }]}>{r.active ? 'On' : 'Off'}</Text>
+                  <Text style={[s.toggleBtnText, r.active && { color: colors.red }]}>{r.active ? t.on : t.off}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={s.editBtn} onPress={() => startEdit(r)} activeOpacity={0.75}>
-                  <Text style={[s.editBtnText, { color: colors.red }]}>Edit</Text>
+                  <Text style={[s.editBtnText, { color: colors.red }]}>{t.edit}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={s.deleteBtn} onPress={() => { cancelReminder(r.id); deleteReminder(r.id); }} activeOpacity={0.75}>
                   <Text style={[s.deleteBtnText, { color: colors.red }]}>✕</Text>
@@ -788,7 +776,7 @@ function RemindersTab() {
 
       {showAddForm && (
         <ReminderForm
-          title="New Reminder"
+          title={t.newReminder}
           label={addLabel}    setLabel={setAddLabel}
           timeDate={addTimeDate} setTimeDate={setAddTimeDate}
           days={addDays}      setDays={setAddDays}
@@ -802,15 +790,15 @@ function RemindersTab() {
 
       {!showAddForm && editingId === null && (
         <PressBtn style={[s.addReminderBtn, { borderColor: colors.red, backgroundColor: 'transparent' }]} onPress={() => setShowAddForm(true)} activeOpacity={0.75}>
-          <Text style={[s.addReminderBtnText, { color: colors.red }]}>+ Add Reminder</Text>
+          <Text style={[s.addReminderBtnText, { color: colors.red }]}>{t.addReminder}</Text>
         </PressBtn>
       )}
 
       {!showAddForm && editingId === null && (
         <View style={[s.infoCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-          <Text style={[s.infoCardTitle, { color: colors.text }]}>ℹ️ How reminders work</Text>
-          <Text style={[s.infoCardBody, { color: colors.textMuted }]}>Reminders fire as system notifications at the scheduled time, even when DiabEasy is closed. Make sure notifications are allowed for DiabEasy in your device settings.</Text>
-          <Text style={[s.infoCardBody, { marginTop: 6, color: colors.textMuted }]}>You can turn all reminders on or off in <Text style={{ fontWeight: '700' }}>Profile → Settings → Notifications</Text>.</Text>
+          <Text style={[s.infoCardTitle, { color: colors.text }]}>{t.howRemindersWork}</Text>
+          <Text style={[s.infoCardBody, { color: colors.textMuted }]}>{t.howRemindersWorkBody}</Text>
+          <Text style={[s.infoCardBody, { marginTop: 6, color: colors.textMuted }]}>{t.howRemindersWorkBody2}</Text>
         </View>
       )}
     </ScrollView>
@@ -821,17 +809,18 @@ function RemindersTab() {
 
 export default function MedicationScreen() {
   const { colors } = useTheme();
+  const t = useTranslation();
   const [activeTab, setActiveTab] = useState<ActiveTab>('calculator');
 
   const TABS: { key: ActiveTab; label: string }[] = [
-    { key: 'calculator', label: 'Calculator' },
-    { key: 'log',        label: 'Insulin Log' },
-    { key: 'reminders',  label: 'Reminders' },
+    { key: 'calculator', label: t.calculatorTab },
+    { key: 'log',        label: t.insulinLogTab },
+    { key: 'reminders',  label: t.remindersTab },
   ];
 
   return (
     <View style={[s.root, { backgroundColor: colors.bg }]}>
-      <Text style={[s.title, { color: colors.text }]}>Medication</Text>
+      <Text style={[s.title, { color: colors.text }]}>{t.medication}</Text>
 
       {/* Sub-tab bar with shadow */}
       <View style={[s.tabBar, { borderColor: colors.red }, s.tabBarShadow]}>

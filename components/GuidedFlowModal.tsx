@@ -7,6 +7,7 @@ import * as Haptics from 'expo-haptics';
 import { useTheme } from '../context/AppContext';
 import { useGlucoseStore } from '../store/glucoseStore';
 import { calcCorrectionDose, calculateIOB } from '../utils/insulinUtils';
+import { useTranslation } from '../hooks/useTranslation';
 
 const RAISE_FOODS: Record<string, { name: string; carbs: number; gi: number; kcal: number }[]> = {
   '⚡ Fastest Acting': [
@@ -51,30 +52,30 @@ function toMgDl(value: number, unit: string): number {
 // ── Hypo Slide ────────────────────────────────────────────────────────────────
 
 function HypoSlide1({ glucoseValue, unit, colors }: { glucoseValue: number; unit: string; colors: any }) {
+  const t = useTranslation();
   const [expandedGroup, setExpandedGroup] = useState<string | null>('⚡ Fastest Acting');
 
   return (
     <ScrollView showsVerticalScrollIndicator={true} persistentScrollbar={true} contentContainerStyle={{ paddingBottom: 24 }}>
       <View style={[styles.valueBanner, { backgroundColor: colors.lowBg, borderColor: colors.low }]}>
-        <Text style={[styles.valueBannerLabel, { color: colors.low }]}>Current Reading</Text>
+        <Text style={[styles.valueBannerLabel, { color: colors.low }]}>{t.currentReading}</Text>
         <Text style={[styles.valueBannerValue, { color: colors.low }]}>{glucoseValue} {unit}</Text>
       </View>
 
       <View style={[styles.explanationCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-        <Text style={[styles.explanationTitle, { color: colors.text }]}>⚠️ Your glycemia is too low.</Text>
-        <Text style={[styles.explanationBody, { color: colors.textMuted }]}>
-          Eat or drink something with fast-acting sugar immediately, then recheck in 15 minutes.
-        </Text>
+        <Text style={[styles.explanationTitle, { color: colors.text }]}>{t.glycemiaTooLow}</Text>
+        <Text style={[styles.explanationBody, { color: colors.textMuted }]}>{t.eatFastSugar}</Text>
         <View style={[styles.tipRow, { borderTopColor: colors.border }]}>
           <Text style={[styles.tipBullet, { color: colors.low }]}>💡</Text>
-          <Text style={[styles.tipText, { color: colors.textMuted }]}>Do NOT take insulin. Do NOT drive.</Text>
+          <Text style={[styles.tipText, { color: colors.textMuted }]}>{t.doNotTakeInsulin}</Text>
         </View>
       </View>
 
-      <Text style={[styles.foodListTitle, { color: colors.text }]}>What to eat or drink now:</Text>
+      <Text style={[styles.foodListTitle, { color: colors.text }]}>{t.whatToEatNow}</Text>
 
       {Object.entries(RAISE_FOODS).map(([groupName, items]) => {
         const isOpen = expandedGroup === groupName;
+        const groupLabel = t.raiseFoodCategories[groupName] ?? groupName;
         return (
           <View key={groupName} style={[styles.foodGroup, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
             <TouchableOpacity
@@ -82,14 +83,14 @@ function HypoSlide1({ glucoseValue, unit, colors }: { glucoseValue: number; unit
               onPress={() => setExpandedGroup(isOpen ? null : groupName)}
               activeOpacity={0.8}
             >
-              <Text style={[styles.foodGroupTitle, { color: colors.text }]}>{groupName}</Text>
+              <Text style={[styles.foodGroupTitle, { color: colors.text }]}>{groupLabel}</Text>
               <Text style={[styles.foodGroupChevron, { color: colors.textMuted }]}>{isOpen ? '▲' : '▼'}</Text>
             </TouchableOpacity>
             {isOpen && items.map((item, idx) => (
               <View key={item.name} style={[styles.foodRow, idx > 0 && { borderTopWidth: 1, borderTopColor: colors.borderLight }]}>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.foodName, { color: colors.text }]}>{item.name}</Text>
-                  <Text style={[styles.foodMacros, { color: colors.textMuted }]}>{item.carbs}g carbs · GI {item.gi} · {item.kcal} kcal</Text>
+                  <Text style={[styles.foodName, { color: colors.text }]}>{t.foodNames[item.name] ?? item.name}</Text>
+                  <Text style={[styles.foodMacros, { color: colors.textMuted }]}>{item.carbs}g {t.carbs} · GI {item.gi} · {item.kcal} kcal</Text>
                 </View>
                 <View style={[styles.carbsBadge, { backgroundColor: colors.lowBg, borderColor: colors.low }]}>
                   <Text style={[styles.carbsBadgeText, { color: colors.low }]}>{item.carbs}g</Text>
@@ -106,6 +107,7 @@ function HypoSlide1({ glucoseValue, unit, colors }: { glucoseValue: number; unit
 // ── Hyper Slide ───────────────────────────────────────────────────────────────
 
 function HyperSlide1({ glucoseValue, unit, colors }: { glucoseValue: number; unit: string; colors: any }) {
+  const t = useTranslation();
   const { settings, insulinEntries } = useGlucoseStore();
   const mgDl          = toMgDl(glucoseValue, unit);
   const correctionRaw = calcCorrectionDose(mgDl, settings.targetGlucose, settings.isf);
@@ -116,35 +118,31 @@ function HyperSlide1({ glucoseValue, unit, colors }: { glucoseValue: number; uni
   return (
     <ScrollView showsVerticalScrollIndicator={true} persistentScrollbar={true} contentContainerStyle={{ paddingBottom: 24 }}>
       <View style={[styles.valueBanner, { backgroundColor: colors.highBg, borderColor: colors.high }]}>
-        <Text style={[styles.valueBannerLabel, { color: colors.high }]}>Current Reading</Text>
+        <Text style={[styles.valueBannerLabel, { color: colors.high }]}>{t.currentReading}</Text>
         <Text style={[styles.valueBannerValue, { color: colors.high }]}>{glucoseValue} {unit}</Text>
       </View>
 
       <View style={[styles.explanationCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-        <Text style={[styles.explanationTitle, { color: colors.text }]}>⚠️ Your glycemia is too high.</Text>
+        <Text style={[styles.explanationTitle, { color: colors.text }]}>{t.glycemiaTooHigh}</Text>
 
         {!hasParams ? (
-          <Text style={[styles.explanationBody, { color: colors.textMuted }]}>
-            Set your insulin parameters in Profile → Settings to get a correction dose recommendation.
-          </Text>
+          <Text style={[styles.explanationBody, { color: colors.textMuted }]}>{t.setParamsForDose}</Text>
         ) : netDose === 0 ? (
-          <Text style={[styles.explanationBody, { color: colors.textMuted }]}>
-            No additional insulin needed right now. Drink water and recheck in 15 minutes.
-          </Text>
+          <Text style={[styles.explanationBody, { color: colors.textMuted }]}>{t.noInsulinNeededRecheck}</Text>
         ) : (
           <>
             <Text style={[styles.doseText, { color: colors.high }]}>
-              Consider taking <Text style={styles.doseBold}>{netDose} shot{netDose !== 1 ? 's' : ''}</Text> of quick-acting insulin, then recheck after 15 minutes.
+              {t.considerShots(netDose)}
             </Text>
             <Text style={[styles.doseDisclaimer, { color: colors.textFaint }]}>
-              ⚠️ Estimate only. Always confirm with your healthcare provider before dosing.
+              {t.estimateOnlyConfirm}
             </Text>
           </>
         )}
 
         <View style={[styles.tipRow, { borderTopColor: colors.border, marginTop: 8 }]}>
           <Text style={[styles.tipBullet, { color: colors.high }]}>💡</Text>
-          <Text style={[styles.tipText, { color: colors.textMuted }]}>Drink plenty of water and avoid eating until levels improve.</Text>
+          <Text style={[styles.tipText, { color: colors.textMuted }]}>{t.drinkWaterAvoidEating}</Text>
         </View>
       </View>
     </ScrollView>
@@ -156,6 +154,7 @@ function HyperSlide1({ glucoseValue, unit, colors }: { glucoseValue: number; uni
 function EmergencySlide({ flowType, glucoseValue, unit, onClose, colors }: {
   flowType: 'hypo' | 'hyper'; glucoseValue: number; unit: string; onClose: () => void; colors: any;
 }) {
+  const t = useTranslation();
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   React.useEffect(() => {
@@ -168,6 +167,7 @@ function EmergencySlide({ flowType, glucoseValue, unit, onClose, colors }: {
   }, []);
 
   const isHypo = flowType === 'hypo';
+  const signs  = isHypo ? t.hypoSigns : t.hyperSigns;
 
   return (
     <ScrollView showsVerticalScrollIndicator={true} persistentScrollbar={true} contentContainerStyle={{ paddingBottom: 24 }}>
@@ -175,26 +175,16 @@ function EmergencySlide({ flowType, glucoseValue, unit, onClose, colors }: {
         backgroundColor: isHypo ? colors.lowBg : colors.highBg,
         borderColor:     isHypo ? colors.low   : colors.high,
       }]}>
-        <Text style={[styles.valueBannerLabel, { color: isHypo ? colors.low : colors.high }]}>Current Reading</Text>
+        <Text style={[styles.valueBannerLabel, { color: isHypo ? colors.low : colors.high }]}>{t.currentReading}</Text>
         <Text style={[styles.valueBannerValue, { color: isHypo ? colors.low : colors.high }]}>{glucoseValue} {unit}</Text>
       </View>
 
       <View style={[styles.explanationCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-        <Text style={[styles.explanationTitle, { color: colors.text }]}>🚨 Do you need emergency services?</Text>
+        <Text style={[styles.explanationTitle, { color: colors.text }]}>{t.emergencyServicesQuestion}</Text>
         <Text style={[styles.explanationBody, { color: colors.textMuted }]}>
-          {isHypo
-            ? 'If you feel confused, cannot swallow, or someone cannot wake you — call 112 immediately.'
-            : 'If you feel nauseous, are vomiting, have fruity-smelling breath, or feel very unwell — call 112 immediately.'}
+          {isHypo ? t.hypoEmergencyBody : t.hyperEmergencyBody}
         </Text>
-        {(isHypo ? [
-          'Loss of consciousness or inability to swallow',
-          'Seizures or severe uncontrolled shaking',
-          'No improvement after two rounds of fast carbs',
-        ] : [
-          'Nausea, vomiting, or abdominal pain',
-          'Fruity or acetone-smelling breath',
-          'Extreme confusion or drowsiness',
-        ]).map((sign, i) => (
+        {signs.map((sign, i) => (
           <View key={i} style={[styles.tipRow, i === 0 && { borderTopWidth: 0 }, { borderTopColor: colors.border }]}>
             <Text style={[styles.tipBullet, { color: colors.red }]}>•</Text>
             <Text style={[styles.tipText, { color: colors.textMuted }]}>{sign}</Text>
@@ -209,16 +199,16 @@ function EmergencySlide({ flowType, glucoseValue, unit, onClose, colors }: {
           activeOpacity={0.85}
         >
           <Text style={styles.callBtnIcon}>📞</Text>
-          <Text style={styles.callBtnText}>Call 112 — Emergency Services</Text>
+          <Text style={styles.callBtnText}>{t.callEmergencyServices}</Text>
         </TouchableOpacity>
       </Animated.View>
 
       <TouchableOpacity style={[styles.fineBtn, { borderColor: colors.border }]} onPress={onClose} activeOpacity={0.75}>
-        <Text style={[styles.fineBtnText, { color: colors.textMuted }]}>I'm managing — close</Text>
+        <Text style={[styles.fineBtnText, { color: colors.textMuted }]}>{t.imManaging}</Text>
       </TouchableOpacity>
 
       <Text style={[styles.emergencyNote, { color: colors.textFaint }]}>
-        Never ignore the warning signs of a diabetic emergency. When in doubt, call.
+        {t.neverIgnoreSigns}
       </Text>
     </ScrollView>
   );
@@ -228,6 +218,7 @@ function EmergencySlide({ flowType, glucoseValue, unit, onClose, colors }: {
 
 export function GuidedFlowModal({ visible, glucoseValue, unit, flowType, onClose }: Props) {
   const { colors } = useTheme();
+  const t = useTranslation();
   const [slide, setSlide] = useState(0);
   const slideAnim = useRef(new Animated.Value(0)).current;
 
@@ -244,7 +235,7 @@ export function GuidedFlowModal({ visible, glucoseValue, unit, flowType, onClose
   };
 
   const isHypo      = flowType === 'hypo';
-  const titles      = isHypo ? ['🩸 Low Blood Sugar', '🚨 Emergency Check'] : ['🩸 High Blood Sugar', '🚨 Emergency Check'];
+  const titles      = isHypo ? [t.lowBloodSugar, t.emergencyCheck] : [t.highBloodSugar, t.emergencyCheck];
   const accentColor = isHypo ? colors.low : colors.high;
 
   return (
@@ -255,7 +246,7 @@ export function GuidedFlowModal({ visible, glucoseValue, unit, flowType, onClose
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
             <View style={{ flex: 1 }}>
               <Text style={[styles.headerTitle, { color: colors.text }]}>{titles[slide]}</Text>
-              <Text style={[styles.headerSub, { color: colors.textMuted }]}>Step {slide + 1} of 2</Text>
+              <Text style={[styles.headerSub, { color: colors.textMuted }]}>{t.stepOf(slide + 1)}</Text>
             </View>
             <TouchableOpacity onPress={onClose} activeOpacity={0.7} style={styles.closeBtn}>
               <Text style={[styles.closeBtnText, { color: colors.textMuted }]}>✕</Text>
@@ -280,10 +271,10 @@ export function GuidedFlowModal({ visible, glucoseValue, unit, flowType, onClose
           {slide === 0 && (
             <View style={[styles.footer, { borderTopColor: colors.border }]}>
               <TouchableOpacity style={[styles.skipBtn, { borderColor: colors.border }]} onPress={onClose} activeOpacity={0.75}>
-                <Text style={[styles.skipBtnText, { color: colors.textMuted }]}>Skip</Text>
+                <Text style={[styles.skipBtnText, { color: colors.textMuted }]}>{t.skipBtn}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.nextBtn, { backgroundColor: accentColor }]} onPress={() => goToSlide(1)} activeOpacity={0.85}>
-                <Text style={styles.nextBtnText}>Emergency Check →</Text>
+                <Text style={styles.nextBtnText}>{t.emergencyCheckBtn}</Text>
               </TouchableOpacity>
             </View>
           )}

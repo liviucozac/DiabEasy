@@ -3,35 +3,17 @@ import { Modal, View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'rea
 import { useTheme } from '../context/AppContext';
 import { useSubscriptionStore } from '../store/subscriptionStore';
 import { PressBtn } from './PressBtn';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface Props {
   visible: boolean;
   onClose: () => void;
 }
 
-const FREE_FEATURES = [
-  'Manual glucose logging',
-  'Medication calculator & insulin log',
-  'Food guide',
-  'SOS & emergency screen',
-  'Reminders',
-  'History & charts — last 15 days',
-  '7-day basic PDF (table only)',
-];
-
-const PREMIUM_FEATURES = [
-  'Everything in Free',
-  'Automatic Bluetooth glucometer readings',
-  'Use multiple devices at once',
-  'Unlimited history & charts',
-  'Full PDF — any date range',
-  'All charts: TIR, trend, pie',
-  'Future: caregiver mode & more',
-];
-
 export function UpgradeModal({ visible, onClose }: Props) {
   const { colors } = useTheme();
   const { setPremiumPaid, setOneTimePdfPurchased } = useSubscriptionStore();
+  const t = useTranslation();
 
   const handleSubscribe = () => {
     // TODO: replace with RevenueCat purchase when ready to publish
@@ -51,13 +33,13 @@ export function UpgradeModal({ visible, onClose }: Props) {
         <View style={[s.sheet, { backgroundColor: colors.bg }]}>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 8 }}>
 
-            <Text style={[s.title, { color: colors.red }]}>DiabEasy Premium</Text>
-            <Text style={[s.subtitle, { color: colors.textMuted }]}>Upgrade for the full experience</Text>
+            <Text style={[s.title, { color: colors.red }]}>{t.diabeasyPremium}</Text>
+            <Text style={[s.subtitle, { color: colors.textMuted }]}>{t.upgradeForFullExperience}</Text>
 
             <View style={s.compareRow}>
               <View style={[s.col, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-                <Text style={[s.colHeader, { color: colors.textMuted }]}>Free</Text>
-                {FREE_FEATURES.map((f, i) => (
+                <Text style={[s.colHeader, { color: colors.textMuted }]}>{t.freeLabel}</Text>
+                {t.freeFeatures.map((f, i) => (
                   <View key={i} style={s.featureRow}>
                     <Text style={[s.featureIcon, { color: colors.textMuted }]}>○</Text>
                     <Text style={[s.featureText, { color: colors.textMuted }]}>{f}</Text>
@@ -66,8 +48,8 @@ export function UpgradeModal({ visible, onClose }: Props) {
               </View>
 
               <View style={[s.col, s.premiumCol, { backgroundColor: colors.bgCard, borderColor: colors.red }]}>
-                <Text style={[s.colHeader, { color: colors.red }]}>★ Premium</Text>
-                {PREMIUM_FEATURES.map((f, i) => (
+                <Text style={[s.colHeader, { color: colors.red }]}>{t.premiumLabel}</Text>
+                {t.premiumFeatures.map((f, i) => (
                   <View key={i} style={s.featureRow}>
                     <Text style={[s.featureIcon, { color: colors.red }]}>✓</Text>
                     <Text style={[s.featureText, { color: colors.text }]}>{f}</Text>
@@ -80,10 +62,10 @@ export function UpgradeModal({ visible, onClose }: Props) {
               style={[s.primaryBtn, { backgroundColor: colors.red }, s.btnShadow]}
               onPress={handleSubscribe}
             >
-              <Text style={s.primaryBtnText}>Go Premium — 10 RON / month</Text>
+              <Text style={s.primaryBtnText}>{t.goPremium}</Text>
             </PressBtn>
             <Text style={[s.btnNote, { color: colors.textMuted }]}>
-              Cancel anytime · Billed monthly via Google Play
+              {t.cancelAnytime}
             </Text>
 
             <View style={[s.divider, { backgroundColor: colors.border }]} />
@@ -93,14 +75,14 @@ export function UpgradeModal({ visible, onClose }: Props) {
               onPress={handleOneTimePdf}
               activeOpacity={0.75}
             >
-              <Text style={[s.outlineBtnText, { color: colors.red }]}>One Full PDF Report — 2.99 RON</Text>
+              <Text style={[s.outlineBtnText, { color: colors.red }]}>{t.oneTimePdf}</Text>
             </PressBtn>
             <Text style={[s.btnNote, { color: colors.textMuted }]}>
-              Single export · All charts included · One-time purchase
+              {t.singleExport}
             </Text>
 
             <TouchableOpacity onPress={onClose} activeOpacity={0.7} style={s.closeLink}>
-              <Text style={[s.closeLinkText, { color: colors.textMuted }]}>Maybe later</Text>
+              <Text style={[s.closeLinkText, { color: colors.textMuted }]}>{t.maybeLater}</Text>
             </TouchableOpacity>
 
           </ScrollView>

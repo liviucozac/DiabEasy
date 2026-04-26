@@ -3,10 +3,12 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSubscription } from '../hooks/useSubscription';
 import { useTheme } from '../context/AppContext';
 import { UpgradeModal } from './UpgradeModal';
+import { useTranslation } from '../hooks/useTranslation';
 
 export function TrialBanner() {
   const { isTrialActive, daysLeftInTrial } = useSubscription();
   const { colors } = useTheme();
+  const t = useTranslation();
   const [showUpgrade, setShowUpgrade] = useState(false);
 
   if (!isTrialActive) return null;
@@ -21,14 +23,14 @@ export function TrialBanner() {
       }]}>
         <Text style={[s.text, { color: urgent ? colors.low : colors.normal }]}>
           {urgent ? '⚠️' : '⏳'}{' '}
-          {daysLeftInTrial} day{daysLeftInTrial !== 1 ? 's' : ''} left in your free trial
+          {t.trialDaysLeft(daysLeftInTrial)}
         </Text>
         <TouchableOpacity
           onPress={() => setShowUpgrade(true)}
           activeOpacity={0.8}
           style={[s.btn, { backgroundColor: colors.red }]}
         >
-          <Text style={s.btnText}>Upgrade</Text>
+          <Text style={s.btnText}>{t.upgrade}</Text>
         </TouchableOpacity>
       </View>
 

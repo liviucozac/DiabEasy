@@ -13,6 +13,7 @@ import { useSubscription, FREE_HISTORY_DAYS } from '../hooks/useSubscription';
 import { UpgradeModal } from '../components/UpgradeModal';
 import Svg, { Polyline, Line, Text as SvgText, Circle, G, Path } from 'react-native-svg';
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { useTranslation } from '../hooks/useTranslation';
 
 type HistoryEntry = GlucoseEntry;
 
@@ -216,6 +217,18 @@ export default function HistoryScreen() {
   const { glucoseLow, glucoseHigh } = settings;
   const { colors, isDark } = useTheme();
   const { isPremium, canUseFullPdf, isTrialActive, hasUsedTrialPdf, markTrialPdfUsed } = useSubscription();
+  const t = useTranslation();
+
+  const fastingDisplayLabel = (value: string) => {
+    const map: Record<string, string> = {
+      'Fasting': t.fasting, 'Pre-meal': t.preMeal, 'Post-meal': t.postMeal,
+      'Random': t.random, 'Bedtime': t.bedtime, 'Post-exercise': t.postExercise,
+    };
+    return map[value] ?? value;
+  };
+
+  const interpretationLabel = (interp: string) =>
+    interp === 'Low' ? t.statusLow : interp === 'High' ? t.statusHigh : t.statusNormal;
 
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo,   setFilterDateTo]   = useState('');
@@ -381,13 +394,13 @@ export default function HistoryScreen() {
           <Text style={[styles.entryDate,  { color: colors.text }]}>{date}</Text>
           <Text style={[styles.entryTime,  { color: colors.textMuted }]}>{time}</Text>
           <Text style={[styles.entryValue, { color: colors.text }]}>{entry.value} {entry.unit}</Text>
-          <Text style={[styles.entryBadge, { color: barColor }]}>{statusIcon(entry.interpretation)} {entry.interpretation}</Text>
+          <Text style={[styles.entryBadge, { color: barColor }]}>{statusIcon(entry.interpretation)} {interpretationLabel(entry.interpretation)}</Text>
           <TouchableOpacity onPress={() => removeEntry(entry.id)} activeOpacity={0.7}>
-            <Text style={[styles.deleteBtn, { color: colors.textMuted }]}>Delete</Text>
+            <Text style={[styles.deleteBtn, { color: colors.textMuted }]}>{t.delete}</Text>
           </TouchableOpacity>
         </View>
-        {!!entry.fasting  && <Text style={[styles.fastingLabel, { color: colors.textMuted }]}>- {entry.fasting}</Text>}
-        {!!entry.symptoms && <Text style={[styles.notes, { color: colors.textMuted }]}>Notes: {entry.symptoms}</Text>}
+        {!!entry.fasting  && <Text style={[styles.fastingLabel, { color: colors.textMuted }]}>- {fastingDisplayLabel(entry.fasting)}</Text>}
+        {!!entry.symptoms && <Text style={[styles.notes, { color: colors.textMuted }]}>{t.notes} {entry.symptoms}</Text>}
       </View>
     );
   };
@@ -666,7 +679,7 @@ export default function HistoryScreen() {
       await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: 'Export Glucose Report' });
     } catch (error) {
       console.error('PDF export error:', error);
-      Alert.alert('Export failed', 'Could not generate the PDF. Please try again.');
+      Alert.alert(t.exportFailed, t.exportFailedBody);
     }
   };
 
@@ -676,20 +689,20 @@ export default function HistoryScreen() {
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}
     >
-      <Text style={[styles.title, { color: colors.text }]}>Past Measurements</Text>
-      <Text style={[styles.filterHeading, { color: colors.text }]}>Filter values</Text>
+      <Text style={[styles.title, { color: colors.text }]}>{t.pastMeasurements}</Text>
+      <Text style={[styles.filterHeading, { color: colors.text }]}>{t.filterValues}</Text>
 
       <View style={styles.filterRow}>
         <View style={styles.filterGroup}>
-          <Text style={[styles.filterLabel, { color: colors.textMuted }]}>From Date</Text>
+          <Text style={[styles.filterLabel, { color: colors.textMuted }]}>{t.fromDate}</Text>
           <TouchableOpacity style={[inputStyle, { justifyContent: 'center' }]} onPress={() => setShowFromPicker(true)}>
-            <Text style={{ color: filterDateFrom ? colors.text : colors.placeholder, fontSize: 14 }}>{filterDateFrom || 'Select date'}</Text>
+            <Text style={{ color: filterDateFrom ? colors.text : colors.placeholder, fontSize: 14 }}>{filterDateFrom || t.selectDate}</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.filterGroup}>
-          <Text style={[styles.filterLabel, { color: colors.textMuted }]}>To Date</Text>
+          <Text style={[styles.filterLabel, { color: colors.textMuted }]}>{t.toDate}</Text>
           <TouchableOpacity style={[inputStyle, { justifyContent: 'center' }]} onPress={() => setShowToPicker(true)}>
-            <Text style={{ color: filterDateTo ? colors.text : colors.placeholder, fontSize: 14 }}>{filterDateTo || 'Select date'}</Text>
+            <Text style={{ color: filterDateTo ? colors.text : colors.placeholder, fontSize: 14 }}>{filterDateTo || t.selectDate}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -705,30 +718,30 @@ export default function HistoryScreen() {
 
       <View style={styles.filterRow}>
         <View style={styles.filterGroup}>
-          <Text style={[styles.filterLabel, { color: colors.textMuted }]}>Min Value</Text>
-          <TextInput style={inputStyle} placeholder="Min" placeholderTextColor={colors.placeholder} keyboardType="decimal-pad" value={filterMin} onChangeText={setFilterMin} />
+          <Text style={[styles.filterLabel, { color: colors.textMuted }]}>{t.minValue}</Text>
+          <TextInput style={inputStyle} placeholder={t.minPlaceholder} placeholderTextColor={colors.placeholder} keyboardType="decimal-pad" value={filterMin} onChangeText={setFilterMin} />
         </View>
         <View style={styles.filterGroup}>
-          <Text style={[styles.filterLabel, { color: colors.textMuted }]}>Max Value</Text>
-          <TextInput style={inputStyle} placeholder="Max" placeholderTextColor={colors.placeholder} keyboardType="decimal-pad" value={filterMax} onChangeText={setFilterMax} />
+          <Text style={[styles.filterLabel, { color: colors.textMuted }]}>{t.maxValue}</Text>
+          <TextInput style={inputStyle} placeholder={t.maxPlaceholder} placeholderTextColor={colors.placeholder} keyboardType="decimal-pad" value={filterMax} onChangeText={setFilterMax} />
         </View>
       </View>
 
-      <Text style={[styles.filterLabel, styles.pillHeading, { color: colors.textMuted }]}>Filter by measuring unit:</Text>
+      <Text style={[styles.filterLabel, styles.pillHeading, { color: colors.textMuted }]}>{t.filterByUnit}</Text>
       <View style={styles.pillRow}>
         <UnitPill label="mg/dL"  value="mg/dL" />
         <UnitPill label="mmol/L" value="mmol/L" />
-        <UnitPill label="All"    value="" />
+        <UnitPill label={t.all}  value="" />
       </View>
 
       <View style={styles.filterBtnsRow}>
         <PressBtn onPress={clearFilters}
           style={[styles.filterActionBtn, { borderColor: colors.red, backgroundColor: 'transparent' }]} activeOpacity={0.7}>
-          <Text style={[styles.filterActionBtnText, { color: colors.red }]}>Clear Filters</Text>
+          <Text style={[styles.filterActionBtnText, { color: colors.red }]}>{t.clearFilters}</Text>
         </PressBtn>
         <PressBtn onPress={() => setFiltersApplied(true)}
           style={[styles.filterActionBtn, { borderColor: colors.red, backgroundColor: 'transparent' }]} activeOpacity={0.7}>
-          <Text style={[styles.filterActionBtnText, { color: colors.red }]}>Apply Filters</Text>
+          <Text style={[styles.filterActionBtnText, { color: colors.red }]}>{t.applyFilters}</Text>
         </PressBtn>
       </View>
 
@@ -738,7 +751,7 @@ export default function HistoryScreen() {
           style={[styles.clearBtn, { borderColor: colors.red, backgroundColor: colors.red }, styles.primaryBtnShadow]}
         >
           <Text style={[styles.clearBtnText, { color: '#fff' }]}>
-            Export Full PDF{isTrialActive && !hasUsedTrialPdf ? ' ★' : ''}
+            {t.exportFullPdf}{isTrialActive && !hasUsedTrialPdf ? ' ★' : ''}
           </Text>
         </PressBtn>
       ) : (
@@ -747,10 +760,10 @@ export default function HistoryScreen() {
             onPress={() => exportPDF(true)}
             style={[styles.clearBtn, { borderColor: colors.red, backgroundColor: colors.red }, styles.primaryBtnShadow]}
           >
-            <Text style={[styles.clearBtnText, { color: '#fff' }]}>Export Basic PDF (7 days)</Text>
+            <Text style={[styles.clearBtnText, { color: '#fff' }]}>{t.exportBasicPdf}</Text>
           </PressBtn>
           <TouchableOpacity onPress={() => setShowUpgrade(true)} activeOpacity={0.75} style={styles.upgradeLink}>
-            <Text style={[styles.upgradeLinkText, { color: colors.red }]}>🔒 Unlock full reports — Upgrade</Text>
+            <Text style={[styles.upgradeLinkText, { color: colors.red }]}>{t.unlockFullReports}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -758,9 +771,9 @@ export default function HistoryScreen() {
       <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
       {history.length === 0 ? (
-        <EmptyState icon="📋" title="No readings yet" subtitle="Submit a glucose value on the Home tab to start your history." />
+        <EmptyState icon="📋" title={t.noReadingsYet} subtitle={t.noReadingsSubtitle} />
       ) : filteredHistory.length === 0 ? (
-        <EmptyState icon="🔍" title="No matches" subtitle="No entries match your current filter criteria." />
+        <EmptyState icon="🔍" title={t.noMatches} subtitle={t.noMatchesSubtitle} />
       ) : (
         <View style={{ maxHeight: 200, position: 'relative' }}>
           <ScrollView
@@ -822,32 +835,32 @@ export default function HistoryScreen() {
 
           {totalReadings >= 3 && (
             <>
-              <Text style={[styles.chartTitle, { color: colors.textMuted }]}>KEY METRICS</Text>
+              <Text style={[styles.chartTitle, { color: colors.textMuted }]}>{t.keyMetrics}</Text>
               <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 12 }}>
                 <View style={{ alignItems: 'center' }}>
                   <Text style={{ fontSize: 16, fontWeight: '900', color: tirPercent !== null && tirPercent >= 70 ? colors.normal : tirPercent !== null && tirPercent >= 50 ? colors.high : colors.low }}>
                     {tirPercent ?? '-'}%
                   </Text>
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text, marginTop: 2 }}>Time in Range</Text>
-                  <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 1 }}>Target: 70%+</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text, marginTop: 2 }}>{t.timeInRange}</Text>
+                  <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 1 }}>{t.targetTirLabel}</Text>
                 </View>
                 <View style={{ width: 1, backgroundColor: colors.border }} />
                 <View style={{ alignItems: 'center' }}>
                   <Text style={{ fontSize: 16, fontWeight: '900', color: eHbA1c !== null && parseFloat(eHbA1c) <= 7 ? colors.normal : eHbA1c !== null && parseFloat(eHbA1c) <= 8 ? colors.high : colors.low }}>
                     {eHbA1c ?? '-'}%
                   </Text>
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text, marginTop: 2 }}>Est. HbA1c (ADAG)</Text>
-                  <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 1 }}>Target: below 7%</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text, marginTop: 2 }}>{t.estHba1c}</Text>
+                  <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 1 }}>{t.targetHba1cLabel}</Text>
                 </View>
               </View>
               <Text style={{ fontSize: 10, color: colors.textFaint, textAlign: 'center', paddingBottom: 8 }}>
-                Based on {totalReadings} readings. Estimates only - confirm with a lab test.
+                {t.basedOnReadings(totalReadings)}
               </Text>
               <View style={[styles.chartDivider, { backgroundColor: colors.border }]} />
             </>
           )}
 
-          <Text style={[styles.chartTitle, { color: colors.textMuted, marginTop: 8 }]}>GLUCOSE OVER TIME</Text>
+          <Text style={[styles.chartTitle, { color: colors.textMuted, marginTop: 8 }]}>{t.glucoseOverTime}</Text>
 
           <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 8, marginVertical: 8 }}>
             {([7, 14, 20, 'all'] as const).map((w) => (
@@ -862,19 +875,18 @@ export default function HistoryScreen() {
                 activeOpacity={0.75}
               >
                 <Text style={{ fontSize: 11, fontWeight: '600', color: chartWindow === w ? '#fff' : colors.red }}>
-                  {w === 'all' ? 'All' : `Last ${w}`}
+                  {w === 'all' ? t.all : `${t.last} ${w}`}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
 
           <Text style={[styles.chartSub, { color: colors.textFaint }]}>
-            Showing {chartData.length} reading{chartData.length !== 1 ? 's' : ''}
-            {hasOlderData ? ` (last ${FREE_HISTORY_DAYS} days)` : ''}
+            {t.showingReadings(chartData.length)}{hasOlderData ? t.lastDaysParens(FREE_HISTORY_DAYS) : ''}
           </Text>
           {hasOlderData && (
             <TouchableOpacity onPress={() => setShowUpgrade(true)} activeOpacity={0.75} style={[styles.chartLockBanner, { backgroundColor: colors.lowBg, borderColor: colors.red }]}>
-              <Text style={[styles.chartLockText, { color: colors.red }]}>🔒 You have older data — upgrade to unlock full history chart</Text>
+              <Text style={[styles.chartLockText, { color: colors.red }]}>{t.olderDataLocked}</Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity
@@ -882,13 +894,13 @@ export default function HistoryScreen() {
             style={{ alignSelf: 'flex-start', marginTop: 6, marginBottom: 2, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6, borderWidth: 1.5, borderColor: colors.red }}
             activeOpacity={0.75}
           >
-            <Text style={{ fontSize: 11, fontWeight: '600', color: colors.red }}>⛶ Expand</Text>
+            <Text style={{ fontSize: 11, fontWeight: '600', color: colors.red }}>{t.expandChart}</Text>
           </TouchableOpacity>
           <View style={{ alignItems: 'center', marginVertical: 8 }}>
             <LineChart data={chartData} colors={colors} />
           </View>
           <View style={styles.lineLegend}>
-            {[{ label: 'Low', color: colors.low }, { label: 'Normal', color: colors.normal }, { label: 'High', color: colors.high }].map(l => (
+            {[{ label: t.statusLow, color: colors.low }, { label: t.statusNormal, color: colors.normal }, { label: t.statusHigh, color: colors.high }].map(l => (
               <View key={l.label} style={styles.lineLegendItem}>
                 <View style={[styles.lineLegendDot, { backgroundColor: l.color }]} />
                 <Text style={[styles.lineLegendText, { color: colors.textMuted }]}>{l.label}</Text>
@@ -901,7 +913,7 @@ export default function HistoryScreen() {
             <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
               <View style={{ backgroundColor: colors.bgCard, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '85%' }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                  <Text style={{ fontSize: 15, fontWeight: '700', color: colors.text }}>Glucose Over Time</Text>
+                  <Text style={{ fontSize: 15, fontWeight: '700', color: colors.text }}>{t.glucoseOverTimeTitle}</Text>
                   <TouchableOpacity onPress={() => setShowChartModal(false)} activeOpacity={0.7}>
                     <Text style={{ fontSize: 18, fontWeight: '700', color: colors.red }}>✕</Text>
                   </TouchableOpacity>
@@ -910,7 +922,7 @@ export default function HistoryScreen() {
                   <ExpandedLineChart data={chartData} colors={colors} />
                 </ScrollView>
                 <View style={[styles.lineLegend, { marginTop: 12 }]}>
-                  {[{ label: 'Low', color: colors.low }, { label: 'Normal', color: colors.normal }, { label: 'High', color: colors.high }].map(l => (
+                  {[{ label: t.statusLow, color: colors.low }, { label: t.statusNormal, color: colors.normal }, { label: t.statusHigh, color: colors.high }].map(l => (
                     <View key={l.label} style={styles.lineLegendItem}>
                       <View style={[styles.lineLegendDot, { backgroundColor: l.color }]} />
                       <Text style={[styles.lineLegendText, { color: colors.textMuted }]}>{l.label}</Text>
@@ -923,7 +935,7 @@ export default function HistoryScreen() {
 
           <View style={[styles.chartDivider, { backgroundColor: colors.border }]} />
 
-          <Text style={[styles.chartTitle, { color: colors.textMuted, marginTop: 8 }]}>READINGS BREAKDOWN</Text>
+          <Text style={[styles.chartTitle, { color: colors.textMuted, marginTop: 8 }]}>{t.readingsBreakdown}</Text>
           <View style={{ alignItems: 'center', marginVertical: 8 }}>
             <PieChart normal={pieNormal} high={pieHigh} low={pieLow} colors={colors} />
           </View>
@@ -935,20 +947,20 @@ export default function HistoryScreen() {
             onPress={() => setShowWeekly(v => !v)}
             activeOpacity={0.8}
           >
-            <Text style={[styles.chartTitle, { color: colors.textMuted }]}>WEEKLY AVERAGES</Text>
-            <Text style={{ fontSize: 12, color: colors.textMuted }}>{showWeekly ? 'collapse' : 'expand'}</Text>
+            <Text style={[styles.chartTitle, { color: colors.textMuted }]}>{t.weeklyAverages}</Text>
+            <Text style={{ fontSize: 12, color: colors.textMuted }}>{showWeekly ? t.collapseLabel : t.expandLabel}</Text>
           </TouchableOpacity>
 
           {showWeekly && (
             <View style={{ marginTop: 8 }}>
               {weeklyAverages.length === 0 ? (
                 <Text style={{ fontSize: 12, color: colors.textMuted, textAlign: 'center', paddingVertical: 8 }}>
-                  Not enough data.
+                  {t.notEnoughData}
                 </Text>
               ) : (
                 weeklyAverages.map((week, i) => {
                   const color = week.avg < 75 ? colors.low : week.avg <= 150 ? colors.normal : colors.high;
-                  const label = week.avg < 75 ? 'Low' : week.avg <= 150 ? 'Normal' : 'High';
+                  const label = week.avg < 75 ? t.statusLow : week.avg <= 150 ? t.statusNormal : t.statusHigh;
                   return (
                     <View key={i} style={{
                       flexDirection: 'row', justifyContent: 'space-between',
@@ -956,9 +968,9 @@ export default function HistoryScreen() {
                       borderTopWidth: i > 0 ? 1 : 0, borderTopColor: colors.border,
                     }}>
                       <Text style={{ fontSize: 12, color: colors.textMuted }}>
-                        Week of {week.weekStart.substring(5).replace('-', '/')}
+                        {t.weekOf} {week.weekStart.substring(5).replace('-', '/')}
                       </Text>
-                      <Text style={{ fontSize: 12, color: colors.textMuted }}>{week.count} readings</Text>
+                      <Text style={{ fontSize: 12, color: colors.textMuted }}>{t.weeklyReadingsCount(week.count)}</Text>
                       <Text style={{ fontSize: 13, fontWeight: '700', color }}>{week.avg} mg/dL</Text>
                       <Text style={{ fontSize: 11, fontWeight: '600', color }}>{label}</Text>
                     </View>

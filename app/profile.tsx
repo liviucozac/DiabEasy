@@ -10,9 +10,11 @@ import { useTheme } from '../context/AppContext';
 import { PressBtn } from '../components/PressBtn';
 import { ParamTrainingModal } from '../components/ParamTrainingModal';
 import { hashValue, biometricsAvailable } from '../utils/securityUtils';
-import { signIn, signUp, signOut, onAuthStateChanged, sendPasswordReset, changePassword } from '../utils/firebaseAuth';
+import { signIn, signUp, signOut, onAuthStateChanged, sendPasswordReset, changePassword, signInWithGoogle } from '../utils/firebaseAuth';
+import { statusCodes } from '@react-native-google-signin/google-signin';
 import { checkFirebasePremium } from '../utils/firestoreSync';
 import { useSubscriptionStore } from '../store/subscriptionStore';
+import { useTranslation } from '../hooks/useTranslation';
 
 const RED = '#EC5557';
 
@@ -71,6 +73,7 @@ function StyledInput({ value, onChangeText, placeholder, keyboardType, secureTex
 
 function AccountSection({ user }: { user: any }) {
   const { colors } = useTheme();
+  const t = useTranslation();
   const [mode, setMode]               = useState<'login' | 'signup'>('login');
   const [email, setEmail]             = useState('');
   const [password, setPassword]       = useState('');
@@ -78,7 +81,6 @@ function AccountSection({ user }: { user: any }) {
   const [error, setError]             = useState('');
   const [success, setSuccess]         = useState('');
 
-  // Change password state
   const [showChangePw, setShowChangePw]   = useState(false);
   const [currentPw, setCurrentPw]         = useState('');
   const [newPw, setNewPw]                 = useState('');
@@ -90,49 +92,62 @@ function AccountSection({ user }: { user: any }) {
   const { setPremiumPaid } = useSubscriptionStore();
 
   const handleAuth = async () => {
-    if (!email.trim() || !password.trim()) { setError('Please enter email and password.'); return; }
+    if (!email.trim() || !password.trim()) { setError(t.pleaseEnterEmailAndPassword); return; }
     setLoading(true); setError('');
     try {
       if (mode === 'login') {
         await signIn(email.trim(), password);
-        // Firebase override: if Firestore marks this user as premium, grant it regardless of Play Store
         checkFirebasePremium().then(isOverride => { if (isOverride) setPremiumPaid(true); }).catch(() => {});
       } else {
         await signUp(email.trim(), password);
       }
       setEmail(''); setPassword('');
     } catch (e: any) {
-      setError(e.message ?? 'Authentication failed.');
+      setError(e.message ?? t.authenticationFailed);
     } finally {
       setLoading(false);
     }
   };
 
   const handleForgotPassword = async () => {
-    if (!email.trim()) { setError('Enter your email above first.'); return; }
+    if (!email.trim()) { setError(t.enterEmailFirst); return; }
     setLoading(true); setError(''); setSuccess('');
     try {
       await sendPasswordReset(email.trim());
-      setSuccess('Reset email sent. Check your inbox.');
+      setSuccess(t.resetEmailSent);
     } catch (e: any) {
-      setError(e.message ?? 'Could not send reset email.');
+      setError(e.message ?? t.couldNotSendReset);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setLoading(true); setError('');
+    try {
+      await signInWithGoogle();
+      checkFirebasePremium().then(isOverride => { if (isOverride) setPremiumPaid(true); }).catch(() => {});
+    } catch (e: any) {
+      if (e.code !== statusCodes.SIGN_IN_CANCELLED) {
+        setError(e.message ?? t.authenticationFailed);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleChangePassword = async () => {
-    if (!currentPw || !newPw || !confirmPw) { setPwError('All fields are required.'); return; }
-    if (newPw.length < 6) { setPwError('New password must be at least 6 characters.'); return; }
-    if (newPw !== confirmPw) { setPwError('New passwords do not match.'); return; }
+    if (!currentPw || !newPw || !confirmPw) { setPwError(t.allFieldsRequired); return; }
+    if (newPw.length < 6) { setPwError(t.newPasswordTooShort); return; }
+    if (newPw !== confirmPw) { setPwError(t.newPasswordsDoNotMatch); return; }
     setPwLoading(true); setPwError(''); setPwSuccess('');
     try {
       await changePassword(currentPw, newPw);
-      setPwSuccess('Password updated successfully.');
+      setPwSuccess(t.passwordUpdated);
       setCurrentPw(''); setNewPw(''); setConfirmPw('');
       setTimeout(() => { setShowChangePw(false); setPwSuccess(''); }, 1500);
     } catch (e: any) {
-      setPwError(e.message ?? 'Could not update password.');
+      setPwError(e.message ?? t.couldNotUpdatePassword);
     } finally {
       setPwLoading(false);
     }
@@ -145,13 +160,13 @@ function AccountSection({ user }: { user: any }) {
   if (user) {
     return (
       <SectionCard>
-        <SectionTitle text="Account" />
+        <SectionTitle text={t.account} />
         <View style={s.avatarRow}>
           <View style={[s.avatar, { backgroundColor: colors.red }]}>
             <Text style={s.avatarText}>{user.email?.[0]?.toUpperCase() ?? '?'}</Text>
           </View>
           <View>
-            <Text style={[s.avatarName, { color: colors.text }]}>Signed in</Text>
+            <Text style={[s.avatarName, { color: colors.text }]}>{t.signedIn}</Text>
             <Text style={[s.avatarEmail, { color: colors.textMuted }]}>{user.email}</Text>
           </View>
         </View>
@@ -159,20 +174,20 @@ function AccountSection({ user }: { user: any }) {
         {!showChangePw ? (
           <>
             <TouchableOpacity onPress={() => { setShowChangePw(true); setPwError(''); setPwSuccess(''); }} activeOpacity={0.7} style={s.changePwLink}>
-              <Text style={[s.changePwLinkText, { color: colors.red }]}>Change Password</Text>
+              <Text style={[s.changePwLinkText, { color: colors.red }]}>{t.changePassword}</Text>
             </TouchableOpacity>
             <PressBtn style={[s.signOutBtn, { borderColor: colors.red }]} onPress={handleSignOut} activeOpacity={0.75}>
-              <Text style={[s.signOutBtnText, { color: colors.red }]}>Sign Out</Text>
+              <Text style={[s.signOutBtnText, { color: colors.red }]}>{t.signOut}</Text>
             </PressBtn>
           </>
         ) : (
           <>
-            <FieldLabel text="Current password" />
-            <StyledInput value={currentPw} onChangeText={setCurrentPw} placeholder="Current password" secureTextEntry />
-            <FieldLabel text="New password" />
-            <StyledInput value={newPw} onChangeText={setNewPw} placeholder="New password (6+ characters)" secureTextEntry />
-            <FieldLabel text="Confirm new password" />
-            <StyledInput value={confirmPw} onChangeText={setConfirmPw} placeholder="Repeat new password" secureTextEntry />
+            <FieldLabel text={t.currentPassword} />
+            <StyledInput value={currentPw} onChangeText={setCurrentPw} placeholder={t.currentPassword} secureTextEntry />
+            <FieldLabel text={t.newPassword} />
+            <StyledInput value={newPw} onChangeText={setNewPw} placeholder={t.newPasswordPlaceholder} secureTextEntry />
+            <FieldLabel text={t.confirmNewPassword} />
+            <StyledInput value={confirmPw} onChangeText={setConfirmPw} placeholder={t.confirmPasswordPlaceholder} secureTextEntry />
             {!!pwError   && <Text style={{ fontSize: 12, color: '#e53935', marginTop: 4, textAlign: 'center' }}>{pwError}</Text>}
             {!!pwSuccess && <Text style={{ fontSize: 12, color: '#2e7d32', marginTop: 4, textAlign: 'center' }}>{pwSuccess}</Text>}
             <PressBtn
@@ -180,10 +195,10 @@ function AccountSection({ user }: { user: any }) {
               onPress={handleChangePassword}
               activeOpacity={0.75}
             >
-              <Text style={s.authBtnText}>{pwLoading ? 'Updating...' : 'Update Password'}</Text>
+              <Text style={s.authBtnText}>{pwLoading ? t.updating : t.updatePassword}</Text>
             </PressBtn>
             <TouchableOpacity onPress={() => { setShowChangePw(false); setCurrentPw(''); setNewPw(''); setConfirmPw(''); setPwError(''); }} activeOpacity={0.7} style={s.changePwLink}>
-              <Text style={[s.changePwLinkText, { color: colors.textMuted }]}>Cancel</Text>
+              <Text style={[s.changePwLinkText, { color: colors.textMuted }]}>{t.cancel}</Text>
             </TouchableOpacity>
           </>
         )}
@@ -193,21 +208,21 @@ function AccountSection({ user }: { user: any }) {
 
   return (
     <SectionCard>
-      <SectionTitle text="Account" />
+      <SectionTitle text={t.account} />
       <View style={{ flexDirection: 'row', marginBottom: 12, borderRadius: 8, borderWidth: 1.5, borderColor: colors.red, overflow: 'hidden' }}>
         {(['login', 'signup'] as const).map((m) => (
           <TouchableOpacity key={m} style={{ flex: 1, paddingVertical: 8, alignItems: 'center', backgroundColor: mode === m ? colors.red : 'transparent' }}
             onPress={() => { setMode(m); setError(''); setSuccess(''); }} activeOpacity={0.8}>
             <Text style={{ fontSize: 13, fontWeight: '600', color: mode === m ? '#fff' : colors.red }}>
-              {m === 'login' ? 'Sign In' : 'Sign Up'}
+              {m === 'login' ? t.signIn : t.signUp}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
-      <FieldLabel text="Email" />
+      <FieldLabel text={t.emailField} />
       <StyledInput value={email} onChangeText={setEmail} placeholder="your@email.com" keyboardType="email-address" autoCapitalize="none" />
-      <FieldLabel text="Password" />
-      <StyledInput value={password} onChangeText={setPassword} placeholder="Password" secureTextEntry />
+      <FieldLabel text={t.passwordField} />
+      <StyledInput value={password} onChangeText={setPassword} placeholder={t.passwordField} secureTextEntry />
       {!!error   && <Text style={{ fontSize: 12, color: '#e53935', marginTop: 4, textAlign: 'center' }}>{error}</Text>}
       {!!success && <Text style={{ fontSize: 12, color: '#2e7d32', marginTop: 4, textAlign: 'center' }}>{success}</Text>}
       <PressBtn
@@ -215,13 +230,29 @@ function AccountSection({ user }: { user: any }) {
         onPress={handleAuth}
         activeOpacity={0.75}
       >
-        <Text style={s.authBtnText}>{loading ? 'Please wait...' : mode === 'login' ? 'Sign In' : 'Create Account'}</Text>
+        <Text style={s.authBtnText}>{loading ? t.pleaseWait : mode === 'login' ? t.signIn : t.createAccount}</Text>
       </PressBtn>
       {mode === 'login' && (
         <TouchableOpacity onPress={handleForgotPassword} activeOpacity={0.7} style={s.changePwLink}>
-          <Text style={[s.forgotLink, { color: colors.textMuted }]}>Forgot password?</Text>
+          <Text style={[s.forgotLink, { color: colors.textMuted }]}>{t.forgotPassword}</Text>
         </TouchableOpacity>
       )}
+
+      <View style={[s.googleDividerRow, { marginTop: 16 }]}>
+        <View style={[s.googleDividerLine, { backgroundColor: colors.border }]} />
+        <Text style={[s.googleDividerText, { color: colors.textMuted }]}>or</Text>
+        <View style={[s.googleDividerLine, { backgroundColor: colors.border }]} />
+      </View>
+
+      <TouchableOpacity
+        style={[s.googleBtn, { borderColor: colors.border, backgroundColor: colors.bgCard }]}
+        onPress={handleGoogleSignIn}
+        activeOpacity={0.8}
+        disabled={loading}
+      >
+        <Text style={s.googleBtnG}>G</Text>
+        <Text style={[s.googleBtnText, { color: colors.text }]}>{t.signInWithGoogle}</Text>
+      </TouchableOpacity>
     </SectionCard>
   );
 }
@@ -231,6 +262,7 @@ function AccountSection({ user }: { user: any }) {
 function ProfileTab() {
   const { profile, setProfile } = useGlucoseStore();
   const { colors } = useTheme();
+  const t = useTranslation();
 
   const [user,  setUser]  = useState<any>(null);
   const [draft, setDraft] = useState({ ...profile });
@@ -257,32 +289,32 @@ function ProfileTab() {
       <AccountSection user={user} />
 
       {user && <SectionCard>
-        <SectionTitle text="Personal Info" />
-        <FieldLabel text="Full name" />
-        <StyledInput value={draft.name} onChangeText={(v) => set({ name: v })} placeholder="Your full name" />
-        <FieldLabel text="Age" />
-        <StyledInput value={draft.age} onChangeText={(v) => set({ age: v })} placeholder="e.g. 28" keyboardType="number-pad" />
-        <FieldLabel text="Diabetes type" />
+        <SectionTitle text={t.personalInfo} />
+        <FieldLabel text={t.fullName} />
+        <StyledInput value={draft.name} onChangeText={(v) => set({ name: v })} placeholder={t.fullNamePlaceholder} />
+        <FieldLabel text={t.age} />
+        <StyledInput value={draft.age} onChangeText={(v) => set({ age: v })} placeholder={t.agePlaceholder} keyboardType="number-pad" />
+        <FieldLabel text={t.diabetesType} />
         <View style={s.pillRow}>
-          {DIABETES_TYPES.map((t) => {
-            const active = draft.diabetesType === t;
+          {DIABETES_TYPES.map((tp) => {
+            const active = draft.diabetesType === tp;
             return (
-              <TouchableOpacity key={t}
+              <TouchableOpacity key={tp}
                 style={[s.pill, active ? s.primaryBtnShadow : null, { borderColor: colors.red, backgroundColor: active ? colors.red : 'transparent' }]}
-                onPress={() => set({ diabetesType: t })} activeOpacity={0.75}>
-                <Text style={[s.pillText, { color: active ? '#fff' : colors.textMuted }]}>{t}</Text>
+                onPress={() => set({ diabetesType: tp })} activeOpacity={0.75}>
+                <Text style={[s.pillText, { color: active ? '#fff' : colors.textMuted }]}>{tp}</Text>
               </TouchableOpacity>
             );
           })}
         </View>
-        <FieldLabel text="Diagnosis date (MM/YYYY)" />
+        <FieldLabel text={t.diagnosisDate} />
         <TouchableOpacity
           style={[s.input, s.datePickerBtn, { borderColor: colors.border, backgroundColor: colors.inputBg }]}
           onPress={() => setShowDiagnosisPicker(true)}
           activeOpacity={0.75}
         >
           <Text style={{ color: draft.diagnosisDate ? colors.text : colors.placeholder, fontSize: 15 }}>
-            {draft.diagnosisDate || 'e.g. 03/2018'}
+            {draft.diagnosisDate || t.diagnosisDatePlaceholder}
           </Text>
         </TouchableOpacity>
         {showDiagnosisPicker && (
@@ -311,7 +343,7 @@ function ProfileTab() {
                     }}
                   />
                   <TouchableOpacity style={[s.dateModalDone, { backgroundColor: colors.red }]} onPress={() => setShowDiagnosisPicker(false)}>
-                    <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Done</Text>
+                    <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>{t.done}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -340,18 +372,18 @@ function ProfileTab() {
             />
           )
         )}
-        <FieldLabel text="Doctor / specialist name" />
-        <StyledInput value={draft.doctorName} onChangeText={(v) => set({ doctorName: v })} placeholder="e.g. Dr. Smith" />
-        <FieldLabel text="Clinic / hospital" />
-        <StyledInput value={draft.clinicName} onChangeText={(v) => set({ clinicName: v })} placeholder="e.g. City Medical Centre" />
+        <FieldLabel text={t.doctorName} />
+        <StyledInput value={draft.doctorName} onChangeText={(v) => set({ doctorName: v })} placeholder={t.doctorNamePlaceholder} />
+        <FieldLabel text={t.clinicHospital} />
+        <StyledInput value={draft.clinicName} onChangeText={(v) => set({ clinicName: v })} placeholder={t.clinicPlaceholder} />
 
         <PressBtn
           style={[s.saveProfileBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]}
           onPress={handleSave}
           activeOpacity={0.8}
-          accessibilityLabel="Save personal info"
+          accessibilityLabel={t.saveProfile}
         >
-          <Text style={s.saveProfileBtnText}>{saved ? '✓ Saved' : 'Save'}</Text>
+          <Text style={s.saveProfileBtnText}>{saved ? t.savedCheck : t.saveProfile}</Text>
         </PressBtn>
       </SectionCard>}
     </ScrollView>
@@ -360,29 +392,15 @@ function ProfileTab() {
 
 // ─── Settings Tab ─────────────────────────────────────────────────────────────
 
-const LOCK_TIMEOUT_OPTIONS: { label: string; value: LockTimeout }[] = [
-  { label: 'Immediately',    value: 'immediate' },
-  { label: 'After 1 minute', value: '1min'      },
-  { label: 'After 5 minutes',value: '5min'      },
-  { label: 'On app close',   value: 'app-close' },
-];
-
-const SECURITY_METHOD_OPTIONS: { label: string; value: SecurityMethod; icon: string }[] = [
-  { label: 'None',       value: 'none',       icon: '🔓' },
-  { label: 'PIN',        value: 'pin',        icon: '🔢' },
-  { label: 'Password',   value: 'password',   icon: '🔑' },
-  { label: 'Biometrics', value: 'biometrics', icon: '🪪' },
-];
-
 function SettingsTab() {
   const { settings, setSettings, clearHistory, clearInsulinLog } = useGlucoseStore();
   const { colors } = useTheme();
+  const t = useTranslation();
   const [showTraining,    setShowTraining]    = useState(false);
   const [isfFocused,      setIsfFocused]      = useState(false);
   const [ratioFocused,    setRatioFocused]    = useState(false);
   const [targetFocused,   setTargetFocused]   = useState(false);
   const [diaFocused,      setDiaFocused]      = useState(false);
-  // Security change state
   const [secNewPin,       setSecNewPin]       = useState('');
   const [secConfirmPin,   setSecConfirmPin]   = useState('');
   const [secNewPass,      setSecNewPass]      = useState('');
@@ -390,62 +408,76 @@ function SettingsTab() {
   const [secError,        setSecError]        = useState('');
   const [secSuccess,      setSecSuccess]      = useState('');
 
+  const LOCK_TIMEOUT_OPTIONS: { label: string; value: LockTimeout }[] = [
+    { label: t.lockImmediate, value: 'immediate' },
+    { label: t.lock1min,      value: '1min'      },
+    { label: t.lock5min,      value: '5min'      },
+    { label: t.lockOnClose,   value: 'app-close' },
+  ];
+
+  const SECURITY_METHOD_OPTIONS: { label: string; value: SecurityMethod; icon: string }[] = [
+    { label: t.lockMethodNone,       value: 'none',       icon: '🔓' },
+    { label: t.lockMethodPin,        value: 'pin',        icon: '🔢' },
+    { label: t.lockMethodPassword,   value: 'password',   icon: '🔑' },
+    { label: t.lockMethodBiometrics, value: 'biometrics', icon: '🪪' },
+  ];
+
   const handleMethodChange = async (method: SecurityMethod) => {
     setSecError(''); setSecSuccess('');
     setSecNewPin(''); setSecConfirmPin('');
     setSecNewPass(''); setSecConfirmPass('');
     if (method === 'biometrics') {
       const ok = await biometricsAvailable();
-      if (!ok) { setSecError('No biometrics enrolled on this device.'); return; }
+      if (!ok) { setSecError(t.noGiometrics); return; }
     }
     if (method === 'none') {
       setSettings({ securityMethod: 'none', securityHash: '' });
-      setSecSuccess('Security disabled.');
+      setSecSuccess(t.securityDisabled);
     } else {
       setSettings({ securityMethod: method, securityHash: '' });
-      if (method === 'biometrics') setSecSuccess('Biometrics enabled.');
+      if (method === 'biometrics') setSecSuccess(t.biometricsEnabled);
     }
   };
 
   const handleSaveCredential = () => {
     setSecError(''); setSecSuccess('');
     if (settings.securityMethod === 'pin') {
-      if (secNewPin.length !== 4 || !/^\d{4}$/.test(secNewPin)) { setSecError('PIN must be exactly 4 digits.'); return; }
-      if (secNewPin !== secConfirmPin)  { setSecError('PINs do not match.'); return; }
+      if (secNewPin.length !== 4 || !/^\d{4}$/.test(secNewPin)) { setSecError(t.pinMust4Digits); return; }
+      if (secNewPin !== secConfirmPin)  { setSecError(t.pinsDoNotMatch); return; }
       setSettings({ securityHash: hashValue(secNewPin) });
       setSecNewPin(''); setSecConfirmPin('');
-      setSecSuccess('PIN saved.');
+      setSecSuccess(t.pinSaved);
     } else if (settings.securityMethod === 'password') {
-      if (secNewPass.length < 7)        { setSecError('Password must be at least 7 characters.'); return; }
-      if (secNewPass !== secConfirmPass) { setSecError('Passwords do not match.'); return; }
+      if (secNewPass.length < 7)        { setSecError(t.passwordMin7); return; }
+      if (secNewPass !== secConfirmPass) { setSecError(t.passwordsDoNotMatch); return; }
       setSettings({ securityHash: hashValue(secNewPass) });
       setSecNewPass(''); setSecConfirmPass('');
-      setSecSuccess('Password saved.');
+      setSecSuccess(t.passwordSaved);
     }
   };
 
   const THEMES: { label: string; value: ThemeType }[] = [
-    { label: '☀️ Light', value: 'light' },
-    { label: '🌙 Dark',  value: 'dark' },
-    { label: '⚙️ System',value: 'system' },
+    { label: t.themeLight,  value: 'light' },
+    { label: t.themeDark,   value: 'dark' },
+    { label: t.themeSystem, value: 'system' },
   ];
 
   const handleClearData = () => {
     Alert.alert(
-      'Clear all data?',
-      'This will permanently delete your entire glucose history and insulin log. This cannot be undone.',
+      t.clearAllDataConfirmTitle,
+      t.clearAllDataConfirmBody,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t.cancel, style: 'cancel' },
         {
-          text: 'Yes, delete everything',
+          text: t.yesDeleteEverything,
           style: 'destructive',
           onPress: () => {
             Alert.alert(
-              'Are you sure?',
-              'Last chance — all readings and insulin entries will be gone forever.',
+              t.areYouSure,
+              t.lastChance,
               [
-                { text: 'Go back', style: 'cancel' },
-                { text: 'Delete permanently', style: 'destructive', onPress: () => { clearHistory(); clearInsulinLog(); } },
+                { text: t.goBack, style: 'cancel' },
+                { text: t.deletePermanently, style: 'destructive', onPress: () => { clearHistory(); clearInsulinLog(); } },
               ]
             );
           },
@@ -457,16 +489,16 @@ function SettingsTab() {
   return (
     <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 32 }}>
       <SectionCard>
-        <SectionTitle text="Appearance" />
-        <FieldLabel text="Theme" />
+        <SectionTitle text={t.appearance} />
+        <FieldLabel text={t.theme} />
         <View style={s.pillRow}>
-          {THEMES.map((t) => {
-            const active = settings.theme === t.value;
+          {THEMES.map((th) => {
+            const active = settings.theme === th.value;
             return (
-              <TouchableOpacity key={t.value}
+              <TouchableOpacity key={th.value}
                 style={[s.pill, active ? s.primaryBtnShadow : null, { borderColor: colors.red, backgroundColor: active ? colors.red : 'transparent' }]}
-                onPress={() => setSettings({ theme: t.value })} activeOpacity={0.75}>
-                <Text style={[s.pillText, { color: active ? '#fff' : colors.textMuted }]}>{t.label}</Text>
+                onPress={() => setSettings({ theme: th.value })} activeOpacity={0.75}>
+                <Text style={[s.pillText, { color: active ? '#fff' : colors.textMuted }]}>{th.label}</Text>
               </TouchableOpacity>
             );
           })}
@@ -474,8 +506,8 @@ function SettingsTab() {
       </SectionCard>
 
       <SectionCard>
-        <SectionTitle text="Units & Language" />
-        <FieldLabel text="Default glucose unit" />
+        <SectionTitle text={t.unitsAndLanguage} />
+        <FieldLabel text={t.defaultGlucoseUnit} />
         <View style={s.pillRow}>
           {(['mg/dL', 'mmol/L'] as const).map((u) => {
             const active = settings.glucoseUnit === u;
@@ -491,20 +523,28 @@ function SettingsTab() {
         <Divider />
         <View style={s.settingRow}>
           <View style={{ flex: 1 }}>
-            <Text style={[s.settingLabel, { color: colors.text }]}>Language</Text>
-            <Text style={[s.settingSubLabel, { color: colors.textFaint }]}>Internationalisation coming soon</Text>
+            <Text style={[s.settingLabel, { color: colors.text }]}>{t.language}</Text>
           </View>
-          <View style={[s.pill, { borderColor: colors.red, backgroundColor: colors.red, paddingHorizontal: 12 }, s.primaryBtnShadow]}>
-            <Text style={s.pillTextActive}>🇬🇧 EN</Text>
+          <View style={s.pillRow}>
+            {(['en', 'ro'] as const).map((lang) => {
+              const active = (settings.language ?? 'en') === lang;
+              return (
+                <TouchableOpacity key={lang}
+                  style={[s.pill, active ? s.primaryBtnShadow : null, { borderColor: colors.red, backgroundColor: active ? colors.red : 'transparent' }]}
+                  onPress={() => setSettings({ language: lang })} activeOpacity={0.75}>
+                  <Text style={[s.pillText, { color: active ? '#fff' : colors.textMuted }]}>{lang === 'en' ? '🇬🇧 EN' : '🇷🇴 RO'}</Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
       </SectionCard>
 
       <SectionCard>
-        <SectionTitle text="Insulin Calculator Defaults" />
-        <Text style={[s.sectionHint, { color: colors.textMuted }]}>These values are used by the Meds calculator. Ask your healthcare provider for your personal settings.</Text>
+        <SectionTitle text={t.insulinCalcDefaults} />
+        <Text style={[s.sectionHint, { color: colors.textMuted }]}>{t.insulinCalcHint}</Text>
 
-        <FieldLabel text="Rapid-acting insulin type" />
+        <FieldLabel text={t.rapidActingInsulinType} />
         <View style={s.pillRow}>
           {INSULIN_ANALOGS.map((analog) => {
             const active = settings.insulinAnalogType === analog.value;
@@ -526,10 +566,10 @@ function SettingsTab() {
 
         <View style={s.paramGrid}>
           {[
-            { label: 'Target glycemia\n(mg/dL)', value: String(settings.targetGlucose), focused: targetFocused, setFocused: setTargetFocused, onChange: (v: string) => { const n = parseFloat(v); if (!isNaN(n)) setSettings({ targetGlucose: n, insulinParamsSet: true }); } },
-            { label: 'ISF\n(mg/dL per unit)',    value: String(settings.isf),           focused: isfFocused,    setFocused: setIsfFocused,    onChange: (v: string) => { const n = parseFloat(v); if (!isNaN(n)) setSettings({ isf: n, insulinParamsSet: true }); } },
-            { label: 'Carb ratio\n(g per unit)', value: String(settings.carbRatio),     focused: ratioFocused,  setFocused: setRatioFocused,  onChange: (v: string) => { const n = parseFloat(v); if (!isNaN(n)) setSettings({ carbRatio: n, insulinParamsSet: true }); } },
-            { label: 'DIA\n(hours)',              value: String(settings.dia),           focused: diaFocused,    setFocused: setDiaFocused,    onChange: (v: string) => { const n = parseFloat(v); if (!isNaN(n)) setSettings({ dia: n }); } },
+            { label: t.targetGlycemia, value: String(settings.targetGlucose), focused: targetFocused, setFocused: setTargetFocused, onChange: (v: string) => { const n = parseFloat(v); if (!isNaN(n)) setSettings({ targetGlucose: n, insulinParamsSet: true }); } },
+            { label: t.isfParam,       value: String(settings.isf),           focused: isfFocused,    setFocused: setIsfFocused,    onChange: (v: string) => { const n = parseFloat(v); if (!isNaN(n)) setSettings({ isf: n, insulinParamsSet: true }); } },
+            { label: t.carbRatioParam, value: String(settings.carbRatio),     focused: ratioFocused,  setFocused: setRatioFocused,  onChange: (v: string) => { const n = parseFloat(v); if (!isNaN(n)) setSettings({ carbRatio: n, insulinParamsSet: true }); } },
+            { label: t.diaParam,       value: String(settings.dia),           focused: diaFocused,    setFocused: setDiaFocused,    onChange: (v: string) => { const n = parseFloat(v); if (!isNaN(n)) setSettings({ dia: n }); } },
           ].map((param, i) => (
             <View key={i} style={s.paramItem}>
               <Text style={[s.paramLabel, { color: colors.textMuted }]}>{param.label}</Text>
@@ -547,7 +587,7 @@ function SettingsTab() {
           onPress={() => setSettings({ insulinParamsSet: true })}
           activeOpacity={0.8}
         >
-          <Text style={s.authBtnText}>Save Parameters</Text>
+          <Text style={s.authBtnText}>{t.saveParameters}</Text>
         </PressBtn>
 
         <TouchableOpacity
@@ -555,18 +595,17 @@ function SettingsTab() {
           onPress={() => setShowTraining(true)}
           activeOpacity={0.75}
         >
-          <Text style={[s.trainingBtnText, { color: colors.red }]}>🎓 What do ISF, carb ratio, and DIA mean?</Text>
+          <Text style={[s.trainingBtnText, { color: colors.red }]}>{t.whatDoParamsMean}</Text>
         </TouchableOpacity>
 
         <ParamTrainingModal visible={showTraining} onClose={() => setShowTraining(false)} />
       </SectionCard>
 
       <SectionCard>
-        <SectionTitle text="Security" />
-        <Text style={[s.sectionHint, { color: colors.textMuted }]}>Choose how the app locks when you leave it.</Text>
+        <SectionTitle text={t.security} />
+        <Text style={[s.sectionHint, { color: colors.textMuted }]}>{t.securityHint}</Text>
 
-        {/* Method pills */}
-        <FieldLabel text="Lock method" />
+        <FieldLabel text={t.lockMethod} />
         <View style={s.pillRow}>
           {SECURITY_METHOD_OPTIONS.map((opt) => {
             const active = settings.securityMethod === opt.value;
@@ -581,28 +620,26 @@ function SettingsTab() {
           })}
         </View>
 
-        {/* PIN entry */}
         {settings.securityMethod === 'pin' && (
           <View style={{ gap: 8, marginTop: 10 }}>
-            <FieldLabel text="New PIN (4 digits)" />
-            <StyledInput value={secNewPin} onChangeText={setSecNewPin} placeholder="••••" keyboardType="number-pad" maxLength={4} secureTextEntry accessibilityLabel="New PIN" />
-            <FieldLabel text="Confirm PIN" />
-            <StyledInput value={secConfirmPin} onChangeText={setSecConfirmPin} placeholder="••••" keyboardType="number-pad" maxLength={4} secureTextEntry accessibilityLabel="Confirm PIN" />
-            <PressBtn style={[s.authBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={handleSaveCredential} accessibilityLabel="Save PIN">
-              <Text style={s.authBtnText}>Save PIN</Text>
+            <FieldLabel text={t.newPin} />
+            <StyledInput value={secNewPin} onChangeText={setSecNewPin} placeholder="••••" keyboardType="number-pad" maxLength={4} secureTextEntry accessibilityLabel={t.newPin} />
+            <FieldLabel text={t.confirmPin} />
+            <StyledInput value={secConfirmPin} onChangeText={setSecConfirmPin} placeholder="••••" keyboardType="number-pad" maxLength={4} secureTextEntry accessibilityLabel={t.confirmPin} />
+            <PressBtn style={[s.authBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={handleSaveCredential} accessibilityLabel={t.savePin}>
+              <Text style={s.authBtnText}>{t.savePin}</Text>
             </PressBtn>
           </View>
         )}
 
-        {/* Password entry */}
         {settings.securityMethod === 'password' && (
           <View style={{ gap: 8, marginTop: 10 }}>
-            <FieldLabel text="New password (7+ characters)" />
-            <StyledInput value={secNewPass} onChangeText={setSecNewPass} placeholder="New password" secureTextEntry accessibilityLabel="New password" />
-            <FieldLabel text="Confirm password" />
-            <StyledInput value={secConfirmPass} onChangeText={setSecConfirmPass} placeholder="Repeat password" secureTextEntry accessibilityLabel="Confirm password" />
-            <PressBtn style={[s.authBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={handleSaveCredential} accessibilityLabel="Save password">
-              <Text style={s.authBtnText}>Save Password</Text>
+            <FieldLabel text={t.newPasswordSetting} />
+            <StyledInput value={secNewPass} onChangeText={setSecNewPass} placeholder={t.newPasswordSetting} secureTextEntry accessibilityLabel={t.newPasswordSetting} />
+            <FieldLabel text={t.confirmPin} />
+            <StyledInput value={secConfirmPass} onChangeText={setSecConfirmPass} placeholder={t.confirmPasswordPlaceholder} secureTextEntry accessibilityLabel={t.confirmPin} />
+            <PressBtn style={[s.authBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={handleSaveCredential} accessibilityLabel={t.savePasswordBtn}>
+              <Text style={s.authBtnText}>{t.savePasswordBtn}</Text>
             </PressBtn>
           </View>
         )}
@@ -610,11 +647,10 @@ function SettingsTab() {
         {!!secError   && <Text style={[s.secMsg, { color: '#e53935' }]}>{secError}</Text>}
         {!!secSuccess && <Text style={[s.secMsg, { color: '#2e7d32' }]}>{secSuccess}</Text>}
 
-        {/* Lock timeout — only shown when a method is active */}
         {settings.securityMethod !== 'none' && (
           <>
             <Divider />
-            <FieldLabel text="Lock after" />
+            <FieldLabel text={t.lockAfter} />
             <View style={s.pillRow}>
               {LOCK_TIMEOUT_OPTIONS.map((opt) => {
                 const active = settings.lockTimeout === opt.value;
@@ -633,33 +669,33 @@ function SettingsTab() {
       </SectionCard>
 
       <SectionCard>
-        <SectionTitle text="Notifications" />
+        <SectionTitle text={t.notifications} />
         <View style={s.settingRow}>
           <View style={{ flex: 1 }}>
-            <Text style={[s.settingLabel, { color: colors.text }]}>Enable notifications</Text>
-            <Text style={[s.settingSubLabel, { color: colors.textFaint }]}>Reminder alerts from the Meds tab</Text>
+            <Text style={[s.settingLabel, { color: colors.text }]}>{t.enableNotifications}</Text>
+            <Text style={[s.settingSubLabel, { color: colors.textFaint }]}>{t.enableNotificationsSubtitle}</Text>
           </View>
           <Switch value={settings.notificationsEnabled} onValueChange={(v) => setSettings({ notificationsEnabled: v })} trackColor={{ false: '#ccc', true: RED }} thumbColor="#fff" />
         </View>
       </SectionCard>
 
       <SectionCard>
-        <SectionTitle text="Data" />
+        <SectionTitle text={t.data} />
         <PressBtn style={[s.dangerBtn]} onPress={handleClearData} activeOpacity={0.75}>
-          <Text style={s.dangerBtnText}>🗑 Clear all data</Text>
+          <Text style={s.dangerBtnText}>{t.clearAllData}</Text>
         </PressBtn>
-        <Text style={[s.dangerHint, { color: colors.textFaint }]}>Deletes glucose history and insulin log. Cannot be undone.</Text>
+        <Text style={[s.dangerHint, { color: colors.textFaint }]}>{t.clearAllDataHint}</Text>
       </SectionCard>
 
       <SectionCard>
-        <SectionTitle text="About" />
-        <View style={s.aboutRow}><Text style={[s.aboutLabel, { color: colors.textMuted }]}>App version</Text><Text style={[s.aboutValue, { color: colors.text }]}>2.0.0</Text></View>
+        <SectionTitle text={t.about} />
+        <View style={s.aboutRow}><Text style={[s.aboutLabel, { color: colors.textMuted }]}>{t.appVersion}</Text><Text style={[s.aboutValue, { color: colors.text }]}>2.0.0</Text></View>
         <Divider />
-        <View style={s.aboutRow}><Text style={[s.aboutLabel, { color: colors.textMuted }]}>Built with</Text><Text style={[s.aboutValue, { color: colors.text }]}>Expo · React Native · Zustand</Text></View>
+        <View style={s.aboutRow}><Text style={[s.aboutLabel, { color: colors.textMuted }]}>{t.builtWith}</Text><Text style={[s.aboutValue, { color: colors.text }]}>Expo · React Native · Zustand</Text></View>
         <Divider />
-        {['Privacy Policy', 'Terms of Use', 'Send Feedback'].map((item, i) => (
+        {[t.privacyPolicy, t.termsOfUse, t.sendFeedback].map((item, i) => (
           <View key={i}>
-            <TouchableOpacity style={s.aboutLinkRow} onPress={() => Alert.alert(item, `${item} not published yet.`)} activeOpacity={0.75}>
+            <TouchableOpacity style={s.aboutLinkRow} onPress={() => Alert.alert(item, t.notPublishedYet(item))} activeOpacity={0.75}>
               <Text style={[s.aboutLink, { color: colors.text }]}>{item}</Text>
               <Text style={[s.aboutChevron, { color: colors.border }]}>›</Text>
             </TouchableOpacity>
@@ -668,7 +704,7 @@ function SettingsTab() {
         ))}
         <Divider />
         <View style={s.disclaimerCard}>
-          <Text style={[s.disclaimerText, { color: colors.textMuted }]}>⚠️ DiabEasy is a personal management aid and not a medical device. Always confirm treatment decisions with your healthcare provider.</Text>
+          <Text style={[s.disclaimerText, { color: colors.textMuted }]}>{t.appDisclaimer}</Text>
         </View>
       </SectionCard>
     </ScrollView>
@@ -679,21 +715,21 @@ function SettingsTab() {
 
 export default function ProfileScreen() {
   const { colors } = useTheme();
+  const t = useTranslation();
   const [activeTab, setActiveTab] = useState<ActiveTab>('profile');
 
   return (
     <View style={[s.root, { backgroundColor: colors.bg }]}>
-      <Text style={[s.title, { color: colors.text }]}>Profile & Settings</Text>
+      <Text style={[s.title, { color: colors.text }]}>{t.profileSettings}</Text>
 
-      {/* Sub-tab bar with shadow */}
       <View style={[s.tabBar, { borderColor: colors.red }, s.tabBarShadow]}>
-        {(['profile', 'settings'] as ActiveTab[]).map((t) => {
-          const active = activeTab === t;
+        {(['profile', 'settings'] as ActiveTab[]).map((tab) => {
+          const active = activeTab === tab;
           return (
-            <TouchableOpacity key={t}
+            <TouchableOpacity key={tab}
               style={[s.tabBtn, { backgroundColor: active ? colors.red : colors.bg }]}
-              onPress={() => setActiveTab(t)} activeOpacity={0.8}>
-              <Text style={[s.tabBtnText, { color: active ? '#fff' : colors.red }]}>{t === 'profile' ? 'Profile' : 'Settings'}</Text>
+              onPress={() => setActiveTab(tab)} activeOpacity={0.8}>
+              <Text style={[s.tabBtnText, { color: active ? '#fff' : colors.red }]}>{tab === 'profile' ? t.profileTab : t.settingsTab}</Text>
             </TouchableOpacity>
           );
         })}
@@ -730,6 +766,12 @@ const s = StyleSheet.create({
   authToggleText: { fontSize: 13 },
   authToggleLink: { fontSize: 13, fontWeight: '700' },
   forgotLink:       { fontSize: 13, textDecorationLine: 'underline' },
+  googleBtn:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderWidth: 1.5, borderRadius: 8, paddingVertical: 11, marginTop: 10 },
+  googleBtnG:       { fontSize: 16, fontWeight: '800', color: '#4285F4' },
+  googleBtnText:    { fontSize: 14, fontWeight: '600' },
+  googleDividerRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  googleDividerLine:{ flex: 1, height: 1 },
+  googleDividerText:{ fontSize: 12 },
   changePwLink:     { alignItems: 'center', marginTop: 10 },
   changePwLinkText: { fontSize: 13, textDecorationLine: 'underline' },
 
@@ -775,7 +817,6 @@ const s = StyleSheet.create({
   disclaimerCard: { borderRadius: 8, padding: 12, marginTop: 8 },
   disclaimerText: { fontSize: 12, lineHeight: 18 },
 
-  // ── Shadows ──────────────────────────────────────────────────────────────────
   tabBarShadow:     { shadowColor: '#EC5557', shadowOffset: { width: 2, height: 2 }, shadowOpacity: 0.12, shadowRadius: 4, elevation: 4 },
   primaryBtnShadow: { shadowColor: '#7a1010', shadowOffset: { width: 4, height: 4 }, shadowOpacity: 0.45, shadowRadius: 0, elevation: 4 },
   outlineBtnShadow: { shadowColor: '#000', shadowOffset: { width: 1, height: 1 }, shadowOpacity: 0.06, shadowRadius: 2 },

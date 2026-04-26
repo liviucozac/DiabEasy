@@ -14,6 +14,7 @@ import { GuidedFlowModal } from '../components/GuidedFlowModal';
 import { TrialBanner } from '../components/TrialBanner';
 import { UpgradeModal } from '../components/UpgradeModal';
 import { useSubscription } from '../hooks/useSubscription';
+import { useTranslation } from '../hooks/useTranslation';
 import type { GlucoseReading } from '../utils/bleGlucometerService';
 
 type Unit = 'mg/dL' | 'mmol/L';
@@ -51,6 +52,7 @@ function formatTimestamp(): string {
 function QuickStats({ unit }: { unit: string }) {
   const { history, settings } = useGlucoseStore();
   const { colors, isDark } = useTheme();
+  const t = useTranslation();
 
   const todayDate    = new Date().toISOString().split('T')[0];
   const todayEntries = history.filter((e) => e.timestamp.startsWith(todayDate) && e.unit === unit);
@@ -66,33 +68,33 @@ function QuickStats({ unit }: { unit: string }) {
       borderColor: colors.border, backgroundColor: colors.bgCard,
       shadowColor: isDark ? '#000' : '#6070a0', shadowOffset: { width: 0, height: 8 }, shadowOpacity: isDark ? 0.45 : 0.13, shadowRadius: 18, elevation: 6,
     }]}>
-      <Text style={[styles.statsTitle, { color: colors.textMuted }]}>Today's Summary</Text>
+      <Text style={[styles.statsTitle, { color: colors.textMuted }]}>{t.todaySummary}</Text>
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
           <Text style={[styles.statNumber, { color: colors.text }]}>{count}</Text>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Readings</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t.readings}</Text>
         </View>
         <View style={[styles.statItem, { borderLeftColor: colors.border, borderLeftWidth: 1 }]}>
           <Text style={[styles.statNumber, { color: colors.text }]}>{avg ?? '—'}</Text>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Average</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t.average}</Text>
         </View>
       </View>
       <View style={[styles.statsDivider, { backgroundColor: colors.border }]} />
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
           <Text style={[styles.statNumber, { color: inRange > 0 ? colors.normal : colors.text }]}>{inRange}</Text>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>In Range</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t.inRange}</Text>
         </View>
         <View style={[styles.statItem, { borderLeftColor: colors.border, borderLeftWidth: 1 }]}>
           <Text style={[styles.statNumber, { color: highs > 0 ? colors.high : colors.text }]}>{highs}</Text>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>↑ Highs</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t.highs}</Text>
         </View>
         <View style={[styles.statItem, { borderLeftColor: colors.border, borderLeftWidth: 1 }]}>
           <Text style={[styles.statNumber, { color: lows > 0 ? colors.low : colors.text }]}>{lows}</Text>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>↓ Lows</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t.lows}</Text>
         </View>
       </View>
-      {count === 0 && <Text style={[styles.statsEmpty, { color: colors.textFaint }]}>No readings logged today yet.</Text>}
+      {count === 0 && <Text style={[styles.statsEmpty, { color: colors.textFaint }]}>{t.noReadingsToday}</Text>}
     </View>
   );
 }
@@ -103,6 +105,7 @@ function HypoPopup({ visible, glucoseValue, unit, onClose }: {
   visible: boolean; glucoseValue: number; unit: Unit; onClose: () => void;
 }) {
   const { colors } = useTheme();
+  const t = useTranslation();
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={[styles.overlayBg, { backgroundColor: colors.overlay }]}>
@@ -113,25 +116,22 @@ function HypoPopup({ visible, glucoseValue, unit, onClose }: {
               shadowColor: colors.red, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 20, elevation: 16,
             }]}>
               <Text style={[styles.popupValueLine, { color: colors.text }]}>
-                Your glycemia is low: <Text style={[styles.popupValueRed, { color: colors.red }]}>{glucoseValue} {unit}</Text>
+                {t.hypoValueLine} <Text style={[styles.popupValueRed, { color: colors.red }]}>{glucoseValue} {unit}</Text>
               </Text>
-              <Text style={[styles.popupSection, { color: colors.text }]}>Quick Fixes for Low Blood Sugar</Text>
-              {['Eat 3–4 glucose tablets (the fastest solution)',
-                'Drink a small glass of juice (orange or apple works best)',
-                'Have a spoonful of honey (just swallow it straight)',
-                'Munch on a few candies (about 6–7 gummies or hard sweets)',
-                'Try a handful of raisins (if you prefer something natural)',
-              ].map((t, i) => <Text key={i} style={[styles.popupTip, { color: colors.textMuted }]}>{t}</Text>)}
+              <Text style={[styles.popupSection, { color: colors.text }]}>{t.hypoSection1}</Text>
+              {[t.hypoTip1, t.hypoTip2, t.hypoTip3, t.hypoTip4, t.hypoTip5].map((tip, i) =>
+                <Text key={i} style={[styles.popupTip, { color: colors.textMuted }]}>{tip}</Text>
+              )}
               <View style={[styles.popupDivider, { backgroundColor: colors.border }]} />
-              <Text style={[styles.popupSection, { color: colors.text }]}>After the First Boost</Text>
-              <Text style={[styles.popupTip, { color: colors.textMuted }]}>Wait 15 minutes, then check again – if still low, repeat.</Text>
-              <Text style={[styles.popupTip, { color: colors.textMuted }]}>Eat something small like a cracker with cheese or yogurt.</Text>
+              <Text style={[styles.popupSection, { color: colors.text }]}>{t.hypoSection2}</Text>
+              <Text style={[styles.popupTip, { color: colors.textMuted }]}>{t.hypoTip6}</Text>
+              <Text style={[styles.popupTip, { color: colors.textMuted }]}>{t.hypoTip7}</Text>
               <View style={[styles.popupDivider, { backgroundColor: colors.border }]} />
-              <Text style={[styles.popupSection, { color: colors.text }]}>Smart Habits</Text>
-              <Text style={[styles.popupTip, { color: colors.textMuted }]}>Always keep glucose tabs or candy in your bag.</Text>
-              <Text style={[styles.popupTip, { color: colors.textMuted }]}>Tell someone nearby if you're feeling shaky.</Text>
+              <Text style={[styles.popupSection, { color: colors.text }]}>{t.hypoSection3}</Text>
+              <Text style={[styles.popupTip, { color: colors.textMuted }]}>{t.hypoTip8}</Text>
+              <Text style={[styles.popupTip, { color: colors.textMuted }]}>{t.hypoTip9}</Text>
               <PressBtn style={[styles.closeBtn, { borderColor: colors.red, backgroundColor: 'transparent' }]} onPress={onClose}>
-                <Text style={[styles.closeBtnText, { color: colors.red }]}>Close</Text>
+                <Text style={[styles.closeBtnText, { color: colors.red }]}>{t.close}</Text>
               </PressBtn>
             </View>
           </ScrollView>
@@ -148,6 +148,7 @@ function HyperPopup({ visible, glucoseValue, unit, onClose }: {
 }) {
   const { colors } = useTheme();
   const { settings } = useGlucoseStore();
+  const t = useTranslation();
   const { isf, targetGlucose, insulinParamsSet } = settings;
 
   const glucoseMgDl = unit === 'mmol/L' ? glucoseValue * 18.0182 : glucoseValue;
@@ -165,35 +166,31 @@ function HyperPopup({ visible, glucoseValue, unit, onClose }: {
               shadowColor: colors.high, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 20, elevation: 16,
             }]}>
               <Text style={[styles.popupValueLine, { color: colors.text }]}>
-                Your glycemia is high: <Text style={{ fontWeight: 'bold', color: colors.high }}>{glucoseValue} {unit}</Text>
+                {t.hyperValueLine} <Text style={{ fontWeight: 'bold', color: colors.high }}>{glucoseValue} {unit}</Text>
               </Text>
 
               {correctionDose !== null && correctionDose > 0 && (
                 <>
-                  <Text style={[styles.popupSection, { color: colors.text }]}>Estimated Correction Dose</Text>
+                  <Text style={[styles.popupSection, { color: colors.text }]}>{t.hyperSection1}</Text>
                   <Text style={[styles.popupTip, { color: colors.textMuted }]}>
-                    Based on your ISF ({isf} mg/dL per unit) and target glucose ({targetGlucose} mg/dL):
+                    {t.hyperCorrectionInfo(isf, targetGlucose)}
                   </Text>
-                  <Text style={[styles.popupCorrectionDose, { color: colors.high }]}>{correctionDose} units</Text>
-                  <Text style={[styles.popupTip, { color: colors.textMuted }]}>
-                    This is an estimate only — always consult your healthcare provider before dosing.
-                  </Text>
+                  <Text style={[styles.popupCorrectionDose, { color: colors.high }]}>{correctionDose} {t.hyperUnits}</Text>
+                  <Text style={[styles.popupTip, { color: colors.textMuted }]}>{t.hyperEstimateOnly}</Text>
                   <View style={[styles.popupDivider, { backgroundColor: colors.border }]} />
                 </>
               )}
 
-              <Text style={[styles.popupSection, { color: colors.text }]}>What to Do When Blood Sugar Is High</Text>
-              {['Drink plenty of water – helps flush out excess sugar.',
-                'Take a short walk – gentle movement helps lower levels.',
-                'Check for ketones if over 13.9 mmol/L (250 mg/dL).',
-                'Never double-dose without medical advice.',
-              ].map((t, i) => <Text key={i} style={[styles.popupTip, { color: colors.textMuted }]}>{t}</Text>)}
+              <Text style={[styles.popupSection, { color: colors.text }]}>{t.hyperSection2}</Text>
+              {[t.hyperTip1, t.hyperTip2, t.hyperTip3, t.hyperTip4].map((tip, i) =>
+                <Text key={i} style={[styles.popupTip, { color: colors.textMuted }]}>{tip}</Text>
+              )}
               <View style={[styles.popupDivider, { backgroundColor: colors.border }]} />
-              <Text style={[styles.popupSection, { color: colors.text }]}>When to Seek Help</Text>
-              <Text style={[styles.popupTip, { color: colors.textMuted }]}>If over 16.7 mmol/L (300 mg/dL) for several hours.</Text>
-              <Text style={[styles.popupTip, { color: colors.textMuted }]}>Nausea, vomiting, or confusion – possible DKA.</Text>
+              <Text style={[styles.popupSection, { color: colors.text }]}>{t.hyperSection3}</Text>
+              <Text style={[styles.popupTip, { color: colors.textMuted }]}>{t.hyperTip5}</Text>
+              <Text style={[styles.popupTip, { color: colors.textMuted }]}>{t.hyperTip6}</Text>
               <PressBtn style={[styles.closeBtn, { borderColor: colors.high, backgroundColor: 'transparent' }]} onPress={onClose}>
-                <Text style={[styles.closeBtnText, { color: colors.high }]}>Close</Text>
+                <Text style={[styles.closeBtnText, { color: colors.high }]}>{t.close}</Text>
               </PressBtn>
             </View>
           </ScrollView>
@@ -203,20 +200,12 @@ function HyperPopup({ visible, glucoseValue, unit, onClose }: {
   );
 }
 
-const FASTING_OPTIONS: { label: string; value: FastingType }[] = [
-  { label: 'Fasting',       value: 'Fasting' },
-  { label: 'Pre-meal',      value: 'Pre-meal' },
-  { label: 'Post-meal',     value: 'Post-meal' },
-  { label: 'Random',        value: 'Random' },
-  { label: 'Bedtime',       value: 'Bedtime' },
-  { label: 'Post-exercise', value: 'Post-exercise' },
-];
-
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function HomeScreen() {
   const { addEntry, setGlucoseValue: setGlobalGlucose, unit: globalUnit, setHasSeenOnboarding, settings } = useGlucoseStore();
   const { colors, isDark } = useTheme();
+  const t = useTranslation();
 
   const [unit, setUnit]                     = useState<Unit>(globalUnit ?? 'mg/dL');
   const [inputValue, setInputValue]         = useState('');
@@ -236,6 +225,15 @@ export default function HomeScreen() {
 
   const submitScale = useRef(new Animated.Value(1)).current;
   const resultScale = useRef(new Animated.Value(0)).current;
+
+  const FASTING_OPTIONS: { label: string; value: FastingType }[] = [
+    { label: t.fasting,      value: 'Fasting' },
+    { label: t.preMeal,      value: 'Pre-meal' },
+    { label: t.postMeal,     value: 'Post-meal' },
+    { label: t.random,       value: 'Random' },
+    { label: t.bedtime,      value: 'Bedtime' },
+    { label: t.postExercise, value: 'Post-exercise' },
+  ];
 
   const handleSubmit = () => {
     const raw = inputValue.trim();
@@ -259,13 +257,11 @@ export default function HomeScreen() {
     resultScale.setValue(0);
     Animated.spring(resultScale, { toValue: 1, useNativeDriver: true, tension: 180, friction: 7 }).start();
 
-    // Manual mode — keeps existing simple popups
     if (colorClass === 'low')       setShowHypoPopup(true);
     else if (colorClass === 'high') setShowHyperPopup(true);
     setInputValue(''); setSymptoms(''); setFasting('');
   };
 
-  // BLE mode — triggers guided multi-slide flow
   const handleBleReading = (reading: GlucoseReading) => {
     const interpretation = getInterpretation(reading.value, reading.unit, settings.glucoseLow, settings.glucoseHigh);
     const colorClass     = getColorClass(reading.value, reading.unit, settings.glucoseLow, settings.glucoseHigh);
@@ -307,6 +303,12 @@ export default function HomeScreen() {
     else if (colorClass === 'high') setShowHyperPopup(true);
   };
 
+  const interpretationLabel = (interp: string) => {
+    if (interp === 'Low')    return t.low;
+    if (interp === 'High')   return t.high;
+    return t.normal;
+  };
+
   return (
     <View style={[styles.safeArea, { backgroundColor: colors.bg }]}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -318,11 +320,10 @@ export default function HomeScreen() {
           <TrialBanner />
 
           <Text style={[styles.appDescription, { color: colors.textMuted }]}>
-            Your simple and helpful companion for{'\n'}tracking{' '}
-            <Text style={[styles.highlight, { color: colors.red }]}>type 1 diabetes</Text>
+            {t.appDescription}
+            <Text style={[styles.highlight, { color: colors.red }]}>{t.appDescriptionHighlight}</Text>
           </Text>
 
-          {/* BLE glucometer button — Premium feature */}
           <TouchableOpacity
             style={[styles.bleBtn, {
               borderColor: canUseBle ? colors.red : colors.border,
@@ -334,21 +335,20 @@ export default function HomeScreen() {
           >
             <Text style={styles.bleBtnIcon}>{canUseBle ? '🔵' : '🔒'}</Text>
             <Text style={[styles.bleBtnText, { color: canUseBle ? colors.red : colors.textMuted }]}>
-              Connect Glucometer{canUseBle ? '' : ' — Premium'}
+              {canUseBle ? t.connectGlucometer : t.connectGlucometerPremium}
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => setShowCompatibleDevices(true)} activeOpacity={0.7} style={styles.compatLink}>
-            <Text style={[styles.compatLinkText, { color: colors.textMuted }]}>Compatible devices</Text>
+            <Text style={[styles.compatLinkText, { color: colors.textMuted }]}>{t.compatibleDevices}</Text>
           </TouchableOpacity>
 
           <View style={[styles.divider, { backgroundColor: isDark ? '#7a1c1a' : '#f2c0c0' }]} />
 
           <Text style={[styles.instruction, { color: colors.textMuted }]}>
-            Or enter manually:
+            {t.orEnterManually}
           </Text>
 
-          {/* Unit toggle */}
           <View style={styles.unitToggleRow}>
             <TouchableOpacity onPress={() => setUnit('mg/dL')} activeOpacity={0.8}>
               <Text style={[styles.unitLabel, { color: unit === 'mg/dL' ? colors.red : colors.textMuted }]}>mg/dL</Text>
@@ -365,7 +365,6 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Input */}
           <TextInput
             style={[styles.glycemiaInput, {
               borderColor: inputBorderColor,
@@ -378,7 +377,7 @@ export default function HomeScreen() {
               elevation: inputFocused ? 4 : 1,
             }]}
             keyboardType="decimal-pad"
-            placeholder="Enter glycemia value"
+            placeholder={t.enterGlycemiaPlaceholder}
             placeholderTextColor={colors.placeholder}
             value={inputValue}
             onChangeText={setInputValue}
@@ -389,7 +388,6 @@ export default function HomeScreen() {
             accessibilityHint={`Enter your reading in ${unit}`}
           />
 
-          {/* Fasting options */}
           <View style={styles.fastingGrid}>
             {FASTING_OPTIONS.map((opt) => (
               <TouchableOpacity
@@ -416,11 +414,10 @@ export default function HomeScreen() {
             ))}
           </View>
 
-          {/* Notes */}
-          <Text style={[styles.symptomsLabel, { color: colors.text }]}>Notes, if any:</Text>
+          <Text style={[styles.symptomsLabel, { color: colors.text }]}>{t.notesIfAny}</Text>
           <TextInput
             style={[styles.symptomsInput, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]}
-            placeholder="e.g. dizziness, insulin intake"
+            placeholder={t.notesPlaceholder}
             placeholderTextColor={colors.placeholder}
             value={symptoms}
             onChangeText={setSymptoms}
@@ -432,18 +429,18 @@ export default function HomeScreen() {
           />
 
           <ShadowBtn
-            label="Submit"
+            label={t.submit}
             onPress={handleSubmit}
             style={[styles.submitBtn, { backgroundColor: colors.red }]}
             textStyle={styles.submitBtnText}
-            accessibilityLabel="Submit glucose reading"
+            accessibilityLabel={t.submit}
           />
 
           {glucoseValue !== null && (
             <Animated.View style={[styles.resultContainer, { transform: [{ scale: resultScale }] }]}>
               <Text style={[styles.resultValue, { color: resultColor }]}>{glucoseValue} {unit}</Text>
               <Text style={[styles.resultInterpretation, { color: resultColor }]}>
-                {statusIcon(getInterpretation(glucoseValue, unit))} {getInterpretation(glucoseValue, unit)}
+                {statusIcon(getInterpretation(glucoseValue, unit))} {interpretationLabel(getInterpretation(glucoseValue, unit))}
               </Text>
               {cls !== 'normal' && (
                 <PressBtn
@@ -455,7 +452,7 @@ export default function HomeScreen() {
                   onPress={handleSeeHelp}
                   activeOpacity={0.75}
                 >
-                  <Text style={[styles.seeHelpBtnText, { color: colors.red }]}>See Help</Text>
+                  <Text style={[styles.seeHelpBtnText, { color: colors.red }]}>{t.seeHelp}</Text>
                 </PressBtn>
               )}
             </Animated.View>
@@ -467,15 +464,15 @@ export default function HomeScreen() {
             borderColor: colors.border, backgroundColor: colors.bgCard,
             shadowColor: isDark ? '#000' : '#6070a0', shadowOffset: { width: 0, height: 8 }, shadowOpacity: isDark ? 0.45 : 0.13, shadowRadius: 18, elevation: 6,
           }]}>
-            <Text style={[styles.tipTitle, { color: colors.textMuted }]}>💡 Quick Tip</Text>
+            <Text style={[styles.tipTitle, { color: colors.textMuted }]}>{t.quickTip}</Text>
             <Text style={[styles.tipText, { color: colors.textMuted }]}>
               {glucoseValue === null
-                ? 'Enter your blood sugar reading above to get personalized tips and track your levels throughout the day.'
+                ? t.tipDefault
                 : getColorClass(glucoseValue, unit) === 'low'
-                ? 'Your blood sugar is low. Eat 15-20g of fast-acting carbs like juice or glucose tablets. Recheck in 15 minutes.'
+                ? t.tipLow
                 : getColorClass(glucoseValue, unit) === 'high'
-                ? 'Your blood sugar is high. Drink water, avoid sugary foods, and consider light movement if safe. Recheck in 2 hours.'
-                : 'Your blood sugar is in range. Keep up the good work! Stay hydrated and maintain your current routine.'}
+                ? t.tipHigh
+                : t.tipNormal}
             </Text>
           </View>
 
@@ -484,16 +481,14 @@ export default function HomeScreen() {
             onPress={() => setHasSeenOnboarding(false)}
             activeOpacity={0.75}
           >
-            <Text style={[styles.howToBtnText, { color: colors.red }]}>📖 How to use the app</Text>
+            <Text style={[styles.howToBtnText, { color: colors.red }]}>{t.howToUseApp}</Text>
           </PressBtn>
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Manual mode popups */}
       <HypoPopup  visible={showHypoPopup}  glucoseValue={glucoseValue!} unit={unit} onClose={() => setShowHypoPopup(false)} />
       <HyperPopup visible={showHyperPopup} glucoseValue={glucoseValue!} unit={unit} onClose={() => setShowHyperPopup(false)} />
 
-      {/* BLE mode — guided flow modal */}
       <GuidedFlowModal
         visible={showGuidedFlow}
         glucoseValue={glucoseValue ?? 0}
@@ -504,13 +499,12 @@ export default function HomeScreen() {
 
       <BleGlucometerScanner visible={showBleScanner} onClose={() => setShowBleScanner(false)} onReading={handleBleReading} />
 
-      {/* Compatible devices sheet */}
       <Modal visible={showCompatibleDevices} transparent animationType="slide" onRequestClose={() => setShowCompatibleDevices(false)}>
         <View style={[styles.overlayBg, { backgroundColor: colors.overlay }]}>
           <View style={[styles.compatSheet, { backgroundColor: colors.bg }]}>
-            <Text style={[styles.compatTitle, { color: colors.text }]}>Compatible Glucometers</Text>
+            <Text style={[styles.compatTitle, { color: colors.text }]}>{t.compatibleDevicesTitle}</Text>
             <Text style={[styles.compatSubtitle, { color: colors.textMuted }]}>
-              Any Bluetooth glucometer supporting the standard Glucose Profile works with DiabEasy.
+              {t.compatibleDevicesSubtitle}
             </Text>
             {[
               { brand: 'Accu-Chek',  models: 'Instant · Guide · Active' },
@@ -531,7 +525,7 @@ export default function HomeScreen() {
               onPress={() => setShowCompatibleDevices(false)}
               activeOpacity={0.8}
             >
-              <Text style={styles.compatBtnText}>Got it</Text>
+              <Text style={styles.compatBtnText}>{t.done}</Text>
             </TouchableOpacity>
           </View>
         </View>

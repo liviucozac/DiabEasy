@@ -8,144 +8,24 @@ import type { DiabetesType, SecurityMethod } from '../store/glucoseStore';
 import { useTheme } from '../context/AppContext';
 import type { ColorScheme } from '../context/colors';
 import { hashValue, biometricsAvailable } from '../utils/securityUtils';
+import { useTranslation } from '../hooks/useTranslation';
 
 const { width } = Dimensions.get('window');
 
-// ─── Slide data ───────────────────────────────────────────────────────────────
+const SLIDE_ICONS = ['👋', '🩸', '📊', '🥗', '📈', '💉', '📋', '📅', '🚨', '⚙️'];
 
-interface Slide {
-  icon: string;
-  title: string;
-  body: string;
-  bullets: string[];
-}
+// ─── Recommended insulin parameters by diabetes type ─────────────────────────
 
-const SLIDES: Slide[] = [
-  {
-    icon: '👋',
-    title: 'Welcome to DiabEasy',
-    body: 'Your personal diabetes companion — simple, fast, and always with you.',
-    bullets: [
-      'Designed specifically for Type 1 diabetes management',
-      'Track glucose, food, insulin, and emergencies in one place',
-      'No account required to get started — all data stays on your device',
-      'Swipe through these slides to learn how each feature works',
-    ],
-  },
-  {
-    icon: '🩸',
-    title: 'Home: Log Blood Sugar',
-    body: 'The Home tab is where you record every reading.',
-    bullets: [
-      'Choose your unit: mg/dL or mmol/L',
-      'Select a reading type: Fasting, Pre-meal, Post-meal, Random, Bedtime, or Post-exercise',
-      'Add optional notes (symptoms, insulin taken, etc.)',
-      'Your reading is colour-coded: red = Low, green = Normal, orange = High',
-      'Low or high? A popup appears with immediate guidance on what to do',
-    ],
-  },
-  {
-    icon: '📊',
-    title: 'Home: Today\'s Summary',
-    body: 'At a glance, see how your day is going.',
-    bullets: [
-      'Total readings logged today',
-      'Average glucose for the day',
-      'Count of In Range, High, and Low readings',
-      'A contextual tip card updates based on your latest reading',
-      'Tap "See Help" after a low or high result for personalised advice',
-    ],
-  },
-  {
-    icon: '🥗',
-    title: 'Food Guide: Plan Your Meal',
-    body: 'Browse 100+ foods and build a personalised meal plan.',
-    bullets: [
-      'Pick a goal: Lower, Maintain, or Raise your blood sugar',
-      'Foods are grouped by category (drinks, grains, proteins, etc.)',
-      'Tap "+ Add" to add a food — tap again to increase the portion',
-      'Use − and + controls to adjust quantity for each item',
-      'See carbs, sugars, fiber, protein, fat, kcal, and GI for every item',
-    ],
-  },
-  {
-    icon: '📈',
-    title: 'Food Guide: Meal Analysis',
-    body: 'Your meal\'s full nutritional breakdown, calculated live.',
-    bullets: [
-      'Running totals update as you add or remove items',
-      'Post-meal glucose estimate shown based on your current reading',
-      'If blood sugar is above 150 mg/dL, eating is flagged as not recommended',
-      'Recommended insulin dose shown for high readings (2–4 units)',
-      'Save meals to your Meal History to track patterns over time',
-    ],
-  },
-  {
-    icon: '💉',
-    title: 'Meds: Insulin Calculator',
-    body: 'The Calculator tab estimates exactly how much insulin to take.',
-    bullets: [
-      'Reads your current glucose and planned meal carbs automatically',
-      'Calculates a Meal Dose based on your carb ratio',
-      'Adds a Correction Dose based on your ISF and target glucose',
-      'Shows Total Dose as the sum of both',
-      'If blood sugar is above 175 mg/dL, a short-acting dose is recommended',
-      'Set your personal ISF, carb ratio, and target in Profile → Settings',
-    ],
-  },
-  {
-    icon: '📋',
-    title: 'Meds: Log & Reminders',
-    body: 'Keep track of every dose and never miss an injection.',
-    bullets: [
-      'Insulin Log: record Rapid-acting or Long-acting doses with time',
-      'Reminders: two default reminders (morning + evening) are ready to use',
-      'Tap Edit on any reminder to change label, time, type, or units',
-      'Add as many custom reminders as you need',
-      'Toggle reminders On/Off without deleting them',
-    ],
-  },
-  {
-    icon: '📅',
-    title: 'History: Charts & Export',
-    body: 'Review your readings with charts and export full reports.',
-    bullets: [
-      'All past readings listed with date, time, value, status, and notes',
-      'Line chart shows glucose trend over your last 20 readings',
-      'Donut pie chart shows the split between Low, Normal, and High',
-      'Filter by date range, min/max value, or measuring unit',
-      'Export a full PDF report with charts, stats, and the insulin log',
-    ],
-  },
-  {
-    icon: '🚨',
-    title: 'Emergency (SOS Tab)',
-    body: 'In a crisis, every second counts.',
-    bullets: [
-      'One-tap Call 112 button — always visible at the top',
-      'Save emergency contacts (family, doctor) for quick dialling',
-      'Import contacts directly from your phone\'s contact list',
-      'Hospital Finder: search or use your location to find nearby hospitals',
-      'Symptom guides for Hypoglycemia, Hyperglycemia, and DKA',
-    ],
-  },
-  {
-    icon: '⚙️',
-    title: 'Profile & Settings',
-    body: 'Personalise DiabEasy to match your treatment plan.',
-    bullets: [
-      'Set your name, diabetes type, diagnosis date, and doctor info',
-      'Create an account to associate your profile (optional)',
-      'Adjust insulin calculator defaults: ISF, carb ratio, target glucose',
-      'Switch between Light, Dark, or System theme',
-      'Clear all data from the Data section if you need a fresh start',
-    ],
-  },
-];
+const RECOMMENDED: Record<DiabetesType, { isf: number; carbRatio: number; target: number }> = {
+  'Type 1': { isf: 50, carbRatio: 10, target: 100 },
+  'LADA':   { isf: 50, carbRatio: 10, target: 100 },
+  'Type 2': { isf: 30, carbRatio: 15, target: 110 },
+  'Other':  { isf: 40, carbRatio: 12, target: 105 },
+  '':       { isf: 50, carbRatio: 10, target: 100 },
+};
 
 // ─── Exact replicas from index.tsx ────────────────────────────────────────────
 
-/** Exact copy of the unit toggle from Home tab */
 function UnitToggleMock({ colors }: { colors: ColorScheme }) {
   return (
     <View style={[mk.previewWrap, { borderColor: colors.border, backgroundColor: colors.bgCard }]}>
@@ -161,13 +41,11 @@ function UnitToggleMock({ colors }: { colors: ColorScheme }) {
   );
 }
 
-/** Exact copy of the fasting/reading-type grid from Home tab */
 function FastingGridMock({ colors }: { colors: ColorScheme }) {
   const opts = ['Fasting', 'Pre-meal', 'Post-meal', 'Random', 'Bedtime', 'Post-exercise'];
   return (
     <View style={[mk.previewWrap, { borderColor: colors.border, backgroundColor: colors.bgCard }]}>
       <Text style={[mk.previewLabel, { color: colors.textFaint }]}>reading type selector</Text>
-      {/* fastingGrid from index.tsx */}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', width: '100%', gap: 5, justifyContent: 'center' }}>
         {opts.map((o, i) => (
           <View key={i} style={{
@@ -195,7 +73,6 @@ function FastingGridMock({ colors }: { colors: ColorScheme }) {
   );
 }
 
-/** Exact copy of the colour-coded result display from Home tab */
 function ColorResultMock({ colors }: { colors: ColorScheme }) {
   const items = [
     { value: '60', unit: 'mg/dL', label: '↓ Low',    color: colors.low    },
@@ -217,12 +94,10 @@ function ColorResultMock({ colors }: { colors: ColorScheme }) {
   );
 }
 
-/** Exact copy of QuickStats from Home tab */
 function StatsMock({ colors, isDark }: { colors: ColorScheme; isDark: boolean }) {
   return (
     <View style={[mk.previewWrap, { borderColor: colors.border, backgroundColor: colors.bgCard }]}>
       <Text style={[mk.previewLabel, { color: colors.textFaint }]}>today's summary card</Text>
-      {/* statsCard from index.tsx */}
       <View style={{
         width: '100%', borderRadius: 14, borderWidth: 1, padding: 8,
         borderColor: colors.border, backgroundColor: colors.bgCard,
@@ -265,9 +140,7 @@ function StatsMock({ colors, isDark }: { colors: ColorScheme; isDark: boolean })
 
 // ─── Exact replicas from foodguide.tsx ───────────────────────────────────────
 
-/** Exact copy of the goal pill row from Food Guide */
 function GoalPillsMock({ colors }: { colors: ColorScheme }) {
-  // ACTION_OPTIONS colors from foodguide.tsx: lower=colors.normal, maintain=colors.high, raise=colors.red
   const options = [
     { label: 'Lower',    color: colors.normal, active: true  },
     { label: 'Maintain', color: colors.textMuted, active: false },
@@ -276,7 +149,6 @@ function GoalPillsMock({ colors }: { colors: ColorScheme }) {
   return (
     <View style={[mk.previewWrap, { borderColor: colors.border, backgroundColor: colors.bgCard }]}>
       <Text style={[mk.previewLabel, { color: colors.textFaint }]}>goal selector</Text>
-      {/* pillRow from foodguide.tsx */}
       <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 10 }}>
         {options.map((opt, i) => (
           <View key={i} style={[{
@@ -295,7 +167,6 @@ function GoalPillsMock({ colors }: { colors: ColorScheme }) {
   );
 }
 
-/** Exact copy of the + Add button and qty controls from a food row in Food Guide */
 function FoodRowMock({ colors }: { colors: ColorScheme }) {
   return (
     <View style={[mk.previewWrap, { borderColor: colors.border, backgroundColor: colors.bgCard }]}>
@@ -309,9 +180,7 @@ function FoodRowMock({ colors }: { colors: ColorScheme }) {
           <Text style={{ fontSize: 11, fontWeight: '700', color: colors.red }}>+ Add</Text>
         </View>
       </View>
-
       <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 6 }} />
-
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 11, fontWeight: '600', color: colors.text }}>Banana (1 medium)</Text>
@@ -332,12 +201,10 @@ function FoodRowMock({ colors }: { colors: ColorScheme }) {
 
 // ─── Exact replicas from medication.tsx ──────────────────────────────────────
 
-/** Exact copy of a reminder card row from Medication tab */
 function ReminderCardMock({ colors }: { colors: ColorScheme }) {
   return (
     <View style={[mk.previewWrap, { borderColor: colors.border, backgroundColor: colors.bgCard }]}>
       <Text style={[mk.previewLabel, { color: colors.textFaint }]}>reminder card</Text>
-      {/* reminderCard from medication.tsx */}
       <View style={{
         flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
         borderRadius: 10, borderWidth: 1, padding: 14,
@@ -362,7 +229,6 @@ function ReminderCardMock({ colors }: { colors: ColorScheme }) {
 
 // ─── Exact replicas from history.tsx ─────────────────────────────────────────
 
-/** Exact copy of the filter + export buttons from History tab */
 function HistoryFilterMock({ colors }: { colors: ColorScheme }) {
   return (
     <View style={[mk.previewWrap, { borderColor: colors.border, backgroundColor: colors.bgCard }]}>
@@ -388,7 +254,6 @@ function HistoryFilterMock({ colors }: { colors: ColorScheme }) {
 
 // ─── Exact replicas from emergency.tsx ───────────────────────────────────────
 
-/** Exact copy of the Call 112 button from Emergency tab */
 function Call112Mock({ colors }: { colors: ColorScheme }) {
   return (
     <View style={[mk.previewWrap, { borderColor: colors.border, backgroundColor: colors.bgCard }]}>
@@ -411,48 +276,40 @@ function Call112Mock({ colors }: { colors: ColorScheme }) {
 type ExtraRender = (colors: ColorScheme, isDark: boolean) => React.ReactNode;
 
 const BULLET_EXTRAS: Record<number, Record<number, ExtraRender>> = {
-  1: { // Log Blood Sugar
+  1: {
     0: (c)       => <UnitToggleMock  colors={c} />,
     1: (c)       => <FastingGridMock colors={c} />,
     3: (c)       => <ColorResultMock colors={c} />,
   },
-  2: { // Today's Summary
+  2: {
     2: (c, dark) => <StatsMock       colors={c} isDark={dark} />,
   },
-  3: { // Food Plan
+  3: {
     0: (c)       => <GoalPillsMock   colors={c} />,
     2: (c)       => <FoodRowMock     colors={c} />,
   },
-  6: { // Log & Reminders
+  6: {
     1: (c)       => <ReminderCardMock colors={c} />,
   },
-  7: { // History
+  7: {
     3: (c)       => <HistoryFilterMock colors={c} />,
   },
-  8: { // Emergency
+  8: {
     0: (c)       => <Call112Mock      colors={c} />,
   },
-};
-
-// ─── Recommended insulin parameters by diabetes type ─────────────────────────
-
-const RECOMMENDED: Record<DiabetesType, { isf: number; carbRatio: number; target: number }> = {
-  'Type 1': { isf: 50, carbRatio: 10, target: 100 },
-  'LADA':   { isf: 50, carbRatio: 10, target: 100 },
-  'Type 2': { isf: 30, carbRatio: 15, target: 110 },
-  'Other':  { isf: 40, carbRatio: 12, target: 105 },
-  '':       { isf: 50, carbRatio: 10, target: 100 },
 };
 
 // ─── Param setup slide ────────────────────────────────────────────────────────
 
 function ParamSetupSlide({
-  colors, diabetesType, onConfirm,
+  colors, diabetesType, onConfirm, slideTotal,
 }: {
   colors: ColorScheme;
   diabetesType: DiabetesType;
   onConfirm: (isf: number, carbRatio: number, target: number) => void;
+  slideTotal: number;
 }) {
+  const t = useTranslation();
   const rec = RECOMMENDED[diabetesType] ?? RECOMMENDED[''];
   const [useEstimates, setUseEstimates] = useState(false);
   const [isf,      setIsf]      = useState('');
@@ -482,32 +339,27 @@ function ParamSetupSlide({
   return (
     <ScrollView style={{ width }} contentContainerStyle={styles.slide} showsVerticalScrollIndicator={false}>
       <Text style={styles.slideIcon}>⚙️</Text>
-      <Text style={[styles.slideTitle, { color: colors.text }]}>Set Your Calculator Parameters</Text>
-      <Text style={[styles.slideBody, { color: colors.textMuted }]}>
-        The insulin calculator needs three personal values from your doctor to give accurate dose recommendations.
-      </Text>
+      <Text style={[styles.slideTitle, { color: colors.text }]}>{t.setYourParams}</Text>
+      <Text style={[styles.slideBody, { color: colors.textMuted }]}>{t.setYourParamsBody}</Text>
 
-      {/* Path toggle */}
       <View style={[ps.pathRow]}>
         <TouchableOpacity
           style={[ps.pathBtn, !useEstimates && { backgroundColor: colors.red, borderColor: colors.red }]}
           onPress={() => applyEstimates(false)} activeOpacity={0.8}>
-          <Text style={[ps.pathBtnText, { color: !useEstimates ? '#fff' : colors.textMuted }]}>I have my values</Text>
+          <Text style={[ps.pathBtnText, { color: !useEstimates ? '#fff' : colors.textMuted }]}>{t.iHaveMyValues}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[ps.pathBtn, useEstimates && { backgroundColor: colors.red, borderColor: colors.red }]}
           onPress={() => applyEstimates(true)} activeOpacity={0.8}>
-          <Text style={[ps.pathBtnText, { color: useEstimates ? '#fff' : colors.textMuted }]}>Suggest values for me</Text>
+          <Text style={[ps.pathBtnText, { color: useEstimates ? '#fff' : colors.textMuted }]}>{t.suggestValues}</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Disclaimer for estimates */}
       {useEstimates && (
         <View style={[ps.disclaimer, { backgroundColor: colors.highBg, borderColor: colors.high }]}>
-          <Text style={[ps.disclaimerTitle, { color: colors.high }]}>⚠️ Estimates only</Text>
+          <Text style={[ps.disclaimerTitle, { color: colors.high }]}>{t.estimatesOnly}</Text>
           <Text style={[ps.disclaimerText, { color: colors.textMuted }]}>
-            These are population averages for {diabetesType || 'Type 1'} diabetes — not a prescription.
-            Confirm with your doctor or diabetes educator before using the calculator for real doses.
+            {t.estimatesOnlyBody(diabetesType || 'Type 1')}
           </Text>
           <View style={ps.recRow}>
             {[
@@ -524,12 +376,11 @@ function ParamSetupSlide({
         </View>
       )}
 
-      {/* Inputs */}
       <View style={[styles.bulletCard, { backgroundColor: colors.bgCard, borderColor: colors.border, gap: 12, marginTop: 12 }]}>
         {[
-          { label: 'ISF  —  how much 1 unit lowers glucose (mg/dL)', value: isf,      set: setIsf,       placeholder: `e.g. ${rec.isf}` },
-          { label: 'Carb ratio  —  grams of carbs per unit (g/u)',   value: carbRatio, set: setCarbRatio, placeholder: `e.g. ${rec.carbRatio}` },
-          { label: 'Target glucose  (mg/dL)',                         value: target,   set: setTarget,    placeholder: `e.g. ${rec.target}` },
+          { label: t.isfInputLabel,           value: isf,       set: setIsf,       placeholder: `e.g. ${rec.isf}` },
+          { label: t.carbRatioInputLabel,      value: carbRatio, set: setCarbRatio, placeholder: `e.g. ${rec.carbRatio}` },
+          { label: t.targetGlucoseInputLabel,  value: target,    set: setTarget,    placeholder: `e.g. ${rec.target}` },
         ].map((f, i) => (
           <View key={i}>
             <Text style={[ps.inputLabel, { color: colors.textMuted }]}>{f.label}</Text>
@@ -551,10 +402,159 @@ function ParamSetupSlide({
         onPress={handleConfirm}
         activeOpacity={0.8}
       >
-        <Text style={styles.nextBtnText}>Confirm & Get Started</Text>
+        <Text style={styles.nextBtnText}>{t.confirmAndGetStarted}</Text>
       </TouchableOpacity>
 
-      <Text style={[styles.pageCount, { color: colors.textFaint }]}>{SLIDES.length + 1} / {SLIDES.length + 1}</Text>
+      <Text style={[styles.pageCount, { color: colors.textFaint }]}>{slideTotal - 1} / {slideTotal}</Text>
+    </ScrollView>
+  );
+}
+
+// ─── Security setup slide ─────────────────────────────────────────────────────
+
+function SecuritySetupSlide({
+  colors,
+  onConfirm,
+  slideTotal,
+}: {
+  colors: ColorScheme;
+  onConfirm: (method: SecurityMethod, hash: string) => void;
+  slideTotal: number;
+}) {
+  const t = useTranslation();
+  const [method,          setMethod]          = useState<SecurityMethod>('none');
+  const [pin,             setPin]             = useState('');
+  const [pinConfirm,      setPinConfirm]      = useState('');
+  const [password,        setPassword]        = useState('');
+  const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [bioOk,           setBioOk]           = useState<boolean | null>(null);
+  const [error,           setError]           = useState('');
+
+  const METHOD_OPTIONS: { value: SecurityMethod; icon: string; label: string; desc: string }[] = [
+    { value: 'none',       icon: '🔓', label: t.noProtection,     desc: t.appOpensInstantly },
+    { value: 'pin',        icon: '🔢', label: t.pinMethod,        desc: t.pinMethodDesc },
+    { value: 'password',   icon: '🔑', label: t.passwordMethod,   desc: t.passwordMethodDesc },
+    { value: 'biometrics', icon: '🪪', label: t.biometricMethod,  desc: t.biometricMethodDesc },
+  ];
+
+  const selectMethod = async (m: SecurityMethod) => {
+    setMethod(m); setError('');
+    if (m === 'biometrics') {
+      const ok = await biometricsAvailable();
+      setBioOk(ok);
+      if (!ok) setError(t.noBiometricsEnrolled);
+    }
+  };
+
+  const handleConfirm = () => {
+    setError('');
+    if (method === 'none') { onConfirm('none', ''); return; }
+    if (method === 'pin') {
+      if (pin.length !== 4)           { setError(t.pinMust4Digits); return; }
+      if (!/^\d{4}$/.test(pin))       { setError(t.pinOnlyDigits); return; }
+      if (pin !== pinConfirm)         { setError(t.pinsDoNotMatch); return; }
+      onConfirm('pin', hashValue(pin)); return;
+    }
+    if (method === 'password') {
+      if (password.length < 7)        { setError(t.passwordMin7); return; }
+      if (password !== passwordConfirm){ setError(t.passwordsDoNotMatch); return; }
+      onConfirm('password', hashValue(password)); return;
+    }
+    if (method === 'biometrics') {
+      if (!bioOk) { setError(t.noBiometricsEnrolled); return; }
+      onConfirm('biometrics', ''); return;
+    }
+  };
+
+  const inputStyle = [ps.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }];
+
+  return (
+    <ScrollView style={{ width }} contentContainerStyle={styles.slide} showsVerticalScrollIndicator={false}>
+      <Text style={styles.slideIcon}>🔐</Text>
+      <Text style={[styles.slideTitle, { color: colors.text }]}>{t.secureYourApp}</Text>
+      <Text style={[styles.slideBody, { color: colors.textMuted }]}>{t.secureYourAppBody}</Text>
+
+      <View style={sc.methodGrid}>
+        {METHOD_OPTIONS.map((opt) => {
+          const active = method === opt.value;
+          return (
+            <TouchableOpacity
+              key={opt.value}
+              style={[sc.methodCard, { borderColor: active ? colors.red : colors.border, backgroundColor: active ? colors.bgSecondary : colors.bgCard }]}
+              onPress={() => selectMethod(opt.value)}
+              activeOpacity={0.75}
+              accessibilityLabel={`${opt.label} — ${opt.desc}`}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: active }}
+            >
+              <Text style={sc.methodIcon}>{opt.icon}</Text>
+              <Text style={[sc.methodLabel, { color: active ? colors.red : colors.text }]}>{opt.label}</Text>
+              <Text style={[sc.methodDesc,  { color: colors.textFaint }]}>{opt.desc}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {method === 'pin' && (
+        <View style={[styles.bulletCard, { backgroundColor: colors.bgCard, borderColor: colors.border, gap: 12, marginTop: 12 }]}>
+          <View>
+            <Text style={[ps.inputLabel, { color: colors.textMuted }]}>{t.enter4DigitPin}</Text>
+            <TextInput style={inputStyle} keyboardType="number-pad" maxLength={4} secureTextEntry
+              placeholder="••••" placeholderTextColor={colors.placeholder} value={pin} onChangeText={setPin}
+              accessibilityLabel="PIN" />
+          </View>
+          <View>
+            <Text style={[ps.inputLabel, { color: colors.textMuted }]}>{t.confirmPinLabel}</Text>
+            <TextInput style={inputStyle} keyboardType="number-pad" maxLength={4} secureTextEntry
+              placeholder="••••" placeholderTextColor={colors.placeholder} value={pinConfirm} onChangeText={setPinConfirm}
+              accessibilityLabel="Confirm PIN" />
+          </View>
+        </View>
+      )}
+
+      {method === 'password' && (
+        <View style={[styles.bulletCard, { backgroundColor: colors.bgCard, borderColor: colors.border, gap: 12, marginTop: 12 }]}>
+          <View>
+            <Text style={[ps.inputLabel, { color: colors.textMuted }]}>{t.passwordLabel}</Text>
+            <TextInput style={inputStyle} secureTextEntry
+              placeholder={t.passwordPlaceholder} placeholderTextColor={colors.placeholder} value={password} onChangeText={setPassword}
+              accessibilityLabel="Password" />
+          </View>
+          <View>
+            <Text style={[ps.inputLabel, { color: colors.textMuted }]}>{t.confirmPasswordLabel}</Text>
+            <TextInput style={inputStyle} secureTextEntry
+              placeholder={t.repeatPasswordPlaceholder} placeholderTextColor={colors.placeholder} value={passwordConfirm} onChangeText={setPasswordConfirm}
+              accessibilityLabel="Confirm password" />
+          </View>
+        </View>
+      )}
+
+      {method === 'biometrics' && bioOk === false && (
+        <View style={[sc.bioWarning, { backgroundColor: colors.highBg, borderColor: colors.high }]}>
+          <Text style={[sc.bioWarningText, { color: colors.high }]}>⚠️ {t.noBiometricsEnrolled}</Text>
+        </View>
+      )}
+      {method === 'biometrics' && bioOk === true && (
+        <View style={[sc.bioWarning, { backgroundColor: colors.normalBg, borderColor: colors.normal }]}>
+          <Text style={[sc.bioWarningText, { color: colors.normal }]}>{t.biometricsDetected}</Text>
+        </View>
+      )}
+
+      {!!error && <Text style={sc.errorText}>{error}</Text>}
+
+      <TouchableOpacity
+        style={[styles.nextBtn, { backgroundColor: colors.red, flex: 0, marginTop: 20, width: '100%' }]}
+        onPress={handleConfirm}
+        activeOpacity={0.8}
+        accessibilityLabel="Confirm security method and finish setup"
+        accessibilityRole="button"
+      >
+        <Text style={styles.nextBtnText}>
+          {method === 'none' ? t.skipAndGetStarted : t.confirmAndGetStarted}
+        </Text>
+      </TouchableOpacity>
+
+      <Text style={[styles.pageCount, { color: colors.textFaint }]}>{slideTotal} / {slideTotal}</Text>
     </ScrollView>
   );
 }
@@ -564,10 +564,11 @@ function ParamSetupSlide({
 export default function OnboardingScreen() {
   const { colors, isDark } = useTheme();
   const { setHasSeenOnboarding, setSettings, profile } = useGlucoseStore();
+  const t = useTranslation();
   const [page, setPage] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
 
-  const TOTAL = SLIDES.length + 2; // info slides + param setup + security setup
+  const TOTAL = t.slides.length + 2;
 
   const goTo = (idx: number) => {
     scrollRef.current?.scrollTo({ x: idx * width, animated: true });
@@ -578,7 +579,7 @@ export default function OnboardingScreen() {
 
   const handleParamConfirm = (isf: number, carbRatio: number, target: number) => {
     setSettings({ isf, carbRatio, targetGlucose: target, insulinParamsSet: true });
-    goTo(SLIDES.length + 1); // advance to security setup
+    goTo(t.slides.length + 1);
   };
 
   const handleSecurityConfirm = (method: SecurityMethod, hash: string) => {
@@ -586,8 +587,8 @@ export default function OnboardingScreen() {
     finish();
   };
 
-  const isParamStep    = page === SLIDES.length;
-  const isSecurityStep = page === SLIDES.length + 1;
+  const isParamStep    = page === t.slides.length;
+  const isSecurityStep = page === t.slides.length + 1;
   const rec = RECOMMENDED[profile.diabetesType] ?? RECOMMENDED[''];
 
   return (
@@ -604,14 +605,14 @@ export default function OnboardingScreen() {
           setPage(Math.round(e.nativeEvent.contentOffset.x / width));
         }}
       >
-        {SLIDES.map((slide, i) => (
+        {t.slides.map((slide, i) => (
           <ScrollView
             key={i}
             style={{ width }}
             contentContainerStyle={styles.slide}
             showsVerticalScrollIndicator={false}
           >
-            <Text style={styles.slideIcon}>{slide.icon}</Text>
+            <Text style={styles.slideIcon}>{SLIDE_ICONS[i] ?? '📱'}</Text>
             <Text style={[styles.slideTitle, { color: colors.text }]}>{slide.title}</Text>
             <Text style={[styles.slideBody,  { color: colors.textMuted }]}>{slide.body}</Text>
 
@@ -631,14 +632,13 @@ export default function OnboardingScreen() {
           </ScrollView>
         ))}
 
-        {/* Param setup */}
         <ParamSetupSlide
           colors={colors}
           diabetesType={profile.diabetesType}
           onConfirm={handleParamConfirm}
+          slideTotal={TOTAL}
         />
 
-        {/* Security setup — final page */}
         <SecuritySetupSlide
           colors={colors}
           onConfirm={handleSecurityConfirm}
@@ -646,7 +646,6 @@ export default function OnboardingScreen() {
         />
       </ScrollView>
 
-      {/* Dots */}
       <View style={styles.dotsRow}>
         {Array.from({ length: TOTAL }, (_, i) => (
           <View
@@ -659,7 +658,6 @@ export default function OnboardingScreen() {
         ))}
       </View>
 
-      {/* Navigation — always visible */}
       <View style={styles.navRow}>
         <TouchableOpacity
           onPress={() => {
@@ -670,16 +668,16 @@ export default function OnboardingScreen() {
           activeOpacity={0.7}
         >
           <Text style={[styles.skipText, { color: colors.textMuted }]}>
-            {(isParamStep || isSecurityStep) ? 'Skip setup' : 'Skip'}
+            {(isParamStep || isSecurityStep) ? t.onboardingSkipSetup : t.onboardingSkip}
           </Text>
         </TouchableOpacity>
         {!isParamStep && !isSecurityStep && (
           <TouchableOpacity
             style={[styles.nextBtn, { backgroundColor: colors.red }]}
-            onPress={() => page === SLIDES.length - 1 ? goTo(SLIDES.length) : goTo(page + 1)}
+            onPress={() => page === t.slides.length - 1 ? goTo(t.slides.length) : goTo(page + 1)}
             activeOpacity={0.8}
           >
-            <Text style={styles.nextBtnText}>Next →</Text>
+            <Text style={styles.nextBtnText}>{t.onboardingNext}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -736,160 +734,7 @@ const ps = StyleSheet.create({
   input:          { borderWidth: 1.5, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7, fontSize: 14 },
 });
 
-// ─── Security setup slide ─────────────────────────────────────────────────────
-
-const METHOD_OPTIONS: { value: SecurityMethod; icon: string; label: string; desc: string }[] = [
-  { value: 'none',       icon: '🔓', label: 'No protection',  desc: 'App opens instantly' },
-  { value: 'pin',        icon: '🔢', label: '4-digit PIN',    desc: 'Quick numeric code' },
-  { value: 'password',   icon: '🔑', label: 'Password',       desc: '7+ character passphrase' },
-  { value: 'biometrics', icon: '🪪', label: 'Face / Finger',  desc: 'Biometric authentication' },
-];
-
-function SecuritySetupSlide({
-  colors,
-  onConfirm,
-  slideTotal,
-}: {
-  colors: ColorScheme;
-  onConfirm: (method: SecurityMethod, hash: string) => void;
-  slideTotal: number;
-}) {
-  const [method,          setMethod]          = useState<SecurityMethod>('none');
-  const [pin,             setPin]             = useState('');
-  const [pinConfirm,      setPinConfirm]      = useState('');
-  const [password,        setPassword]        = useState('');
-  const [passwordConfirm, setPasswordConfirm] = useState('');
-  const [bioOk,           setBioOk]           = useState<boolean | null>(null);
-  const [error,           setError]           = useState('');
-
-  const selectMethod = async (m: SecurityMethod) => {
-    setMethod(m); setError('');
-    if (m === 'biometrics') {
-      const ok = await biometricsAvailable();
-      setBioOk(ok);
-      if (!ok) setError('No biometrics enrolled on this device. Choose another method.');
-    }
-  };
-
-  const handleConfirm = () => {
-    setError('');
-    if (method === 'none') { onConfirm('none', ''); return; }
-    if (method === 'pin') {
-      if (pin.length !== 4)           { setError('PIN must be exactly 4 digits.'); return; }
-      if (!/^\d{4}$/.test(pin))       { setError('PIN must contain only digits.'); return; }
-      if (pin !== pinConfirm)         { setError('PINs do not match.'); return; }
-      onConfirm('pin', hashValue(pin)); return;
-    }
-    if (method === 'password') {
-      if (password.length < 7)        { setError('Password must be at least 7 characters.'); return; }
-      if (password !== passwordConfirm){ setError('Passwords do not match.'); return; }
-      onConfirm('password', hashValue(password)); return;
-    }
-    if (method === 'biometrics') {
-      if (!bioOk) { setError('No biometrics enrolled on this device. Choose another method.'); return; }
-      onConfirm('biometrics', ''); return;
-    }
-  };
-
-  const inputStyle = [ps.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }];
-
-  return (
-    <ScrollView style={{ width }} contentContainerStyle={styles.slide} showsVerticalScrollIndicator={false}>
-      <Text style={styles.slideIcon}>🔐</Text>
-      <Text style={[styles.slideTitle, { color: colors.text }]}>Secure Your App</Text>
-      <Text style={[styles.slideBody, { color: colors.textMuted }]}>
-        Choose how you want to unlock DiabEasy each time you open it. You can change this later in Profile → Settings.
-      </Text>
-
-      {/* Method cards */}
-      <View style={sc.methodGrid}>
-        {METHOD_OPTIONS.map((opt) => {
-          const active = method === opt.value;
-          return (
-            <TouchableOpacity
-              key={opt.value}
-              style={[sc.methodCard, { borderColor: active ? colors.red : colors.border, backgroundColor: active ? colors.bgSecondary : colors.bgCard }]}
-              onPress={() => selectMethod(opt.value)}
-              activeOpacity={0.75}
-              accessibilityLabel={`${opt.label} — ${opt.desc}`}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: active }}
-            >
-              <Text style={sc.methodIcon}>{opt.icon}</Text>
-              <Text style={[sc.methodLabel, { color: active ? colors.red : colors.text }]}>{opt.label}</Text>
-              <Text style={[sc.methodDesc,  { color: colors.textFaint }]}>{opt.desc}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-
-      {/* PIN entry */}
-      {method === 'pin' && (
-        <View style={[styles.bulletCard, { backgroundColor: colors.bgCard, borderColor: colors.border, gap: 12, marginTop: 12 }]}>
-          <View>
-            <Text style={[ps.inputLabel, { color: colors.textMuted }]}>Enter 4-digit PIN</Text>
-            <TextInput style={inputStyle} keyboardType="number-pad" maxLength={4} secureTextEntry
-              placeholder="••••" placeholderTextColor={colors.placeholder} value={pin} onChangeText={setPin}
-              accessibilityLabel="PIN" />
-          </View>
-          <View>
-            <Text style={[ps.inputLabel, { color: colors.textMuted }]}>Confirm PIN</Text>
-            <TextInput style={inputStyle} keyboardType="number-pad" maxLength={4} secureTextEntry
-              placeholder="••••" placeholderTextColor={colors.placeholder} value={pinConfirm} onChangeText={setPinConfirm}
-              accessibilityLabel="Confirm PIN" />
-          </View>
-        </View>
-      )}
-
-      {/* Password entry */}
-      {method === 'password' && (
-        <View style={[styles.bulletCard, { backgroundColor: colors.bgCard, borderColor: colors.border, gap: 12, marginTop: 12 }]}>
-          <View>
-            <Text style={[ps.inputLabel, { color: colors.textMuted }]}>Password (7+ characters)</Text>
-            <TextInput style={inputStyle} secureTextEntry
-              placeholder="Enter password" placeholderTextColor={colors.placeholder} value={password} onChangeText={setPassword}
-              accessibilityLabel="Password" />
-          </View>
-          <View>
-            <Text style={[ps.inputLabel, { color: colors.textMuted }]}>Confirm password</Text>
-            <TextInput style={inputStyle} secureTextEntry
-              placeholder="Repeat password" placeholderTextColor={colors.placeholder} value={passwordConfirm} onChangeText={setPasswordConfirm}
-              accessibilityLabel="Confirm password" />
-          </View>
-        </View>
-      )}
-
-      {/* Biometrics note */}
-      {method === 'biometrics' && bioOk === false && (
-        <View style={[sc.bioWarning, { backgroundColor: colors.highBg, borderColor: colors.high }]}>
-          <Text style={[sc.bioWarningText, { color: colors.high }]}>⚠️ No biometrics enrolled on this device. Please choose another method or enrol first in your device settings.</Text>
-        </View>
-      )}
-      {method === 'biometrics' && bioOk === true && (
-        <View style={[sc.bioWarning, { backgroundColor: colors.normalBg, borderColor: colors.normal }]}>
-          <Text style={[sc.bioWarningText, { color: colors.normal }]}>✓ Biometrics detected. You'll be prompted to authenticate each time you open the app.</Text>
-        </View>
-      )}
-
-      {/* Error */}
-      {!!error && <Text style={sc.errorText}>{error}</Text>}
-
-      <TouchableOpacity
-        style={[styles.nextBtn, { backgroundColor: colors.red, flex: 0, marginTop: 20, width: '100%' }]}
-        onPress={handleConfirm}
-        activeOpacity={0.8}
-        accessibilityLabel="Confirm security method and finish setup"
-        accessibilityRole="button"
-      >
-        <Text style={styles.nextBtnText}>
-          {method === 'none' ? 'Skip & Get Started' : 'Confirm & Get Started'}
-        </Text>
-      </TouchableOpacity>
-
-      <Text style={[styles.pageCount, { color: colors.textFaint }]}>{slideTotal} / {slideTotal}</Text>
-    </ScrollView>
-  );
-}
+// ─── Security setup slide styles ─────────────────────────────────────────────
 
 const sc = StyleSheet.create({
   methodGrid:    { flexDirection: 'row', flexWrap: 'wrap', gap: 10, width: '100%', marginTop: 4 },

@@ -9,6 +9,7 @@ import { calcCorrectionDose, getAnalogByType } from '../utils/insulinUtils';
 import { generateId } from '../utils/idUtils';
 import { useTheme } from '../context/AppContext';
 import { PressBtn } from '../components/PressBtn';
+import { useTranslation } from '../hooks/useTranslation';
 
 const RED = '#EC5557';
 
@@ -222,23 +223,18 @@ function statusColor(value: number, unit: string, lowMgdL: number, highMgdL: num
   return value < lo ? '#e53935' : value <= hi ? '#2e7d32' : '#ef6c00';
 }
 
-function statusLabel(value: number, unit: string, lowMgdL: number, highMgdL: number): string {
-  const lo = unit === 'mmol/L' ? lowMgdL  / 18.0182 : lowMgdL;
-  const hi = unit === 'mmol/L' ? highMgdL / 18.0182 : highMgdL;
-  return value < lo ? 'Low' : value <= hi ? 'Normal' : 'High';
-}
-
 function NutrientGrid({ totals }: { totals: NutrientTotals }) {
   const { colors } = useTheme();
+  const t = useTranslation();
   const stats = [
-    { label: 'Carbs',    value: `${totals.carbs.toFixed(1)}g` },
-    { label: 'Sugars',   value: `${totals.sugars.toFixed(1)}g` },
-    { label: 'Fiber',    value: `${totals.fiber.toFixed(1)}g` },
-    { label: 'Protein',  value: `${totals.protein.toFixed(1)}g` },
-    { label: 'Fat',      value: `${totals.fat.toFixed(1)}g` },
-    { label: 'Kcal',     value: `${totals.kcal.toFixed(0)}` },
-    { label: 'Sodium',   value: `${totals.sodium.toFixed(0)}mg` },
-    { label: 'Potassium',value: `${totals.potassium.toFixed(0)}mg` },
+    { label: t.carbs,     value: `${totals.carbs.toFixed(1)}g` },
+    { label: t.sugars,    value: `${totals.sugars.toFixed(1)}g` },
+    { label: t.fiber,     value: `${totals.fiber.toFixed(1)}g` },
+    { label: t.protein,   value: `${totals.protein.toFixed(1)}g` },
+    { label: t.fat,       value: `${totals.fat.toFixed(1)}g` },
+    { label: t.kcal,      value: `${totals.kcal.toFixed(0)}` },
+    { label: t.sodium,    value: `${totals.sodium.toFixed(0)}mg` },
+    { label: t.potassium, value: `${totals.potassium.toFixed(0)}mg` },
   ];
   return (
     <View style={s.statsGrid}>
@@ -258,6 +254,7 @@ export default function FoodGuideScreen() {
   const { glucoseValue, unit, settings, setTotalCarbs } = useGlucoseStore();
   const { colors, isDark } = useTheme();
   const router = useRouter();
+  const t = useTranslation();
 
   const [activeTab,      setActiveTab]      = useState<ActiveTab>('planner');
   const [foodAction,     setFoodAction]     = useState<FoodAction>('');
@@ -300,6 +297,18 @@ export default function FoodGuideScreen() {
 
   const showSearch = foodAction !== '' && searchQuery.trim().length > 0;
 
+  const statusLabelT = (value: number, sUnit: string, low: number, high: number) => {
+    const lo = sUnit === 'mmol/L' ? low  / 18.0182 : low;
+    const hi = sUnit === 'mmol/L' ? high / 18.0182 : high;
+    return value < lo ? t.statusLow : value <= hi ? t.statusNormal : t.statusHigh;
+  };
+
+  const ACTION_OPTIONS = [
+    { label: t.lower,    value: 'lower'    as FoodAction, color: colors.normal },
+    { label: t.maintain, value: 'maintain' as FoodAction, color: colors.textMuted },
+    { label: t.raise,    value: 'raise'    as FoodAction, color: colors.red },
+  ];
+
   const addFoodToMeal = (item: FoodItem) => {
     setCurrentMeal((prev) => {
       const existing = prev.find((i) => i.name === item.name);
@@ -326,21 +335,22 @@ export default function FoodGuideScreen() {
     setActiveTab('history');
   };
 
-  const ACTION_OPTIONS = [
-    { label: 'Lower',    value: 'lower'    as FoodAction, color: colors.normal },
-    { label: 'Maintain', value: 'maintain' as FoodAction, color: colors.textMuted },
-    { label: 'Raise',    value: 'raise'    as FoodAction, color: colors.red },
-  ];
+  const actionLabel = (action: FoodAction) => {
+    if (action === 'lower')    return t.lower;
+    if (action === 'maintain') return t.maintain;
+    if (action === 'raise')    return t.raise;
+    return action;
+  };
 
   const renderFoodRow = (item: FoodItem, idx: number) => (
     <View key={`${item.name}-${idx}`} style={[s.foodRow, { backgroundColor: colors.bgCard }, idx > 0 && [s.foodRowBorder, { borderTopColor: colors.borderLight }]]}>
       <View style={s.foodInfo}>
-        <Text style={[s.foodName, { color: colors.text }]}>{item.name}</Text>
-        <Text style={[s.foodMacros, { color: colors.textMuted }]}>Carbs {item.carbs}g · Sugars {item.sugars}g · Fiber {item.fiber}g</Text>
-        <Text style={[s.foodMacros, { color: colors.textMuted }]}>Protein {item.protein}g · Fat {item.fat}g · {item.kcal} kcal · GI {item.gi}</Text>
+        <Text style={[s.foodName, { color: colors.text }]}>{t.foodNames[item.name] ?? item.name}</Text>
+        <Text style={[s.foodMacros, { color: colors.textMuted }]}>{t.carbs} {item.carbs}g · {t.sugars} {item.sugars}g · {t.fiber} {item.fiber}g</Text>
+        <Text style={[s.foodMacros, { color: colors.textMuted }]}>{t.protein} {item.protein}g · {t.fat} {item.fat}g · {item.kcal} kcal · GI {item.gi}</Text>
       </View>
       <PressBtn style={[s.addBtn, { borderColor: colors.red, backgroundColor: 'transparent' }]} onPress={() => addFoodToMeal(item)} activeOpacity={0.75}>
-        <Text style={[s.addBtnText, { color: colors.red }]}>+ Add</Text>
+        <Text style={[s.addBtnText, { color: colors.red }]}>{t.addFood}</Text>
       </PressBtn>
     </View>
   );
@@ -349,16 +359,16 @@ export default function FoodGuideScreen() {
     <>
       {glucoseValue !== null ? (
         <View style={[s.readingCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-          <Text style={[s.readingLabel, { color: colors.textMuted }]}>Current glycemia</Text>
+          <Text style={[s.readingLabel, { color: colors.textMuted }]}>{t.currentGlycemia}</Text>
           <Text style={[s.readingValue, { color: colors.red }]}>{glucoseValue} {unit}</Text>
         </View>
       ) : (
         <View style={[s.localGlucoseCard, { backgroundColor: colors.bgCard, borderColor: localGlucoseInput ? colors.red : colors.border }]}>
-          <Text style={[s.readingLabel, { color: colors.textMuted }]}>Current blood sugar (optional)</Text>
+          <Text style={[s.readingLabel, { color: colors.textMuted }]}>{t.currentBloodSugar}</Text>
           <View style={s.localGlucoseRow}>
             <TextInput
               style={[s.localGlucoseInput, { color: colors.text, backgroundColor: colors.inputBg }]}
-              placeholder="e.g. 120"
+              placeholder={t.glucosePlaceholder}
               placeholderTextColor="#aaa"
               keyboardType="decimal-pad"
               value={localGlucoseInput}
@@ -368,7 +378,7 @@ export default function FoodGuideScreen() {
           </View>
           {!localGlucoseInput && (
             <Text style={{ color: colors.textFaint, fontSize: 11, marginTop: 4 }}>
-              Enter your glucose for a post-meal estimate, or log on Home.
+              {t.glucoseNoReading}
             </Text>
           )}
         </View>
@@ -383,22 +393,22 @@ export default function FoodGuideScreen() {
             const analog  = getAnalogByType(settings.insulinAnalogType);
             return (
               <View style={[s.highWarningCard, { backgroundColor: colors.highBg, borderColor: colors.high }]}>
-                <Text style={[s.highWarningTitle, { color: colors.high }]}>⚠️ Eating not recommended</Text>
+                <Text style={[s.highWarningTitle, { color: colors.high }]}>{t.eatingNotRecommended}</Text>
                 <Text style={[s.highWarningBody, { color: colors.text }]}>
-                  Your blood sugar is high ({mgdl} mg/dL · {mmolEq} mmol/L).{' '}
+                  {t.bloodSugarHighWarning(Math.round(mgdl), mmolEq)}{' '}
                   {dose !== null && dose > 0
-                    ? <>Take <Text style={[s.highWarningBold, { color: colors.high }]}>{dose} unit{dose !== 1 ? 's' : ''} of {analog.label.toLowerCase()} insulin</Text> before eating.</>
-                    : <>Your level is very high — <Text style={[s.highWarningBold, { color: colors.high }]}>consult your doctor</Text> before eating.</>
+                    ? t.takeDoseBeforeEating(dose, analog.label.toLowerCase())
+                    : t.consultDoctorBeforeEating
                   }
                 </Text>
                 <Text style={[s.highWarningCheck, { color: colors.textMuted }]}>
-                  🕐 Recheck your blood sugar every 15 minutes.
+                  {t.recheckEvery15}
                 </Text>
               </View>
             );
           })()}
 
-          <Text style={[s.sectionLabel, { color: colors.textMuted }]}>What would you like to do?</Text>
+          <Text style={[s.sectionLabel, { color: colors.textMuted }]}>{t.whatWouldYouLikeToDo}</Text>
           <View style={s.pillRow}>
             {ACTION_OPTIONS.map((opt) => {
               const active = foodAction === opt.value;
@@ -413,17 +423,17 @@ export default function FoodGuideScreen() {
           </View>
 
           <TouchableOpacity style={s.skipMealBtn} onPress={() => router.push('/medication')} activeOpacity={0.75}>
-            <Text style={s.skipMealBtnText}>I'm not eating — go to Meds tab →</Text>
+            <Text style={s.skipMealBtnText}>{t.notEatingGoMeds}</Text>
           </TouchableOpacity>
 
           {foodAction === '' && (
             <View style={[s.howItWorksCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-              <Text style={[s.howItWorksTitle, { color: colors.text }]}>How it works</Text>
+              <Text style={[s.howItWorksTitle, { color: colors.text }]}>{t.howItWorks}</Text>
               {[
-                { step: '1', label: 'Pick a goal',    desc: 'Choose whether you want to Lower, Maintain, or Raise your glycemia.' },
-                { step: '2', label: 'Browse foods',   desc: 'Tap any category to expand it and explore recommended foods, drinks and snacks.' },
-                { step: '3', label: 'Build your meal',desc: 'Tap "+ Add" on any item. Your nutritional summary and estimated post-meal glycemia update live.' },
-                { step: '4', label: 'Save it',        desc: 'Tap "Save Meal to History" to keep a record of what you ate.' },
+                { step: '1', label: t.howStep1Label, desc: t.howStep1Desc },
+                { step: '2', label: t.howStep2Label, desc: t.howStep2Desc },
+                { step: '3', label: t.howStep3Label, desc: t.howStep3Desc },
+                { step: '4', label: t.howStep4Label, desc: t.howStep4Desc },
               ].map((row) => (
                 <View key={row.step} style={s.howItWorksRow}>
                   <Text style={[s.howItWorksStep, { backgroundColor: colors.red }]}>{row.step}</Text>
@@ -439,7 +449,7 @@ export default function FoodGuideScreen() {
           {foodAction !== '' && (
             <View style={[s.searchBar, { borderColor: searchFocused ? colors.red : colors.border, backgroundColor: colors.inputBg }]}>
               <Text style={s.searchIcon}>🔍</Text>
-              <TextInput style={[s.searchInput, { color: colors.text }]} placeholder="Search foods…" placeholderTextColor="#aaa"
+              <TextInput style={[s.searchInput, { color: colors.text }]} placeholder={t.searchFoods} placeholderTextColor="#aaa"
                 value={searchQuery} onChangeText={setSearchQuery}
                 onFocus={() => setSearchFocused(true)} onBlur={() => setSearchFocused(false)} returnKeyType="search" />
               {searchQuery.length > 0 && (
@@ -452,32 +462,33 @@ export default function FoodGuideScreen() {
 
           {foodAction === 'lower' && !showSearch && (
             <View style={[s.noteCard, { backgroundColor: colors.normalBg, borderColor: '#c8e6c9' }]}>
-              <Text style={[s.noteText, { color: colors.normal }]}>💡 Physical activity alongside low-GI foods helps lower blood sugar most effectively.</Text>
+              <Text style={[s.noteText, { color: colors.normal }]}>{t.lowerNote}</Text>
             </View>
           )}
 
           {showSearch && (
             <View style={[s.groupCard, { backgroundColor: colors.bgCard, borderColor: colors.border, shadowColor: isDark ? '#000' : '#6070a0', shadowOffset: { width: 0, height: 8 }, shadowOpacity: isDark ? 0.45 : 0.13, shadowRadius: 18, elevation: 4 }]}>
               <View style={s.groupHeader}>
-                <Text style={[s.groupTitle, { color: colors.text }]}>Search Results</Text>
-                <Text style={[s.groupCount, { color: colors.textMuted }]}>{searchResults.length} found</Text>
+                <Text style={[s.groupTitle, { color: colors.text }]}>{t.searchResults}</Text>
+                <Text style={[s.groupCount, { color: colors.textMuted }]}>{t.found(searchResults.length)}</Text>
               </View>
               {searchResults.length === 0
-                ? <Text style={[s.noResults, { color: colors.textMuted }]}>No foods match "{searchQuery}"</Text>
+                ? <Text style={[s.noResults, { color: colors.textMuted }]}>{t.noFoodsMatch(searchQuery)}</Text>
                 : searchResults.map((item, idx) => renderFoodRow(item, idx))}
             </View>
           )}
 
           {foodAction !== '' && !showSearch && Object.entries(foodDatabase[foodAction]).map(([groupName, items]) => {
             const isOpen = expandedGroup === groupName;
+            const groupLabel = t.foodCategories[groupName] ?? groupName;
             return (
               <View key={groupName} style={[s.groupCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                 <TouchableOpacity style={s.groupHeader}
                   onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setExpandedGroup(isOpen ? null : groupName); }}
                   activeOpacity={0.8}>
-                  <Text style={[s.groupTitle, { color: colors.text }]}>{groupName}</Text>
+                  <Text style={[s.groupTitle, { color: colors.text }]}>{groupLabel}</Text>
                   <View style={s.groupHeaderRight}>
-                    <Text style={[s.groupCount, { color: colors.textMuted }]}>{items.length} items</Text>
+                    <Text style={[s.groupCount, { color: colors.textMuted }]}>{t.items(items.length)}</Text>
                     <Text style={[s.groupChevron, { color: colors.textMuted }]}>{isOpen ? '▲' : '▼'}</Text>
                   </View>
                 </TouchableOpacity>
@@ -490,7 +501,7 @@ export default function FoodGuideScreen() {
             <>
               <View style={s.divider} onLayout={onMealSectionLayout} />
               <View style={[s.statsCard, { backgroundColor: colors.bgCard, borderColor: colors.border, shadowColor: isDark ? '#000' : '#6070a0', shadowOffset: { width: 0, height: 8 }, shadowOpacity: isDark ? 0.45 : 0.13, shadowRadius: 18, elevation: 4 }]}>
-                <Text style={[s.statsTitle, { color: colors.textMuted }]}>Meal Nutrition Summary</Text>
+                <Text style={[s.statsTitle, { color: colors.textMuted }]}>{t.mealNutritionSummary}</Text>
                 <NutrientGrid totals={totals} />
               </View>
 
@@ -500,30 +511,30 @@ export default function FoodGuideScreen() {
                   <View style={[s.glycemiaCard, { borderColor: col, backgroundColor: colors.bgCard }]}>
                     <View style={s.glycemiaRow}>
                       <View style={{ flex: 1 }}>
-                        <Text style={[s.glycemiaLabel, { color: colors.text }]}>Estimated post-meal glycemia</Text>
-                        <Text style={[s.glycemiaSub, { color: colors.textMuted }]}>{totals.carbs.toFixed(1)}g carbs · before: {effectiveGlucose} {unit ?? 'mg/dL'}</Text>
+                        <Text style={[s.glycemiaLabel, { color: colors.text }]}>{t.estimatedPostMeal}</Text>
+                        <Text style={[s.glycemiaSub, { color: colors.textMuted }]}>{totals.carbs.toFixed(1)}g {t.carbs} · {t.beforeMeal}: {effectiveGlucose} {unit ?? 'mg/dL'}</Text>
                       </View>
                       <View style={s.glycemiaRight}>
                         <Text style={[s.glycemiaValue, { color: col }]}>{postMeal.value}</Text>
                         <Text style={[s.glycemiaUnit,  { color: col }]}>{postMeal.unit}</Text>
-                        <Text style={[s.glycemiaStatus,{ color: col }]}>{statusLabel(postMeal.value, postMeal.unit, settings.glucoseLow, settings.glucoseHigh)}</Text>
+                        <Text style={[s.glycemiaStatus,{ color: col }]}>{statusLabelT(postMeal.value, postMeal.unit, settings.glucoseLow, settings.glucoseHigh)}</Text>
                       </View>
                     </View>
-                    <Text style={[s.glycemiaDisclaimer, { color: colors.textFaint }]}>⚠️ Estimate only — individual response varies. Always verify with a reading.</Text>
+                    <Text style={[s.glycemiaDisclaimer, { color: colors.textFaint }]}>{t.estimateOnlyVerify}</Text>
                   </View>
                 );
               })()}
 
               <View style={[s.groupCard, { backgroundColor: colors.bgCard, borderColor: colors.border, shadowColor: isDark ? '#000' : '#6070a0', shadowOffset: { width: 0, height: 8 }, shadowOpacity: isDark ? 0.45 : 0.13, shadowRadius: 18, elevation: 4 }]}>
                 <View style={s.groupHeader}>
-                  <Text style={[s.groupTitle, { color: colors.text }]}>Selected Items ({currentMeal.length})</Text>
+                  <Text style={[s.groupTitle, { color: colors.text }]}>{t.selectedItems(currentMeal.length)}</Text>
                   <PressBtn onPress={() => setCurrentMeal([])} activeOpacity={0.75}>
-                    <Text style={[s.clearAllText, { color: colors.red }]}>Clear all</Text>
+                    <Text style={[s.clearAllText, { color: colors.red }]}>{t.clearAllItems}</Text>
                   </PressBtn>
                 </View>
                 {currentMeal.map((item, idx) => (
                   <View key={item.uniqueId} style={[s.foodRow, idx > 0 && [s.foodRowBorder, { borderTopColor: colors.borderLight }]]}>
-                    <Text style={[s.foodName, { flex: 1, color: colors.text, marginRight: 8 }]}>{item.name}</Text>
+                    <Text style={[s.foodName, { flex: 1, color: colors.text, marginRight: 8 }]}>{t.foodNames[item.name] ?? item.name}</Text>
                     <View style={s.qtyRow}>
                       <PressBtn style={[s.qtyBtn, { borderColor: colors.border, backgroundColor: 'transparent' }]} onPress={() => decrementMealItem(item.uniqueId)} activeOpacity={0.75}>
                         <Text style={[s.qtyBtnText, { color: colors.red }]}>−</Text>
@@ -538,11 +549,11 @@ export default function FoodGuideScreen() {
               </View>
 
               <PressBtn style={[s.saveMealBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={saveMeal}>
-                <Text style={s.saveMealBtnText}>Save Meal to History</Text>
+                <Text style={s.saveMealBtnText}>{t.saveMealToHistory}</Text>
               </PressBtn>
               <PressBtn style={[s.backToListBtn, { borderColor: colors.red, backgroundColor: 'transparent' }]}
                 onPress={() => scrollRef.current?.scrollTo({ y: 0, animated: true })} activeOpacity={0.75}>
-                <Text style={[s.backToListBtnText, { color: colors.red }]}>↑ Back to food list</Text>
+                <Text style={[s.backToListBtnText, { color: colors.red }]}>{t.backToFoodList}</Text>
               </PressBtn>
             </>
           )}
@@ -555,17 +566,12 @@ export default function FoodGuideScreen() {
         <>
           <View style={[s.emptyCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
             <Text style={s.emptyIcon}>🥗</Text>
-            <Text style={[s.emptyTitle, { color: colors.text }]}>No meals saved yet</Text>
-            <Text style={[s.emptyText, { color: colors.textMuted }]}>Build a meal in the Planner tab and tap "Save Meal to History".</Text>
+            <Text style={[s.emptyTitle, { color: colors.text }]}>{t.noMealsSaved}</Text>
+            <Text style={[s.emptyText, { color: colors.textMuted }]}>{t.noMealsSavedText}</Text>
           </View>
           <View style={[s.howItWorksCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-            <Text style={[s.howItWorksTitle, { color: colors.text }]}>💡 Meal logging tips</Text>
-            {['Log meals consistently to spot patterns between what you eat and your glucose levels.',
-              'High-GI foods raise blood sugar faster — use the GI value shown for each item as a guide.',
-              'Fiber slows glucose absorption — meals higher in fiber generally cause a gentler rise.',
-              'The post-meal estimate is a guide only. Always verify with an actual reading 1–2 hours after eating.',
-              'Pair your meal plan with the Meds calculator for a complete picture of your insulin needs.',
-            ].map((tip, i) => (
+            <Text style={[s.howItWorksTitle, { color: colors.text }]}>{t.mealLoggingTips}</Text>
+            {[t.mealTip1, t.mealTip2, t.mealTip3, t.mealTip4, t.mealTip5].map((tip, i) => (
               <View key={i} style={s.tipRow}>
                 <Text style={[s.tipBullet, { color: colors.red }]}>•</Text>
                 <Text style={[s.tipBody, { color: colors.textMuted }]}>{tip}</Text>
@@ -585,12 +591,12 @@ export default function FoodGuideScreen() {
                   <View style={s.mealHistoryTop}>
                     <Text style={[s.mealHistoryDate, { color: colors.text }]}>{meal.date}</Text>
                     <View style={[s.actionBadge, { borderColor: actionColor }]}>
-                      <Text style={[s.actionBadgeText, { color: actionColor }]}>{meal.action}</Text>
+                      <Text style={[s.actionBadgeText, { color: actionColor }]}>{actionLabel(meal.action)}</Text>
                     </View>
                   </View>
                   <Text style={[s.mealHistorySub, { color: colors.textMuted }]}>
-                    {meal.items.length} items · {meal.totals.carbs.toFixed(1)}g carbs · {meal.totals.kcal.toFixed(0)} kcal
-                    {meal.estimatedGlycemia !== null ? ` · est. ${meal.estimatedGlycemia} ${meal.unit}` : ''}
+                    {t.items(meal.items.length)} · {meal.totals.carbs.toFixed(1)}g {t.carbs} · {meal.totals.kcal.toFixed(0)} kcal
+                    {meal.estimatedGlycemia !== null ? ` · ${t.estLabel} ${meal.estimatedGlycemia} ${meal.unit}` : ''}
                   </Text>
                 </View>
                 <Text style={[s.groupChevron, { marginLeft: 8 }]}>{isOpen ? '▲' : '▼'}</Text>
@@ -602,30 +608,30 @@ export default function FoodGuideScreen() {
                     <View style={[s.glycemiaCard, { margin: 10, marginTop: 0, borderColor: estCol, backgroundColor: colors.bgCard }]}>
                       <View style={s.glycemiaRow}>
                         <View style={{ flex: 1 }}>
-                          <Text style={[s.glycemiaLabel, { color: colors.text }]}>Post-meal glycemia estimate</Text>
-                          <Text style={[s.glycemiaSub, { color: colors.textMuted }]}>Before meal: {meal.currentGlucose} {meal.unit}</Text>
+                          <Text style={[s.glycemiaLabel, { color: colors.text }]}>{t.postMealGlycemiaEstimate}</Text>
+                          <Text style={[s.glycemiaSub, { color: colors.textMuted }]}>{t.beforeMeal}: {meal.currentGlucose} {meal.unit}</Text>
                         </View>
                         <View style={s.glycemiaRight}>
                           <Text style={[s.glycemiaValue, { color: estCol }]}>{meal.estimatedGlycemia}</Text>
                           <Text style={[s.glycemiaUnit,  { color: estCol }]}>{meal.unit}</Text>
-                          <Text style={[s.glycemiaStatus,{ color: estCol }]}>{statusLabel(meal.estimatedGlycemia, meal.unit, settings.glucoseLow, settings.glucoseHigh)}</Text>
+                          <Text style={[s.glycemiaStatus,{ color: estCol }]}>{statusLabelT(meal.estimatedGlycemia, meal.unit, settings.glucoseLow, settings.glucoseHigh)}</Text>
                         </View>
                       </View>
                     </View>
                   )}
                   <View style={[s.statsCard, { margin: 10, marginTop: 0 }]}>
-                    <Text style={[s.statsTitle, { color: colors.textMuted }]}>Nutritional Summary</Text>
+                    <Text style={[s.statsTitle, { color: colors.textMuted }]}>{t.nutritionalSummary}</Text>
                     <NutrientGrid totals={meal.totals} />
                   </View>
                   <View style={{ paddingHorizontal: 14, paddingBottom: 10 }}>
-                    <Text style={[s.groupTitle, { fontSize: 13, marginBottom: 6 }]}>Items</Text>
+                    <Text style={[s.groupTitle, { fontSize: 13, marginBottom: 6, color: colors.text }]}>{t.itemsLabel}</Text>
                     {meal.items.map((item, idx) => (
-                      <Text key={idx} style={[s.historyItemName, { color: colors.textMuted }]}>• {item.name}</Text>
+                      <Text key={idx} style={[s.historyItemName, { color: colors.textMuted }]}>• {t.foodNames[item.name] ?? item.name}</Text>
                     ))}
                   </View>
                   <PressBtn style={[s.deleteMealBtn, { backgroundColor: 'transparent' }]}
                     onPress={() => setSavedMeals((prev) => prev.filter((m) => m.id !== meal.id))} activeOpacity={0.75}>
-                    <Text style={[s.deleteMealBtnText, { color: colors.textMuted }]}>Delete this meal</Text>
+                    <Text style={[s.deleteMealBtnText, { color: colors.textMuted }]}>{t.deleteMeal}</Text>
                   </PressBtn>
                 </>
               )}
@@ -639,17 +645,16 @@ export default function FoodGuideScreen() {
   return (
     <ScrollView ref={scrollRef} style={[s.container, { backgroundColor: colors.bg }]}
       contentContainerStyle={s.contentContainer} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-      <Text style={[s.title, { color: colors.text }]}>Meal Planner & Food Guide</Text>
+      <Text style={[s.title, { color: colors.text }]}>{t.mealPlanner}</Text>
 
-      {/* Sub-tab bar with shadow */}
       <View style={[s.tabRow, { borderColor: colors.red }, s.tabBarShadow]}>
-        {(['planner', 'history'] as ActiveTab[]).map((t) => {
-          const active = activeTab === t;
+        {(['planner', 'history'] as ActiveTab[]).map((tab) => {
+          const active = activeTab === tab;
           return (
-            <TouchableOpacity key={t} style={[s.tabBtn, { backgroundColor: active ? colors.red : colors.bg }]}
-              onPress={() => setActiveTab(t)} activeOpacity={0.8}>
+            <TouchableOpacity key={tab} style={[s.tabBtn, { backgroundColor: active ? colors.red : colors.bg }]}
+              onPress={() => setActiveTab(tab)} activeOpacity={0.8}>
               <Text style={[s.tabBtnText, { color: active ? '#fff' : colors.red }]}>
-                {t === 'planner' ? 'Planner' : `History${savedMeals.length > 0 ? ` (${savedMeals.length})` : ''}`}
+                {tab === 'planner' ? t.planner : `${t.history}${savedMeals.length > 0 ? ` (${savedMeals.length})` : ''}`}
               </Text>
             </TouchableOpacity>
           );
@@ -778,3 +783,6 @@ const s = StyleSheet.create({
   highWarningCheck: { fontSize: 12, fontStyle: 'italic' },
   outlineBtnShadow: { shadowColor: '#000', shadowOffset: { width: 1, height: 1 }, shadowOpacity: 0.06, shadowRadius: 2 },
 });
+
+
+/* Psalm 37:4 "Delight yourself in the LORD, and he will give you the desires of your heart" */

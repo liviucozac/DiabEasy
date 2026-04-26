@@ -12,7 +12,20 @@
           "package_name": "com.liviucozac.diabeasy"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "150645699717-lla8md4u9568a9am1nklh49qavkk2ot0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.liviucozac.diabeasy",
+            "certificate_hash": "6d6f186a09de2a0ba8b3458644d44be32246ed13"
+          }
+        },
+        {
+          "client_id": "150645699717-s1emc44hle6kkkqopjqsrs7cef7chkjl.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBQ859khQPzLYNNOUhvDzezvKlP_vFSkZQ"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "150645699717-s1emc44hle6kkkqopjqsrs7cef7chkjl.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

@@ -4,45 +4,18 @@ import {
   StyleSheet, Modal, Dimensions,
 } from 'react-native';
 import { useTheme } from '../context/AppContext';
+import { useTranslation } from '../hooks/useTranslation';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
-const TRAINING_SLIDES = [
-  {
-    icon: '📉',
-    title: 'ISF — Insulin Sensitivity Factor',
-    body: 'How much does 1 unit of insulin lower your blood sugar?',
-    example: 'If your ISF is 50 mg/dL, taking 1 unit brings your glucose down by ~50 mg/dL.\n\nHigher ISF → more sensitive to insulin → smaller doses needed.\nLower ISF → less sensitive → larger doses needed.',
-    tip: 'Your doctor sets this based on your body weight and insulin needs.',
-  },
-  {
-    icon: '🍽️',
-    title: 'Carb Ratio',
-    body: 'How many grams of carbs does 1 unit of rapid insulin cover?',
-    example: 'If your carb ratio is 10, you need 1 unit for every 10 g of carbs.\n\nMeal with 60 g of carbs → 60 ÷ 10 = 6 units meal dose.',
-    tip: 'A smaller number means 1 unit covers fewer carbs — you need more insulin per meal.',
-  },
-  {
-    icon: '🎯',
-    title: 'Target Glucose',
-    body: "The blood sugar level you're trying to reach after a correction.",
-    example: "If your target is 100 mg/dL and you're currently at 200 mg/dL, the calculator figures out how many units close that gap using your ISF:\n\n(200 − 100) ÷ 50 = 2 correction units.",
-    tip: 'Most doctors set this between 90–120 mg/dL for Type 1.',
-  },
-  {
-    icon: '⏱️',
-    title: 'DIA — Duration of Insulin Action',
-    body: 'How many hours does your rapid-acting insulin stay active in your body?',
-    example: "If your DIA is 5 h, a dose you took 3 hours ago still has about 2 hours of work left.\n\nThis is called Insulin On Board (IOB) — the calculator subtracts it so you don't stack doses.",
-    tip: 'Ultra-rapid insulins (Fiasp, Lyumjev) typically have a shorter DIA than standard ones.',
-  },
-];
+const SLIDE_ICONS = ['📉', '🍽️', '🎯', '⏱️'];
 
 export function ParamTrainingModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const { colors, isDark } = useTheme();
+  const t = useTranslation();
   const [page, setPage] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
-  const TOTAL = TRAINING_SLIDES.length;
+  const TOTAL = t.trainingSlides.length;
 
   const goTo = (idx: number) => {
     scrollRef.current?.scrollTo({ x: idx * SCREEN_W, animated: true });
@@ -56,15 +29,13 @@ export function ParamTrainingModal({ visible, onClose }: { visible: boolean; onC
       <View style={tr.overlay}>
         <View style={[tr.sheet, { backgroundColor: colors.bg, shadowColor: isDark ? '#000' : '#6070a0' }]}>
 
-          {/* Header */}
           <View style={tr.header}>
-            <Text style={[tr.headerTitle, { color: colors.text }]}>Understanding your parameters</Text>
+            <Text style={[tr.headerTitle, { color: colors.text }]}>{t.understandingParams}</Text>
             <TouchableOpacity onPress={handleClose} activeOpacity={0.7} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityLabel="Close" accessibilityRole="button">
               <Text style={[tr.closeX, { color: colors.textMuted }]}>✕</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Slides */}
           <ScrollView
             ref={scrollRef}
             horizontal
@@ -73,14 +44,14 @@ export function ParamTrainingModal({ visible, onClose }: { visible: boolean; onC
             scrollEventThrottle={16}
             onMomentumScrollEnd={(e) => setPage(Math.round(e.nativeEvent.contentOffset.x / SCREEN_W))}
           >
-            {TRAINING_SLIDES.map((slide, i) => (
+            {t.trainingSlides.map((slide, i) => (
               <ScrollView key={i} style={{ width: SCREEN_W }} contentContainerStyle={tr.slide} showsVerticalScrollIndicator={false}>
-                <Text style={tr.slideIcon}>{slide.icon}</Text>
+                <Text style={tr.slideIcon}>{SLIDE_ICONS[i]}</Text>
                 <Text style={[tr.slideTitle, { color: colors.text }]}>{slide.title}</Text>
                 <Text style={[tr.slideBody, { color: colors.textMuted }]}>{slide.body}</Text>
 
                 <View style={[tr.exampleBox, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}>
-                  <Text style={[tr.exampleLabel, { color: colors.red }]}>Example</Text>
+                  <Text style={[tr.exampleLabel, { color: colors.red }]}>{t.exampleLabel}</Text>
                   <Text style={[tr.exampleText, { color: colors.text }]}>{slide.example}</Text>
                 </View>
 
@@ -91,27 +62,25 @@ export function ParamTrainingModal({ visible, onClose }: { visible: boolean; onC
             ))}
           </ScrollView>
 
-          {/* Dots */}
           <View style={tr.dotsRow}>
             {Array.from({ length: TOTAL }, (_, i) => (
               <View key={i} style={[tr.dot, { backgroundColor: i === page ? colors.red : colors.border, width: i === page ? 16 : 8 }]} />
             ))}
           </View>
 
-          {/* Nav */}
           <View style={tr.navRow}>
             {page > 0 && (
               <TouchableOpacity onPress={() => goTo(page - 1)} activeOpacity={0.75} style={[tr.navBtn, { borderColor: colors.border }]} accessibilityLabel="Previous slide" accessibilityRole="button">
-                <Text style={[tr.navBtnText, { color: colors.textMuted }]}>← Back</Text>
+                <Text style={[tr.navBtnText, { color: colors.textMuted }]}>{t.backBtn}</Text>
               </TouchableOpacity>
             )}
             {page < TOTAL - 1 ? (
               <TouchableOpacity onPress={() => goTo(page + 1)} activeOpacity={0.8} style={[tr.navBtn, tr.navBtnPrimary, { backgroundColor: colors.red }]} accessibilityLabel={`Next slide, ${page + 2} of ${TOTAL}`} accessibilityRole="button">
-                <Text style={[tr.navBtnText, { color: '#fff' }]}>Next →</Text>
+                <Text style={[tr.navBtnText, { color: '#fff' }]}>{t.nextBtn}</Text>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity onPress={handleClose} activeOpacity={0.8} style={[tr.navBtn, tr.navBtnPrimary, { backgroundColor: colors.red }]} accessibilityLabel="Done, close guide" accessibilityRole="button">
-                <Text style={[tr.navBtnText, { color: '#fff' }]}>Got it ✓</Text>
+                <Text style={[tr.navBtnText, { color: '#fff' }]}>{t.gotIt}</Text>
               </TouchableOpacity>
             )}
           </View>

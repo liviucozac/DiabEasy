@@ -8,6 +8,7 @@ import * as Contacts from 'expo-contacts';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../context/AppContext';
 import { PressBtn } from '../components/PressBtn';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface EmergencyContact {
   id: string; name: string; phone: string; relation: string;
@@ -56,8 +57,12 @@ function getLocaleEmergencyNumber(): string {
   }
 }
 
+const HYPO_ICONS  = ['🫨','💧','💓','😵','🍽️','😰','👁️','🌀','🫥','😮‍💨','🤕','😶'];
+const HYPER_ICONS = ['🥤','🚽','😴','👁️','🤕','🏜️','🤢','🌀','🍬','🩹','🫁','🫃'];
+
 export default function EmergencyScreen() {
   const { colors } = useTheme();
+  const t = useTranslation();
 
   const [emergencyNumber,  setEmergencyNumber]  = useState(() => getLocaleEmergencyNumber());
   const [locationAddress,  setLocationAddress]  = useState('');
@@ -110,7 +115,6 @@ export default function EmergencyScreen() {
   const [hyperOpen,     setHyperOpen]     = useState(false);
   const [dosOpen,       setDosOpen]       = useState(false);
 
-  // ── Phone contacts picker ──────────────────────────────────────────────────
   const [phoneContacts,     setPhoneContacts]     = useState<Contacts.Contact[]>([]);
   const [showContactPicker, setShowContactPicker] = useState(false);
   const [contactSearch,     setContactSearch]     = useState('');
@@ -118,7 +122,7 @@ export default function EmergencyScreen() {
   const openContactPicker = async () => {
     const { status } = await Contacts.requestPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission denied', 'Contacts access was denied. You can still add contacts manually.');
+      Alert.alert(t.permissionDenied, t.contactsPermissionDenied);
       return;
     }
     const { data } = await Contacts.getContactsAsync({
@@ -134,7 +138,6 @@ export default function EmergencyScreen() {
   const pickContact = (contact: Contacts.Contact) => {
     const phone = contact.phoneNumbers?.[0]?.number ?? '';
     const name  = contact.name ?? '';
-    // If contact has multiple numbers, pick the first but let user review
     setNewName(name);
     setNewPhone(phone);
     setShowContactPicker(false);
@@ -145,30 +148,29 @@ export default function EmergencyScreen() {
     (c.name ?? '').toLowerCase().includes(contactSearch.toLowerCase())
   );
 
-  // ── Regular handlers ────────────────────────────────────────────────────────
   const callEmergency = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     Linking.openURL(`tel:${emergencyNumber}`);
   };
 
   const callContact = (phone: string, name: string) => {
-    Alert.alert(`Call ${name}?`, phone, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Call', onPress: () => Linking.openURL(`tel:${phone}`) },
+    Alert.alert(`${name}?`, phone, [
+      { text: t.cancel, style: 'cancel' },
+      { text: t.callBtn, onPress: () => Linking.openURL(`tel:${phone}`) },
     ]);
   };
 
   const deleteContact = (id: string) => {
-    Alert.alert('Delete contact?', 'This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () =>
+    Alert.alert(t.deleteContact, t.deleteContactConfirm, [
+      { text: t.cancel, style: 'cancel' },
+      { text: t.deleteBtn, style: 'destructive', onPress: () =>
           setContacts((prev) => prev.filter((c) => c.id !== id)) },
     ]);
   };
 
   const handleAddContact = () => {
     if (!newName.trim() || !newPhone.trim()) {
-      Alert.alert('Missing info', 'Please enter at least a name and phone number.');
+      Alert.alert(t.missingInfo, t.missingContactInfo);
       return;
     }
     setContacts((prev) => [
@@ -184,38 +186,10 @@ export default function EmergencyScreen() {
     Linking.openURL(`https://www.google.com/maps/search/${query}`);
   };
 
-  const HYPO_SYMPTOMS = [
-    { icon: '🫨', text: 'Shakiness or trembling' }, { icon: '💧', text: 'Sweating' },
-    { icon: '💓', text: 'Rapid heartbeat' }, { icon: '😵', text: 'Dizziness or lightheadedness' },
-    { icon: '🍽️', text: 'Hunger' }, { icon: '😰', text: 'Irritability or anxiety' },
-    { icon: '👁️', text: 'Blurry or double vision' }, { icon: '🌀', text: 'Confusion or difficulty concentrating' },
-    { icon: '🫥', text: 'Pale skin' }, { icon: '😮‍💨', text: 'Weakness or fatigue' },
-    { icon: '🤕', text: 'Headache' }, { icon: '😶', text: 'Tingling lips' },
-  ];
-
-  const HYPER_SYMPTOMS = [
-    { icon: '🥤', text: 'Excessive thirst' }, { icon: '🚽', text: 'Frequent urination' },
-    { icon: '😴', text: 'Fatigue' }, { icon: '👁️', text: 'Blurred vision' },
-    { icon: '🤕', text: 'Headache' }, { icon: '🏜️', text: 'Dry mouth and skin' },
-    { icon: '🤢', text: 'Nausea or vomiting' }, { icon: '🌀', text: 'Difficulty concentrating' },
-    { icon: '🍬', text: 'Fruity-smelling breath (possible DKA)' }, { icon: '🩹', text: 'Slow-healing wounds' },
-    { icon: '🫁', text: 'Breathlessness' }, { icon: '🫃', text: 'Abdominal pain' },
-  ];
-
-  const DOS = [
-    { do: true,  text: 'Stay calm and sit or lie down safely' },
-    { do: true,  text: 'Eat 15–20g fast carbs if low (juice, glucose tabs)' },
-    { do: true,  text: 'Recheck blood sugar after 15 minutes' },
-    { do: true,  text: 'Tell someone nearby what is happening' },
-    { do: true,  text: 'Use glucagon kit if unconscious and one is available' },
-    { do: true,  text: `Call ${emergencyNumber} if you feel it is a genuine emergency` },
-    { do: false, text: 'Do NOT drive if blood sugar is low' },
-    { do: false, text: 'Do NOT take insulin if already hypoglycemic' },
-    { do: false, text: 'Do NOT eat large meals to treat a low — use fast carbs only' },
-    { do: false, text: 'Do NOT ignore symptoms hoping they will pass on their own' },
-    { do: false, text: 'Do NOT double-dose insulin without medical advice' },
-    { do: false, text: 'Do NOT leave a hypoglycemic person alone if they are confused' },
-  ];
+  const DOS = t.dos.map((item, i) => ({
+    do: i < 6,
+    text: typeof item === 'function' ? item(emergencyNumber) : item,
+  }));
 
   return (
     <ScrollView
@@ -224,25 +198,25 @@ export default function EmergencyScreen() {
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
     >
-      <Text style={[s.title, { color: colors.text }]}>SOS & Emergency</Text>
+      <Text style={[s.title, { color: colors.text }]}>{t.sosEmergency}</Text>
 
       {/* ── Phone Contacts Picker Modal ── */}
       {showContactPicker && (
         <View style={[s.pickerOverlay, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
           <View style={s.pickerHeader}>
-            <Text style={[s.pickerTitle, { color: colors.text }]}>Choose a Contact</Text>
+            <Text style={[s.pickerTitle, { color: colors.text }]}>{t.chooseContact}</Text>
             <TouchableOpacity onPress={() => setShowContactPicker(false)} activeOpacity={0.7}>
               <Text style={[s.pickerClose, { color: colors.red }]}>✕ Close</Text>
             </TouchableOpacity>
           </View>
           <TextInput
             style={[s.pickerSearch, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]}
-            placeholder="Search contacts…" placeholderTextColor="#aaa"
+            placeholder={t.searchContacts} placeholderTextColor="#aaa"
             value={contactSearch} onChangeText={setContactSearch}
           />
           <ScrollView style={{ maxHeight: 320 }} keyboardShouldPersistTaps="handled">
             {filteredPhoneContacts.length === 0 ? (
-              <Text style={[s.pickerEmpty, { color: colors.textMuted }]}>No contacts found.</Text>
+              <Text style={[s.pickerEmpty, { color: colors.textMuted }]}>{t.noContactsFound}</Text>
             ) : (
               filteredPhoneContacts.map((c, i) => (
                 <TouchableOpacity
@@ -264,9 +238,9 @@ export default function EmergencyScreen() {
 
       {/* ── 1. EMERGENCY CALL ── */}
       <View style={[s.emergencyCallCard, { backgroundColor: colors.lowBg, borderColor: colors.red }]}>
-        <Text style={[s.emergencyCallTitle, { color: colors.red }]}>Need immediate help?</Text>
+        <Text style={[s.emergencyCallTitle, { color: colors.red }]}>{t.needImmediateHelp}</Text>
         <Text style={[s.emergencyCallSub, { color: colors.textMuted }]}>
-          If your condition is life-threatening or you cannot treat yourself, call emergency services now.
+          {t.emergencyCallSub}
         </Text>
         <Animated.View style={{ transform: [{ scale: pulseAnim }], width: '100%', alignItems: 'center' }}>
           <PressBtn
@@ -274,18 +248,18 @@ export default function EmergencyScreen() {
             onPress={callEmergency}
           >
             <Text style={s.callBtnIcon}>📞</Text>
-            <Text style={s.callBtnText}>Call {emergencyNumber} — Emergency Services</Text>
+            <Text style={s.callBtnText}>{t.callEmergency(emergencyNumber)}</Text>
           </PressBtn>
         </Animated.View>
         {(locationLoading || locationAddress !== '') && (
           <View style={s.locationBlock}>
-            <Text style={[s.locationLabel, { color: colors.textMuted }]}>Your address is</Text>
+            <Text style={[s.locationLabel, { color: colors.textMuted }]}>{t.yourAddressIs}</Text>
             <Text style={[s.locationLine, { color: colors.text }]}>
-              {locationLoading ? '📍 Detecting your location…' : `📍 ${locationAddress}`}
+              {locationLoading ? t.detectingLocation : `📍 ${locationAddress}`}
             </Text>
             {!locationLoading && (
               <TouchableOpacity onPress={fetchLocation} activeOpacity={0.7} style={s.refreshBtn}>
-                <Text style={[s.refreshBtnText, { color: colors.textMuted }]}>🔄 Refresh location</Text>
+                <Text style={[s.refreshBtnText, { color: colors.textMuted }]}>{t.refreshLocation}</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -296,7 +270,7 @@ export default function EmergencyScreen() {
             onPress={searchHospitals}
             activeOpacity={0.75}
           >
-            <Text style={[s.hospitalBtnText, { color: colors.red }]}>🏥 Find a Nearby Hospital</Text>
+            <Text style={[s.hospitalBtnText, { color: colors.red }]}>{t.findNearbyHospital}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -304,24 +278,24 @@ export default function EmergencyScreen() {
       {/* ── 2. EMERGENCY CONTACTS ── */}
       <SectionCard>
         <View style={s.rowBetween}>
-          <SectionTitle text="Emergency Contacts" />
+          <SectionTitle text={t.emergencyContacts} />
           {!showAddForm && (
             <View style={s.addBtnRow}>
               <PressBtn
                 style={[s.addFromPhoneBtn, { borderColor: colors.red, backgroundColor: 'transparent' }]}
                 onPress={openContactPicker} activeOpacity={0.75}
               >
-                <Text style={[s.addFromPhoneBtnText, { color: colors.red }]}>📱 From Contacts</Text>
+                <Text style={[s.addFromPhoneBtnText, { color: colors.red }]}>{t.fromContacts}</Text>
               </PressBtn>
               <TouchableOpacity onPress={() => setShowAddForm(true)} activeOpacity={0.75}>
-                <Text style={[s.addContactLink, { color: colors.red }]}>+ Manual</Text>
+                <Text style={[s.addContactLink, { color: colors.red }]}>{t.manualContact}</Text>
               </TouchableOpacity>
             </View>
           )}
         </View>
 
         {contacts.length === 0 && !showAddForm && (
-          <Text style={[s.emptyText, { color: colors.textMuted }]}>No contacts saved yet.</Text>
+          <Text style={[s.emptyText, { color: colors.textMuted }]}>{t.noContactsSaved}</Text>
         )}
 
         {contacts.map((c, idx) => (
@@ -338,7 +312,7 @@ export default function EmergencyScreen() {
                 <Text style={s.contactCallBtnText}>📞</Text>
               </PressBtn>
               <PressBtn onPress={() => deleteContact(c.id)} activeOpacity={0.75}>
-                <Text style={[s.contactDeleteBtn, { color: colors.red }]}>Delete</Text>
+                <Text style={[s.contactDeleteBtn, { color: colors.red }]}>{t.deleteBtn}</Text>
               </PressBtn>
             </View>
           </View>
@@ -347,28 +321,28 @@ export default function EmergencyScreen() {
         {showAddForm && (
           <View style={s.addForm}>
             <Divider />
-            <Text style={[s.fieldLabel, { color: colors.textMuted }]}>Name</Text>
+            <Text style={[s.fieldLabel, { color: colors.textMuted }]}>{t.nameField}</Text>
             <TextInput style={[s.input, { borderColor: nameFocus ? colors.red : colors.border, color: colors.text, backgroundColor: colors.inputBg }]}
-              placeholder="e.g. Mom" placeholderTextColor="#aaa" value={newName} onChangeText={setNewName}
+              placeholder={t.namePlaceholder} placeholderTextColor="#aaa" value={newName} onChangeText={setNewName}
               onFocus={() => setNameFocus(true)} onBlur={() => setNameFocus(false)} returnKeyType="next" />
-            <Text style={[s.fieldLabel, { color: colors.textMuted }]}>Phone number</Text>
+            <Text style={[s.fieldLabel, { color: colors.textMuted }]}>{t.phoneField}</Text>
             <TextInput style={[s.input, { borderColor: phoneFocus ? colors.red : colors.border, color: colors.text, backgroundColor: colors.inputBg }]}
-              placeholder="e.g. +40700000000" placeholderTextColor="#aaa" value={newPhone} onChangeText={setNewPhone}
+              placeholder={t.phonePlaceholder} placeholderTextColor="#aaa" value={newPhone} onChangeText={setNewPhone}
               onFocus={() => setPhoneFocus(true)} onBlur={() => setPhoneFocus(false)} keyboardType="phone-pad" returnKeyType="next" />
-            <Text style={[s.fieldLabel, { color: colors.textMuted }]}>Relation (optional)</Text>
+            <Text style={[s.fieldLabel, { color: colors.textMuted }]}>{t.relationField}</Text>
             <TextInput style={[s.input, { borderColor: relationFocus ? colors.red : colors.border, color: colors.text, backgroundColor: colors.inputBg }]}
-              placeholder="e.g. Parent, Doctor" placeholderTextColor="#aaa" value={newRelation} onChangeText={setNewRelation}
+              placeholder={t.relationPlaceholder} placeholderTextColor="#aaa" value={newRelation} onChangeText={setNewRelation}
               onFocus={() => setRelationFocus(true)} onBlur={() => setRelationFocus(false)} returnKeyType="done" />
             <View style={s.formBtnRow}>
               <View style={{ flex: 1 }}>
                 <PressBtn style={[s.cancelBtn, { backgroundColor: 'transparent' }]}
                   onPress={() => { setShowAddForm(false); setNewName(''); setNewPhone(''); setNewRelation(''); }} activeOpacity={0.75}>
-                  <Text style={s.cancelBtnText}>Cancel</Text>
+                  <Text style={s.cancelBtnText}>{t.cancel}</Text>
                 </PressBtn>
               </View>
               <View style={{ flex: 1 }}>
                 <PressBtn style={[s.saveBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={handleAddContact}>
-                  <Text style={s.saveBtnText}>Save</Text>
+                  <Text style={s.saveBtnText}>{t.save}</Text>
                 </PressBtn>
               </View>
             </View>
@@ -382,29 +356,29 @@ export default function EmergencyScreen() {
           <View style={s.rowBetween}>
             <View style={s.symptomTitleRow}>
               <View style={[s.symptomDot, { backgroundColor: '#e53935' }]} />
-              <SectionTitle text="Hypoglycemia Symptoms" color="#e53935" />
+              <SectionTitle text={t.hypoSymptomsTitle} color="#e53935" />
             </View>
             <Text style={s.chevron}>{hypoOpen ? '▲' : '▼'}</Text>
           </View>
-          <Text style={[s.symptomThreshold, { color: colors.textMuted }]}>Low blood sugar — below 75 mg/dL / 4.2 mmol/L</Text>
-          {!hypoOpen && <Text style={[s.clickForMore, { color: colors.textFaint }]}>Click for more</Text>}
+          <Text style={[s.symptomThreshold, { color: colors.textMuted }]}>{t.hypoThreshold}</Text>
+          {!hypoOpen && <Text style={[s.clickForMore, { color: colors.textFaint }]}>{t.clickForMore}</Text>}
         </TouchableOpacity>
         {hypoOpen && (
           <>
             <View style={s.symptomsGrid}>
-              {HYPO_SYMPTOMS.map((sym, i) => (
+              {t.hypoSymptoms.map((text, i) => (
                 <View key={i} style={[s.symptomChip, { backgroundColor: colors.bgSecondary }]}>
-                  <Text style={[s.symptomChipText, { color: colors.textMuted }]}>{sym.icon} {sym.text}</Text>
+                  <Text style={[s.symptomChipText, { color: colors.textMuted }]}>{HYPO_ICONS[i]} {text}</Text>
                 </View>
               ))}
             </View>
             <Divider />
-            <Text style={[s.actionTitle, { color: colors.text }]}>What to do:</Text>
-            <Text style={[s.actionItem, { color: colors.textMuted }]}>1. Eat 15–20g of fast-acting carbs (juice, glucose tabs, candy)</Text>
-            <Text style={[s.actionItem, { color: colors.textMuted }]}>2. Wait 15 minutes and recheck blood sugar</Text>
-            <Text style={[s.actionItem, { color: colors.textMuted }]}>3. If still low, repeat step 1</Text>
-            <Text style={[s.actionItem, { color: colors.textMuted }]}>4. Once normal, eat a small snack to prevent another dip</Text>
-            <Text style={[s.actionItem, { color: colors.textMuted }]}>5. If unconscious or unable to swallow — call {emergencyNumber} immediately</Text>
+            <Text style={[s.actionTitle, { color: colors.text }]}>{t.whatToDo}</Text>
+            <Text style={[s.actionItem, { color: colors.textMuted }]}>{t.hypoAction1}</Text>
+            <Text style={[s.actionItem, { color: colors.textMuted }]}>{t.hypoAction2}</Text>
+            <Text style={[s.actionItem, { color: colors.textMuted }]}>{t.hypoAction3}</Text>
+            <Text style={[s.actionItem, { color: colors.textMuted }]}>{t.hypoAction4}</Text>
+            <Text style={[s.actionItem, { color: colors.textMuted }]}>{t.hypoAction5(emergencyNumber)}</Text>
           </>
         )}
       </SectionCard>
@@ -415,29 +389,29 @@ export default function EmergencyScreen() {
           <View style={s.rowBetween}>
             <View style={s.symptomTitleRow}>
               <View style={[s.symptomDot, { backgroundColor: '#ef6c00' }]} />
-              <SectionTitle text="Hyperglycemia Symptoms" color="#ef6c00" />
+              <SectionTitle text={t.hyperSymptomsTitle} color="#ef6c00" />
             </View>
             <Text style={s.chevron}>{hyperOpen ? '▲' : '▼'}</Text>
           </View>
-          <Text style={[s.symptomThreshold, { color: colors.textMuted }]}>High blood sugar — above 150 mg/dL / 8.3 mmol/L</Text>
-          {!hyperOpen && <Text style={[s.clickForMore, { color: colors.textFaint }]}>Click for more</Text>}
+          <Text style={[s.symptomThreshold, { color: colors.textMuted }]}>{t.hyperThreshold}</Text>
+          {!hyperOpen && <Text style={[s.clickForMore, { color: colors.textFaint }]}>{t.clickForMore}</Text>}
         </TouchableOpacity>
         {hyperOpen && (
           <>
             <View style={s.symptomsGrid}>
-              {HYPER_SYMPTOMS.map((sym, i) => (
+              {t.hyperSymptoms.map((text, i) => (
                 <View key={i} style={[s.symptomChip, { backgroundColor: colors.bgSecondary }]}>
-                  <Text style={[s.symptomChipText, { color: colors.textMuted }]}>{sym.icon} {sym.text}</Text>
+                  <Text style={[s.symptomChipText, { color: colors.textMuted }]}>{HYPER_ICONS[i]} {text}</Text>
                 </View>
               ))}
             </View>
             <Divider />
-            <Text style={[s.actionTitle, { color: colors.text }]}>What to do:</Text>
-            <Text style={[s.actionItem, { color: colors.textMuted }]}>1. Drink plenty of water to help flush excess glucose</Text>
-            <Text style={[s.actionItem, { color: colors.textMuted }]}>2. Take a correction insulin dose if prescribed</Text>
-            <Text style={[s.actionItem, { color: colors.textMuted }]}>3. Avoid food until levels improve</Text>
-            <Text style={[s.actionItem, { color: colors.textMuted }]}>4. Check for ketones if above 250 mg/dL (13.9 mmol/L)</Text>
-            <Text style={[s.actionItem, { color: colors.textMuted }]}>5. Seek emergency help if over 300 mg/dL or you feel very unwell</Text>
+            <Text style={[s.actionTitle, { color: colors.text }]}>{t.whatToDo}</Text>
+            <Text style={[s.actionItem, { color: colors.textMuted }]}>{t.hyperAction1}</Text>
+            <Text style={[s.actionItem, { color: colors.textMuted }]}>{t.hyperAction2}</Text>
+            <Text style={[s.actionItem, { color: colors.textMuted }]}>{t.hyperAction3}</Text>
+            <Text style={[s.actionItem, { color: colors.textMuted }]}>{t.hyperAction4}</Text>
+            <Text style={[s.actionItem, { color: colors.textMuted }]}>{t.hyperAction5}</Text>
           </>
         )}
       </SectionCard>
@@ -446,11 +420,11 @@ export default function EmergencyScreen() {
       <SectionCard>
         <TouchableOpacity onPress={() => setDosOpen(v => !v)} activeOpacity={0.8}>
           <View style={s.rowBetween}>
-            <SectionTitle text="Do's & Don'ts During a Crisis" />
+            <SectionTitle text={t.dosTitle} />
             <Text style={s.chevron}>{dosOpen ? '▲' : '▼'}</Text>
           </View>
-          <Text style={[s.symptomThreshold, { color: colors.textMuted }]}>Quick reference for any diabetic emergency</Text>
-          {!dosOpen && <Text style={[s.clickForMore, { color: colors.textFaint }]}>Click for more</Text>}
+          <Text style={[s.symptomThreshold, { color: colors.textMuted }]}>{t.dosSubtitle}</Text>
+          {!dosOpen && <Text style={[s.clickForMore, { color: colors.textFaint }]}>{t.clickForMore}</Text>}
         </TouchableOpacity>
         {dosOpen && (
           <View style={s.dosGrid}>
@@ -493,8 +467,9 @@ const s = StyleSheet.create({
   emptyText:    { fontSize: 13, textAlign: 'center', paddingVertical: 10 },
   input:        { borderWidth: 1.5, borderRadius: 6, paddingVertical: Platform.OS === 'ios' ? 9 : 7, paddingHorizontal: 12, fontSize: 14, marginBottom: 10 },
 
-  mapBtnRow: { flexDirection: 'row', gap: 10, alignSelf: 'stretch' }, 
-  mapBtn: { flex: 1, borderRadius: 7, paddingVertical: 10, alignItems: 'center', height: 42 },  mapBtnOutline:{ borderWidth: 1.5 },
+  mapBtnRow: { flexDirection: 'row', gap: 10, alignSelf: 'stretch' },
+  mapBtn: { flex: 1, borderRadius: 7, paddingVertical: 10, alignItems: 'center', height: 42 },
+  mapBtnOutline:{ borderWidth: 1.5 },
   mapBtnText:   { fontSize: 13, fontWeight: '700', color: '#fff', backgroundColor: 'transparent' },
   mapBtnOutlineText: { backgroundColor: 'transparent' },
 
@@ -515,56 +490,37 @@ const s = StyleSheet.create({
 
   addForm:       { marginTop: 4 },
   fieldLabel:    { fontSize: 12, fontWeight: '600', marginBottom: 4, marginTop: 8 },
-  formBtnRow: { flexDirection: 'row', gap: 10, marginTop: 12, alignSelf: 'stretch' },
-  cancelBtn: { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1.5, alignItems: 'center', backgroundColor: 'transparent' },
-  cancelBtnText: { fontSize: 14, fontWeight: '600', backgroundColor: 'transparent' },
-  saveBtn:   { flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: 'center' },
-  saveBtnText:   { fontSize: 14, color: '#fff', fontWeight: '700', backgroundColor: 'transparent' },
+  formBtnRow:    { flexDirection: 'row', gap: 10, marginTop: 12, alignSelf: 'stretch' },
+  cancelBtn:     { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1.5, alignItems: 'center', backgroundColor: 'transparent' },
+  cancelBtnText: { fontSize: 14, fontWeight: '600', color: '#aaa', backgroundColor: 'transparent' },
+  saveBtn:       { flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: 'center' },
+  saveBtnText:   { fontSize: 14, fontWeight: '700', color: '#fff', backgroundColor: 'transparent' },
 
-  symptomTitleRow:  { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  symptomDot:       { width: 10, height: 10, borderRadius: 5 },
-  symptomThreshold: { fontSize: 11, marginBottom: 10, marginTop: -4 },
-  symptomsGrid:     { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 4 },
-  symptomChip:      { borderRadius: 6, paddingHorizontal: 10, paddingVertical: 5 },
-  symptomChipText:  { fontSize: 12 },
-  actionTitle:      { fontSize: 13, fontWeight: '700', marginBottom: 6 },
-  actionItem:       { fontSize: 13, lineHeight: 20, marginBottom: 3 },
-  dosGrid:      { marginTop: 8 },
-  dosRow:       { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 7 },
-  dosRowBorder: { borderTopWidth: 1, borderTopColor: '#f0f0f0' },
-  dosText:      { flex: 1, fontSize: 13, lineHeight: 19, fontWeight: '500' },
-  clickForMore: { fontSize: 11, marginBottom: 4 },
+  symptomTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  symptomDot:      { width: 10, height: 10, borderRadius: 5 },
+  symptomThreshold:{ fontSize: 11, marginBottom: 6, lineHeight: 16 },
+  symptomsGrid:    { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
+  symptomChip:     { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7 },
+  symptomChipText: { fontSize: 12, lineHeight: 18 },
+  clickForMore:    { fontSize: 11, marginTop: 4 },
+  actionTitle:     { fontSize: 13, fontWeight: '700', marginBottom: 6, marginTop: 4 },
+  actionItem:      { fontSize: 13, lineHeight: 20, marginBottom: 4 },
 
-  // Phone contacts picker
-  pickerOverlay: { borderRadius: 12, borderWidth: 1, padding: 14, marginBottom: 14 },
+  dosGrid:         { marginTop: 8 },
+  dosRow:          { paddingVertical: 7 },
+  dosRowBorder:    { borderTopWidth: 1, borderTopColor: '#f5f5f5' },
+  dosText:         { fontSize: 13, lineHeight: 19, fontWeight: '600' },
+
+  pickerOverlay: { borderRadius: 12, borderWidth: 1, padding: 16, marginBottom: 12 },
   pickerHeader:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  pickerTitle:   { fontSize: 15, fontWeight: '700' },
-  pickerClose:   { fontSize: 13, fontWeight: '700' },
-  pickerSearch:  { borderWidth: 1.5, borderRadius: 6, paddingHorizontal: 10, paddingVertical: Platform.OS === 'ios' ? 7 : 5, fontSize: 14, marginBottom: 8 },
-  pickerEmpty:   { fontSize: 13, textAlign: 'center', paddingVertical: 16 },
+  pickerTitle:   { fontSize: 14, fontWeight: '700' },
+  pickerClose:   { fontSize: 13, fontWeight: '600' },
+  pickerSearch:  { borderWidth: 1.5, borderRadius: 6, paddingHorizontal: 12, paddingVertical: 8, fontSize: 13, marginBottom: 8 },
+  pickerEmpty:   { textAlign: 'center', fontSize: 13, paddingVertical: 12 },
   pickerRow:     { paddingVertical: 12, borderBottomWidth: 1 },
-  pickerName:    { fontSize: 14, fontWeight: '600', marginBottom: 2 },
-  pickerPhone:   { fontSize: 12 },
+  pickerName:    { fontSize: 14, fontWeight: '600' },
+  pickerPhone:   { fontSize: 12, marginTop: 2 },
 
-  // ── Shadows ──────────────────────────────────────────────────────────────────
-  callBtnShadow: {
-    shadowColor: '#7a1010',
-    shadowOffset: { width: 4, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 0,
-    elevation: 6,
-  },
-  primaryBtnShadow: {
-    shadowColor: '#7a1010',
-    shadowOffset: { width: 3, height: 3 },
-    shadowOpacity: 0.45,
-    shadowRadius: 0,
-    elevation: 4,
-  },
-  outlineBtnShadow: {
-    shadowColor: '#000',
-    shadowOffset: { width: 1, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 2,
-  },
+  callBtnShadow:    { shadowColor: '#7a1010', shadowOffset: { width: 4, height: 4 }, shadowOpacity: 0.45, shadowRadius: 0, elevation: 6 },
+  primaryBtnShadow: { shadowColor: '#7a1010', shadowOffset: { width: 4, height: 4 }, shadowOpacity: 0.45, shadowRadius: 0, elevation: 4 },
 });
