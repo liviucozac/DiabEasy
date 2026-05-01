@@ -9,6 +9,7 @@ import * as Haptics from 'expo-haptics';
 import { useTheme } from '../context/AppContext';
 import { PressBtn } from '../components/PressBtn';
 import { useTranslation } from '../hooks/useTranslation';
+import { useGlucoseStore } from '../store/glucoseStore';
 
 interface EmergencyContact {
   id: string; name: string; phone: string; relation: string;
@@ -63,6 +64,7 @@ const HYPER_ICONS = ['🥤','🚽','😴','👁️','🤕','🏜️','🤢','�
 export default function EmergencyScreen() {
   const { colors } = useTheme();
   const t = useTranslation();
+  const { caregiverSession, setCaregiverSession } = useGlucoseStore();
 
   const [emergencyNumber,  setEmergencyNumber]  = useState(() => getLocaleEmergencyNumber());
   const [locationAddress,  setLocationAddress]  = useState('');
@@ -240,7 +242,9 @@ export default function EmergencyScreen() {
       <View style={[s.emergencyCallCard, { backgroundColor: colors.lowBg, borderColor: colors.red }]}>
         <Text style={[s.emergencyCallTitle, { color: colors.red }]}>{t.needImmediateHelp}</Text>
         <Text style={[s.emergencyCallSub, { color: colors.textMuted }]}>
-          {t.emergencyCallSub}
+          {caregiverSession
+            ? t.caregiverEmergencySub(caregiverSession.patientName, caregiverSession.patientAddress ?? '')
+            : t.emergencyCallSub}
         </Text>
         <Animated.View style={{ transform: [{ scale: pulseAnim }], width: '100%', alignItems: 'center' }}>
           <PressBtn
@@ -251,26 +255,46 @@ export default function EmergencyScreen() {
             <Text style={s.callBtnText}>{t.callEmergency(emergencyNumber)}</Text>
           </PressBtn>
         </Animated.View>
-        {(locationLoading || locationAddress !== '') && (
-          <View style={s.locationBlock}>
-            <Text style={[s.locationLabel, { color: colors.textMuted }]}>{t.yourAddressIs}</Text>
-            <Text style={[s.locationLine, { color: colors.text }]}>
-              {locationLoading ? t.detectingLocation : `📍 ${locationAddress}`}
-            </Text>
+        {caregiverSession ? (
+          caregiverSession.patientAddress ? (
+            <View style={s.locationBlock}>
+              <Text style={[s.locationLabel, { color: colors.textMuted }]}>{t.patientAddress}</Text>
+              <Text style={[s.locationLine, { color: colors.text }]}>📍 {caregiverSession.patientAddress}</Text>
+            </View>
+          ) : null
+        ) : (
+          <>
+            {(locationLoading || locationAddress !== '') && (
+              <View style={s.locationBlock}>
+                <Text style={[s.locationLabel, { color: colors.textMuted }]}>{t.yourAddressIs}</Text>
+                <Text style={[s.locationLine, { color: colors.text }]}>
+                  {locationLoading ? t.detectingLocation : `📍 ${locationAddress}`}
+                </Text>
+                {!locationLoading && (
+                  <TouchableOpacity onPress={fetchLocation} activeOpacity={0.7} style={s.refreshBtn}>
+                    <Text style={[s.refreshBtnText, { color: colors.textMuted }]}>{t.refreshLocation}</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
             {!locationLoading && (
-              <TouchableOpacity onPress={fetchLocation} activeOpacity={0.7} style={s.refreshBtn}>
-                <Text style={[s.refreshBtnText, { color: colors.textMuted }]}>{t.refreshLocation}</Text>
+              <TouchableOpacity
+                style={[s.hospitalBtn, { borderColor: colors.red }]}
+                onPress={searchHospitals}
+                activeOpacity={0.75}
+              >
+                <Text style={[s.hospitalBtnText, { color: colors.red }]}>{t.findNearbyHospital}</Text>
               </TouchableOpacity>
             )}
-          </View>
+          </>
         )}
-        {!locationLoading && (
+        {caregiverSession && (
           <TouchableOpacity
-            style={[s.hospitalBtn, { borderColor: colors.red }]}
-            onPress={searchHospitals}
+            style={[s.hospitalBtn, { borderColor: colors.red, marginTop: 10 }]}
+            onPress={() => setCaregiverSession(null)}
             activeOpacity={0.75}
           >
-            <Text style={[s.hospitalBtnText, { color: colors.red }]}>{t.findNearbyHospital}</Text>
+            <Text style={[s.hospitalBtnText, { color: colors.red }]}>Exit Caregiver Mode</Text>
           </TouchableOpacity>
         )}
       </View>

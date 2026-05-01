@@ -10,11 +10,17 @@ import { useTheme } from '../context/AppContext';
 import { PressBtn } from '../components/PressBtn';
 import { ParamTrainingModal } from '../components/ParamTrainingModal';
 import { hashValue, biometricsAvailable } from '../utils/securityUtils';
-import { signIn, signUp, signOut, onAuthStateChanged, sendPasswordReset, changePassword, signInWithGoogle } from '../utils/firebaseAuth';
-import { statusCodes } from '@react-native-google-signin/google-signin';
-import { checkFirebasePremium } from '../utils/firestoreSync';
+import { signIn, signUp, signOut, onAuthStateChanged, sendPasswordReset, changePassword } from '../utils/firebaseAuth';
+import firestore from '@react-native-firebase/firestore';
+import {
+  checkFirebasePremium, generateCaregiverCode,
+  revokeCaregiverCode, fetchActiveCaregiverCodes,
+  CaregiverCodeType, ActiveCaregiverCodes,
+} from '../utils/firestoreSync';
 import { useSubscriptionStore } from '../store/subscriptionStore';
 import { useTranslation } from '../hooks/useTranslation';
+import { useSubscription } from '../hooks/useSubscription';
+import { UpgradeModal } from '../components/UpgradeModal';
 
 const RED = '#EC5557';
 
@@ -122,20 +128,6 @@ function AccountSection({ user }: { user: any }) {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    setLoading(true); setError('');
-    try {
-      await signInWithGoogle();
-      checkFirebasePremium().then(isOverride => { if (isOverride) setPremiumPaid(true); }).catch(() => {});
-    } catch (e: any) {
-      if (e.code !== statusCodes.SIGN_IN_CANCELLED) {
-        setError(e.message ?? t.authenticationFailed);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleChangePassword = async () => {
     if (!currentPw || !newPw || !confirmPw) { setPwError(t.allFieldsRequired); return; }
     if (newPw.length < 6) { setPwError(t.newPasswordTooShort); return; }
@@ -153,9 +145,7 @@ function AccountSection({ user }: { user: any }) {
     }
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-  };
+  const handleSignOut = async () => { await signOut(); };
 
   if (user) {
     return (
@@ -190,11 +180,7 @@ function AccountSection({ user }: { user: any }) {
             <StyledInput value={confirmPw} onChangeText={setConfirmPw} placeholder={t.confirmPasswordPlaceholder} secureTextEntry />
             {!!pwError   && <Text style={{ fontSize: 12, color: '#e53935', marginTop: 4, textAlign: 'center' }}>{pwError}</Text>}
             {!!pwSuccess && <Text style={{ fontSize: 12, color: '#2e7d32', marginTop: 4, textAlign: 'center' }}>{pwSuccess}</Text>}
-            <PressBtn
-              style={[s.authBtn, { backgroundColor: pwLoading ? colors.border : colors.red }, s.primaryBtnShadow]}
-              onPress={handleChangePassword}
-              activeOpacity={0.75}
-            >
+            <PressBtn style={[s.authBtn, { backgroundColor: pwLoading ? colors.border : colors.red }, s.primaryBtnShadow]} onPress={handleChangePassword} activeOpacity={0.75}>
               <Text style={s.authBtnText}>{pwLoading ? t.updating : t.updatePassword}</Text>
             </PressBtn>
             <TouchableOpacity onPress={() => { setShowChangePw(false); setCurrentPw(''); setNewPw(''); setConfirmPw(''); setPwError(''); }} activeOpacity={0.7} style={s.changePwLink}>
@@ -225,11 +211,7 @@ function AccountSection({ user }: { user: any }) {
       <StyledInput value={password} onChangeText={setPassword} placeholder={t.passwordField} secureTextEntry />
       {!!error   && <Text style={{ fontSize: 12, color: '#e53935', marginTop: 4, textAlign: 'center' }}>{error}</Text>}
       {!!success && <Text style={{ fontSize: 12, color: '#2e7d32', marginTop: 4, textAlign: 'center' }}>{success}</Text>}
-      <PressBtn
-        style={[s.authBtn, { backgroundColor: loading ? colors.border : colors.red }, s.primaryBtnShadow]}
-        onPress={handleAuth}
-        activeOpacity={0.75}
-      >
+      <PressBtn style={[s.authBtn, { backgroundColor: loading ? colors.border : colors.red }, s.primaryBtnShadow]} onPress={handleAuth} activeOpacity={0.75}>
         <Text style={s.authBtnText}>{loading ? t.pleaseWait : mode === 'login' ? t.signIn : t.createAccount}</Text>
       </PressBtn>
       {mode === 'login' && (
@@ -237,22 +219,208 @@ function AccountSection({ user }: { user: any }) {
           <Text style={[s.forgotLink, { color: colors.textMuted }]}>{t.forgotPassword}</Text>
         </TouchableOpacity>
       )}
+    </SectionCard>
+  );
+}
 
-      <View style={[s.googleDividerRow, { marginTop: 16 }]}>
-        <View style={[s.googleDividerLine, { backgroundColor: colors.border }]} />
-        <Text style={[s.googleDividerText, { color: colors.textMuted }]}>or</Text>
-        <View style={[s.googleDividerLine, { backgroundColor: colors.border }]} />
+// ─── Caregiver Code Section ───────────────────────────────────────────────────
+
+function CaregiverCodeSection({ patientName, patientAddress }: { patientName: string; patientAddress: string }) {
+  const { colors } = useTheme();
+  const { history, insulinEntries, savedMeals, setCaregiverSyncEnabled } = useGlucoseStore();
+  const { isPremium } = useSubscription();
+
+  const [selectedType, setSelectedType] = useState<CaregiverCodeType>('temporary');
+  const [activeCodes,  setActiveCodes]  = useState<ActiveCaregiverCodes>({ temporary: null, permanent: null });
+  const [tempExpiresAt, setTempExpiresAt] = useState<Date | null>(null);
+  const [loadingCodes, setLoadingCodes] = useState(true);
+  const [generating,   setGenerating]   = useState(false);
+  const [genError,     setGenError]     = useState('');
+  const [revoking,     setRevoking]     = useState<CaregiverCodeType | null>(null);
+  const [showUpgrade,  setShowUpgrade]  = useState(false);
+
+  useEffect(() => {
+    fetchActiveCaregiverCodes()
+      .then(codes => {
+        setActiveCodes(codes);
+        if (codes.temporary) {
+          firestore().collection('inviteCodes').doc(codes.temporary).get()
+            .then(doc => {
+              console.log('EXISTS:', doc.exists());
+              console.log('DATA:', JSON.stringify(doc.data()));
+              if (doc.exists()) setTempExpiresAt(doc.data()?.expiresAt?.toDate() ?? null);
+            }).catch(e => console.log('EXPIRY FETCH ERROR:', e));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingCodes(false));
+  }, []);
+
+  const handleGenerate = async () => {
+    setGenerating(true); setGenError('');
+    try {
+      const code = await generateCaregiverCode(
+        patientName || 'Patient',
+        patientAddress ?? '',
+        selectedType,
+        history,
+        insulinEntries,
+        savedMeals,
+      );
+      setCaregiverSyncEnabled(true);
+      setActiveCodes(prev => ({ ...prev, [selectedType]: code }));
+      if (selectedType === 'temporary') {
+        setTempExpiresAt(new Date(Date.now() + 24 * 60 * 60 * 1000));
+      }
+    } catch (e: any) {
+      setGenError(e.message ?? 'Failed to generate code. Please try again.');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleRevoke = async (type: CaregiverCodeType) => {
+    const code = activeCodes[type];
+    if (!code) return;
+    setRevoking(type);
+    try {
+      await revokeCaregiverCode(code);
+      setActiveCodes(prev => ({ ...prev, [type]: null }));
+      if (type === 'temporary') setTempExpiresAt(null);
+    } catch {
+    } finally {
+      setRevoking(null);
+    }
+  };
+
+  const ActiveCodeCard = ({ type }: { type: CaregiverCodeType }) => {
+    const code = activeCodes[type];
+    if (!code) return null;
+    const isPermanent = type === 'permanent';
+
+    const expiryLabel = !isPermanent && tempExpiresAt
+      ? `Expires: ${tempExpiresAt.toLocaleDateString()} at ${tempExpiresAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+      : null;
+
+    return (
+      <View style={[cg.codeCard, { borderColor: isPermanent ? colors.red : colors.normal, backgroundColor: colors.inputBg }]}>
+        <View style={cg.codeCardHeader}>
+          <Text style={[cg.codeCardLabel, { color: colors.textMuted }]}>
+            {isPermanent ? '🔒 Permanent' : '⏳ 24-hour'}
+          </Text>
+          <TouchableOpacity
+            onPress={() => handleRevoke(type)}
+            disabled={revoking === type}
+            activeOpacity={0.75}
+            style={[cg.revokeBtn, { borderColor: '#e53935' }]}
+          >
+            <Text style={{ fontSize: 12, fontWeight: '700', color: revoking === type ? colors.textMuted : '#e53935' }}>
+              {revoking === type ? 'Revoking…' : 'Revoke'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+        <Text style={[cg.codeDigits, { color: isPermanent ? colors.red : colors.normal }]}>{code}</Text>
+        <Text style={[cg.codeHint, { color: colors.textFaint }]}>
+          {isPermanent
+            ? 'Active until revoked. Share only with a parent or tutor.'
+            : expiryLabel ?? 'Active for 24 hours or until revoked.'}
+        </Text>
       </View>
+    );
+  };
 
-      <TouchableOpacity
-        style={[s.googleBtn, { borderColor: colors.border, backgroundColor: colors.bgCard }]}
-        onPress={handleGoogleSignIn}
-        activeOpacity={0.8}
-        disabled={loading}
-      >
-        <Text style={s.googleBtnG}>G</Text>
-        <Text style={[s.googleBtnText, { color: colors.text }]}>{t.signInWithGoogle}</Text>
-      </TouchableOpacity>
+  return (
+    <SectionCard>
+      <SectionTitle text="Caregiver Access" />
+
+      {!isPremium ? (
+        <View style={{ alignItems: 'center', paddingVertical: 12, gap: 10 }}>
+          <Text style={{ fontSize: 36 }}>👑</Text>
+          <Text style={{ fontSize: 15, fontWeight: '800', color: colors.text, textAlign: 'center' }}>
+            Premium Feature
+          </Text>
+          <Text style={{ fontSize: 13, color: colors.textMuted, textAlign: 'center', lineHeight: 19 }}>
+            Caregiver access lets doctors and family members view your data in read-only mode. Upgrade to unlock code generation.
+          </Text>
+          <TouchableOpacity
+            style={{
+              marginTop: 6, borderRadius: 8, paddingVertical: 11, paddingHorizontal: 24,
+              backgroundColor: colors.red,
+              shadowColor: '#7a1010', shadowOffset: { width: 4, height: 4 },
+              shadowOpacity: 0.45, shadowRadius: 0, elevation: 4,
+            }}
+            onPress={() => setShowUpgrade(true)}
+            activeOpacity={0.75}
+          >
+            <Text style={{ fontSize: 14, fontWeight: '700', color: '#fff' }}>Upgrade to Premium</Text>
+          </TouchableOpacity>
+          <UpgradeModal visible={showUpgrade} onClose={() => setShowUpgrade(false)} />
+        </View>
+      ) : (
+        <>
+          <Text style={[s.sectionHint, { color: colors.textMuted }]}>
+            Share a code with a doctor, parent, or caregiver so they can view your data in read-only mode.
+          </Text>
+
+          {loadingCodes ? (
+            <Text style={{ fontSize: 12, color: colors.textFaint, textAlign: 'center', marginBottom: 8 }}>Loading…</Text>
+          ) : (
+            <>
+              <ActiveCodeCard type="temporary" />
+              <ActiveCodeCard type="permanent" />
+            </>
+          )}
+
+          {(activeCodes.temporary || activeCodes.permanent) && (
+            <View style={[s.divider, { backgroundColor: colors.border, marginVertical: 14 }]} />
+          )}
+
+          <FieldLabel text="Generate a new code" />
+          <View style={cg.typeRow}>
+            {(['temporary', 'permanent'] as CaregiverCodeType[]).map((type) => {
+              const active = selectedType === type;
+              return (
+                <TouchableOpacity
+                  key={type}
+                  style={[cg.typePill, { borderColor: colors.red, backgroundColor: active ? colors.red : 'transparent' }, active ? s.primaryBtnShadow : null]}
+                  onPress={() => setSelectedType(type)}
+                  activeOpacity={0.75}
+                >
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: active ? '#fff' : colors.textMuted }}>
+                    {type === 'temporary' ? '⏳ 24-hour' : '🔒 Permanent'}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {selectedType === 'permanent' && (
+            <View style={[cg.warningBox, { backgroundColor: colors.lowBg, borderColor: colors.low }]}>
+              <Text style={[cg.warningText, { color: colors.low }]}>
+                ⚠️  Only share a permanent code with a parent or tutor you fully trust. It stays active until you revoke it.
+              </Text>
+            </View>
+          )}
+
+          {!!genError && (
+            <Text style={{ fontSize: 12, color: '#e53935', marginBottom: 8, textAlign: 'center' }}>{genError}</Text>
+          )}
+
+          <PressBtn
+            style={[s.authBtn, { backgroundColor: generating ? colors.border : colors.red }, s.primaryBtnShadow]}
+            onPress={handleGenerate}
+            activeOpacity={0.75}
+          >
+            <Text style={s.authBtnText}>
+              {generating
+                ? '…'
+                : activeCodes[selectedType]
+                  ? `Replace ${selectedType === 'temporary' ? '24-hour' : 'permanent'} code`
+                  : `Generate ${selectedType === 'temporary' ? '24-hour' : 'permanent'} code`}
+            </Text>
+          </PressBtn>
+        </>
+      )}
     </SectionCard>
   );
 }
@@ -260,7 +428,7 @@ function AccountSection({ user }: { user: any }) {
 // ─── Profile Tab ──────────────────────────────────────────────────────────────
 
 function ProfileTab() {
-  const { profile, setProfile } = useGlucoseStore();
+  const { profile, setProfile, caregiverSession } = useGlucoseStore();
   const { colors } = useTheme();
   const t = useTranslation();
 
@@ -288,95 +456,69 @@ function ProfileTab() {
     <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 32 }}>
       <AccountSection user={user} />
 
+      {!caregiverSession && user && <CaregiverCodeSection patientName={draft.name} patientAddress={draft.address ?? ''} />}
+
       {user && <SectionCard>
         <SectionTitle text={t.personalInfo} />
         <FieldLabel text={t.fullName} />
         <StyledInput value={draft.name} onChangeText={(v) => set({ name: v })} placeholder={t.fullNamePlaceholder} />
-        <FieldLabel text={t.age} />
-        <StyledInput value={draft.age} onChangeText={(v) => set({ age: v })} placeholder={t.agePlaceholder} keyboardType="number-pad" />
-        <FieldLabel text={t.diabetesType} />
-        <View style={s.pillRow}>
-          {DIABETES_TYPES.map((tp) => {
-            const active = draft.diabetesType === tp;
-            return (
-              <TouchableOpacity key={tp}
-                style={[s.pill, active ? s.primaryBtnShadow : null, { borderColor: colors.red, backgroundColor: active ? colors.red : 'transparent' }]}
-                onPress={() => set({ diabetesType: tp })} activeOpacity={0.75}>
-                <Text style={[s.pillText, { color: active ? '#fff' : colors.textMuted }]}>{tp}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-        <FieldLabel text={t.diagnosisDate} />
-        <TouchableOpacity
-          style={[s.input, s.datePickerBtn, { borderColor: colors.border, backgroundColor: colors.inputBg }]}
-          onPress={() => setShowDiagnosisPicker(true)}
-          activeOpacity={0.75}
-        >
-          <Text style={{ color: draft.diagnosisDate ? colors.text : colors.placeholder, fontSize: 15 }}>
-            {draft.diagnosisDate || t.diagnosisDatePlaceholder}
-          </Text>
-        </TouchableOpacity>
-        {showDiagnosisPicker && (
-          Platform.OS === 'ios' ? (
-            <Modal transparent animationType="fade" onRequestClose={() => setShowDiagnosisPicker(false)}>
-              <View style={s.dateModalOverlay}>
-                <View style={[s.dateModalSheet, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-                  <DateTimePicker
-                    value={(() => {
-                      if (draft.diagnosisDate) {
-                        const [m, y] = draft.diagnosisDate.split('/');
-                        const d = new Date(parseInt(y, 10), parseInt(m, 10) - 1, 1);
-                        return isNaN(d.getTime()) ? new Date() : d;
-                      }
-                      return new Date();
-                    })()}
-                    mode="date"
-                    display="spinner"
-                    maximumDate={new Date()}
-                    onChange={(_, date) => {
-                      if (date) {
-                        const mm = String(date.getMonth() + 1).padStart(2, '0');
-                        const yyyy = String(date.getFullYear());
-                        set({ diagnosisDate: `${mm}/${yyyy}` });
-                      }
-                    }}
-                  />
-                  <TouchableOpacity style={[s.dateModalDone, { backgroundColor: colors.red }]} onPress={() => setShowDiagnosisPicker(false)}>
-                    <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>{t.done}</Text>
-                  </TouchableOpacity>
+        {!caregiverSession && <>
+          <FieldLabel text={t.age} />
+          <StyledInput value={draft.age} onChangeText={(v) => set({ age: v })} placeholder={t.agePlaceholder} keyboardType="number-pad" />
+          <FieldLabel text={t.diabetesType} />
+          <View style={s.pillRow}>
+            {DIABETES_TYPES.map((tp) => {
+              const active = draft.diabetesType === tp;
+              return (
+                <TouchableOpacity key={tp}
+                  style={[s.pill, active ? s.primaryBtnShadow : null, { borderColor: colors.red, backgroundColor: active ? colors.red : 'transparent' }]}
+                  onPress={() => set({ diabetesType: tp })} activeOpacity={0.75}>
+                  <Text style={[s.pillText, { color: active ? '#fff' : colors.textMuted }]}>{tp}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          <FieldLabel text={t.diagnosisDate} />
+          <TouchableOpacity
+            style={[s.input, s.datePickerBtn, { borderColor: colors.border, backgroundColor: colors.inputBg }]}
+            onPress={() => setShowDiagnosisPicker(true)}
+            activeOpacity={0.75}
+          >
+            <Text style={{ color: draft.diagnosisDate ? colors.text : colors.placeholder, fontSize: 15 }}>
+              {draft.diagnosisDate || t.diagnosisDatePlaceholder}
+            </Text>
+          </TouchableOpacity>
+          {showDiagnosisPicker && (
+            Platform.OS === 'ios' ? (
+              <Modal transparent animationType="fade" onRequestClose={() => setShowDiagnosisPicker(false)}>
+                <View style={s.dateModalOverlay}>
+                  <View style={[s.dateModalSheet, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                    <DateTimePicker
+                      value={(() => { if (draft.diagnosisDate) { const [m, y] = draft.diagnosisDate.split('/'); const d = new Date(parseInt(y, 10), parseInt(m, 10) - 1, 1); return isNaN(d.getTime()) ? new Date() : d; } return new Date(); })()}
+                      mode="date" display="spinner" maximumDate={new Date()}
+                      onChange={(_, date) => { if (date) { set({ diagnosisDate: `${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}` }); } }}
+                    />
+                    <TouchableOpacity style={[s.dateModalDone, { backgroundColor: colors.red }]} onPress={() => setShowDiagnosisPicker(false)}>
+                      <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>{t.done}</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              </View>
-            </Modal>
-          ) : (
-            <DateTimePicker
-              value={(() => {
-                if (draft.diagnosisDate) {
-                  const [m, y] = draft.diagnosisDate.split('/');
-                  const d = new Date(parseInt(y, 10), parseInt(m, 10) - 1, 1);
-                  return isNaN(d.getTime()) ? new Date() : d;
-                }
-                return new Date();
-              })()}
-              mode="date"
-              display="spinner"
-              maximumDate={new Date()}
-              onChange={(_, date) => {
-                setShowDiagnosisPicker(false);
-                if (date) {
-                  const mm = String(date.getMonth() + 1).padStart(2, '0');
-                  const yyyy = String(date.getFullYear());
-                  set({ diagnosisDate: `${mm}/${yyyy}` });
-                }
-              }}
-            />
-          )
-        )}
-        <FieldLabel text={t.doctorName} />
-        <StyledInput value={draft.doctorName} onChangeText={(v) => set({ doctorName: v })} placeholder={t.doctorNamePlaceholder} />
-        <FieldLabel text={t.clinicHospital} />
-        <StyledInput value={draft.clinicName} onChangeText={(v) => set({ clinicName: v })} placeholder={t.clinicPlaceholder} />
-
+              </Modal>
+            ) : (
+              <DateTimePicker
+                value={(() => { if (draft.diagnosisDate) { const [m, y] = draft.diagnosisDate.split('/'); const d = new Date(parseInt(y, 10), parseInt(m, 10) - 1, 1); return isNaN(d.getTime()) ? new Date() : d; } return new Date(); })()}
+                mode="date" display="spinner" maximumDate={new Date()}
+                onChange={(_, date) => { setShowDiagnosisPicker(false); if (date) { set({ diagnosisDate: `${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}` }); } }}
+              />
+            )
+          )}
+          <FieldLabel text={t.doctorName} />
+          <StyledInput value={draft.doctorName} onChangeText={(v) => set({ doctorName: v })} placeholder={t.doctorNamePlaceholder} />
+          <FieldLabel text={t.clinicHospital} />
+          <StyledInput value={draft.clinicName} onChangeText={(v) => set({ clinicName: v })} placeholder={t.clinicPlaceholder} />
+          <FieldLabel text={t.address} />
+          <StyledInput value={draft.address ?? ''} onChangeText={(v) => set({ address: v })} placeholder={t.addressPlaceholder} />
+        </>}
         <PressBtn
           style={[s.saveProfileBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]}
           onPress={handleSave}
@@ -393,7 +535,7 @@ function ProfileTab() {
 // ─── Settings Tab ─────────────────────────────────────────────────────────────
 
 function SettingsTab() {
-  const { settings, setSettings, clearHistory, clearInsulinLog } = useGlucoseStore();
+  const { settings, setSettings, clearHistory, clearInsulinLog, caregiverSession } = useGlucoseStore();
   const { colors } = useTheme();
   const t = useTranslation();
   const [showTraining,    setShowTraining]    = useState(false);
@@ -443,13 +585,13 @@ function SettingsTab() {
     setSecError(''); setSecSuccess('');
     if (settings.securityMethod === 'pin') {
       if (secNewPin.length !== 4 || !/^\d{4}$/.test(secNewPin)) { setSecError(t.pinMust4Digits); return; }
-      if (secNewPin !== secConfirmPin)  { setSecError(t.pinsDoNotMatch); return; }
+      if (secNewPin !== secConfirmPin) { setSecError(t.pinsDoNotMatch); return; }
       setSettings({ securityHash: hashValue(secNewPin) });
       setSecNewPin(''); setSecConfirmPin('');
       setSecSuccess(t.pinSaved);
     } else if (settings.securityMethod === 'password') {
-      if (secNewPass.length < 7)        { setSecError(t.passwordMin7); return; }
-      if (secNewPass !== secConfirmPass) { setSecError(t.passwordsDoNotMatch); return; }
+      if (secNewPass.length < 7)         { setSecError(t.passwordMin7); return; }
+      if (secNewPass !== secConfirmPass)  { setSecError(t.passwordsDoNotMatch); return; }
       setSettings({ securityHash: hashValue(secNewPass) });
       setSecNewPass(''); setSecConfirmPass('');
       setSecSuccess(t.passwordSaved);
@@ -540,10 +682,9 @@ function SettingsTab() {
         </View>
       </SectionCard>
 
-      <SectionCard>
+      {!caregiverSession && <SectionCard>
         <SectionTitle text={t.insulinCalcDefaults} />
         <Text style={[s.sectionHint, { color: colors.textMuted }]}>{t.insulinCalcHint}</Text>
-
         <FieldLabel text={t.rapidActingInsulinType} />
         <View style={s.pillRow}>
           {INSULIN_ANALOGS.map((analog) => {
@@ -551,9 +692,7 @@ function SettingsTab() {
             return (
               <TouchableOpacity key={analog.value}
                 style={[s.pill, active ? s.primaryBtnShadow : null, { borderColor: colors.red, backgroundColor: active ? colors.red : 'transparent' }]}
-                onPress={() => {
-                  setSettings({ insulinAnalogType: analog.value as InsulinAnalogType, dia: analog.defaultDia });
-                }}
+                onPress={() => setSettings({ insulinAnalogType: analog.value as InsulinAnalogType, dia: analog.defaultDia })}
                 activeOpacity={0.75}>
                 <Text style={[s.pillText, { color: active ? '#fff' : colors.textMuted }]}>{analog.label}</Text>
               </TouchableOpacity>
@@ -563,7 +702,6 @@ function SettingsTab() {
         <Text style={[s.sectionHint, { color: colors.textFaint, marginTop: 2 }]}>
           {getAnalogByType(settings.insulinAnalogType).sublabel}
         </Text>
-
         <View style={s.paramGrid}>
           {[
             { label: t.targetGlycemia, value: String(settings.targetGlucose), focused: targetFocused, setFocused: setTargetFocused, onChange: (v: string) => { const n = parseFloat(v); if (!isNaN(n)) setSettings({ targetGlucose: n, insulinParamsSet: true }); } },
@@ -581,30 +719,18 @@ function SettingsTab() {
             </View>
           ))}
         </View>
-
-        <PressBtn
-          style={[s.authBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]}
-          onPress={() => setSettings({ insulinParamsSet: true })}
-          activeOpacity={0.8}
-        >
+        <PressBtn style={[s.authBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={() => setSettings({ insulinParamsSet: true })} activeOpacity={0.8}>
           <Text style={s.authBtnText}>{t.saveParameters}</Text>
         </PressBtn>
-
-        <TouchableOpacity
-          style={[s.trainingBtn, { borderColor: colors.red }]}
-          onPress={() => setShowTraining(true)}
-          activeOpacity={0.75}
-        >
+        <TouchableOpacity style={[s.trainingBtn, { borderColor: colors.red }]} onPress={() => setShowTraining(true)} activeOpacity={0.75}>
           <Text style={[s.trainingBtnText, { color: colors.red }]}>{t.whatDoParamsMean}</Text>
         </TouchableOpacity>
-
         <ParamTrainingModal visible={showTraining} onClose={() => setShowTraining(false)} />
-      </SectionCard>
+      </SectionCard>}
 
       <SectionCard>
         <SectionTitle text={t.security} />
         <Text style={[s.sectionHint, { color: colors.textMuted }]}>{t.securityHint}</Text>
-
         <FieldLabel text={t.lockMethod} />
         <View style={s.pillRow}>
           {SECURITY_METHOD_OPTIONS.map((opt) => {
@@ -619,7 +745,6 @@ function SettingsTab() {
             );
           })}
         </View>
-
         {settings.securityMethod === 'pin' && (
           <View style={{ gap: 8, marginTop: 10 }}>
             <FieldLabel text={t.newPin} />
@@ -631,7 +756,6 @@ function SettingsTab() {
             </PressBtn>
           </View>
         )}
-
         {settings.securityMethod === 'password' && (
           <View style={{ gap: 8, marginTop: 10 }}>
             <FieldLabel text={t.newPasswordSetting} />
@@ -643,10 +767,8 @@ function SettingsTab() {
             </PressBtn>
           </View>
         )}
-
         {!!secError   && <Text style={[s.secMsg, { color: '#e53935' }]}>{secError}</Text>}
         {!!secSuccess && <Text style={[s.secMsg, { color: '#2e7d32' }]}>{secSuccess}</Text>}
-
         {settings.securityMethod !== 'none' && (
           <>
             <Divider />
@@ -668,7 +790,7 @@ function SettingsTab() {
         )}
       </SectionCard>
 
-      <SectionCard>
+      {!caregiverSession && <SectionCard>
         <SectionTitle text={t.notifications} />
         <View style={s.settingRow}>
           <View style={{ flex: 1 }}>
@@ -677,15 +799,15 @@ function SettingsTab() {
           </View>
           <Switch value={settings.notificationsEnabled} onValueChange={(v) => setSettings({ notificationsEnabled: v })} trackColor={{ false: '#ccc', true: RED }} thumbColor="#fff" />
         </View>
-      </SectionCard>
+      </SectionCard>}
 
-      <SectionCard>
+      {!caregiverSession && <SectionCard>
         <SectionTitle text={t.data} />
         <PressBtn style={[s.dangerBtn]} onPress={handleClearData} activeOpacity={0.75}>
           <Text style={s.dangerBtnText}>{t.clearAllData}</Text>
         </PressBtn>
         <Text style={[s.dangerHint, { color: colors.textFaint }]}>{t.clearAllDataHint}</Text>
-      </SectionCard>
+      </SectionCard>}
 
       <SectionCard>
         <SectionTitle text={t.about} />
@@ -721,7 +843,6 @@ export default function ProfileScreen() {
   return (
     <View style={[s.root, { backgroundColor: colors.bg }]}>
       <Text style={[s.title, { color: colors.text }]}>{t.profileSettings}</Text>
-
       <View style={[s.tabBar, { borderColor: colors.red }, s.tabBarShadow]}>
         {(['profile', 'settings'] as ActiveTab[]).map((tab) => {
           const active = activeTab === tab;
@@ -734,7 +855,6 @@ export default function ProfileScreen() {
           );
         })}
       </View>
-
       <View style={[s.content, { backgroundColor: colors.bg }]}>
         {activeTab === 'profile' ? <ProfileTab /> : <SettingsTab />}
       </View>
@@ -766,12 +886,6 @@ const s = StyleSheet.create({
   authToggleText: { fontSize: 13 },
   authToggleLink: { fontSize: 13, fontWeight: '700' },
   forgotLink:       { fontSize: 13, textDecorationLine: 'underline' },
-  googleBtn:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderWidth: 1.5, borderRadius: 8, paddingVertical: 11, marginTop: 10 },
-  googleBtnG:       { fontSize: 16, fontWeight: '800', color: '#4285F4' },
-  googleBtnText:    { fontSize: 14, fontWeight: '600' },
-  googleDividerRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  googleDividerLine:{ flex: 1, height: 1 },
-  googleDividerText:{ fontSize: 12 },
   changePwLink:     { alignItems: 'center', marginTop: 10 },
   changePwLinkText: { fontSize: 13, textDecorationLine: 'underline' },
 
@@ -822,13 +936,24 @@ const s = StyleSheet.create({
   outlineBtnShadow: { shadowColor: '#000', shadowOffset: { width: 1, height: 1 }, shadowOpacity: 0.06, shadowRadius: 2 },
   dangerBtnShadow:  { shadowColor: '#e53935', shadowOffset: { width: 2, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 3 },
 
-  comingSoonBox:   { borderRadius: 10, borderWidth: 1, padding: 16, alignItems: 'center', gap: 6 },
-  comingSoonIcon:  { fontSize: 32 },
-  comingSoonTitle: { fontSize: 14, fontWeight: '700', textAlign: 'center' },
-  comingSoonText:  { fontSize: 13, textAlign: 'center', lineHeight: 19 },
-
   trainingBtn:     { marginTop: 14, borderWidth: 1.5, borderRadius: 8, paddingVertical: 9, alignItems: 'center' },
   trainingBtnText: { fontSize: 13, fontWeight: '600' },
+
+  codeBox:  { borderWidth: 2, borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginTop: 4 },
+  codeText: { fontSize: 36, fontWeight: '800', letterSpacing: 8 },
   saveProfileBtn:     { marginTop: 16, borderRadius: 10, paddingVertical: 13, alignItems: 'center' },
   saveProfileBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
+});
+
+const cg = StyleSheet.create({
+  codeCard:       { borderRadius: 10, borderWidth: 1.5, padding: 12, marginBottom: 10 },
+  codeCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  codeCardLabel:  { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
+  codeDigits:     { fontSize: 32, fontWeight: '900', letterSpacing: 8, textAlign: 'center', marginBottom: 4 },
+  codeHint:       { fontSize: 11, textAlign: 'center', lineHeight: 16 },
+  revokeBtn:      { borderWidth: 1.5, borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4 },
+  typeRow:        { flexDirection: 'row', gap: 10, marginBottom: 10 },
+  typePill:       { flex: 1, paddingVertical: 9, borderRadius: 8, borderWidth: 1.5, alignItems: 'center' },
+  warningBox:     { borderRadius: 8, borderWidth: 1.5, padding: 10, marginBottom: 10 },
+  warningText:    { fontSize: 12, lineHeight: 17 },
 });

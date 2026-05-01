@@ -42,6 +42,13 @@ export const changePassword = async (currentPassword: string, newPassword: strin
   await user.updatePassword(newPassword);
 };
 
+export const signInAnonymously = async () => {
+  const current = auth().currentUser;
+  if (current) return current;
+  const result = await auth().signInAnonymously();
+  return result.user;
+};
+
 export const signInWithGoogle = async () => {
   await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
   const response = await GoogleSignin.signIn();

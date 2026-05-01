@@ -2,10 +2,12 @@ import React, { useState, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   ScrollView, Modal, StyleSheet, KeyboardAvoidingView,
-  Platform, Animated,
+  Platform, Animated, Alert,
 } from 'react-native';
+import auth from '@react-native-firebase/auth';
 import * as Haptics from 'expo-haptics';
 import { useGlucoseStore } from '../store/glucoseStore';
+import { redeemCaregiverCode } from '../utils/firestoreSync';
 import { useTheme } from '../context/AppContext';
 import { PressBtn } from '../components/PressBtn';
 import { ShadowBtn } from '../components/ShadowBtn';
@@ -203,7 +205,7 @@ function HyperPopup({ visible, glucoseValue, unit, onClose }: {
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function HomeScreen() {
-  const { addEntry, setGlucoseValue: setGlobalGlucose, unit: globalUnit, setHasSeenOnboarding, settings } = useGlucoseStore();
+  const { addEntry, setGlucoseValue: setGlobalGlucose, unit: globalUnit, setHasSeenOnboarding, settings, setCaregiverSession } = useGlucoseStore();
   const { colors, isDark } = useTheme();
   const t = useTranslation();
 
@@ -222,6 +224,26 @@ export default function HomeScreen() {
   const [showUpgrade, setShowUpgrade] = useState(false);
 
   const { canUseBle } = useSubscription();
+
+  const [showCaregiverModal, setShowCaregiverModal] = useState(false);
+  const [caregiverCode, setCaregiverCode]           = useState('');
+  const [caregiverLoading, setCaregiverLoading]     = useState(false);
+  const [caregiverError, setCaregiverError]         = useState('');
+
+  const handleActivateCaregiver = async () => {
+    if (caregiverCode.trim().length !== 6) return;
+    setCaregiverLoading(true); setCaregiverError('');
+    try {
+      const session = await redeemCaregiverCode(caregiverCode);
+      setCaregiverSession(session);
+      setShowCaregiverModal(false);
+      setCaregiverCode('');
+    } catch (e: any) {
+      setCaregiverError(e?.message ?? t.invalidCode);
+    } finally {
+      setCaregiverLoading(false);
+    }
+  };
 
   const submitScale = useRef(new Animated.Value(1)).current;
   const resultScale = useRef(new Animated.Value(0)).current;
@@ -458,6 +480,16 @@ export default function HomeScreen() {
             </Animated.View>
           )}
 
+          <TouchableOpacity onPress={() => {
+              if (!auth().currentUser) {
+                Alert.alert('Sign in required', 'You need to be signed in to use caregiver mode. Go to the Profile tab to create an account or sign in.');
+                return;
+              }
+              setShowCaregiverModal(true); setCaregiverError(''); setCaregiverCode('');
+            }} activeOpacity={0.7} style={styles.caregiverLink}>
+            <Text style={[styles.caregiverLinkText, { color: colors.red }]}>{t.useAppAsCaregiver}</Text>
+          </TouchableOpacity>
+
           <QuickStats unit={unit} />
 
           <View style={[styles.tipCard, {
@@ -533,6 +565,37 @@ export default function HomeScreen() {
 
       <UpgradeModal visible={showUpgrade} onClose={() => setShowUpgrade(false)} />
 
+      <Modal visible={showCaregiverModal} transparent animationType="slide" onRequestClose={() => setShowCaregiverModal(false)}>
+        <View style={[styles.overlayBg, { backgroundColor: colors.overlay }]}>
+          <View style={[styles.caregiverSheet, { backgroundColor: colors.bg, borderColor: colors.border }]}>
+            <Text style={[styles.caregiverTitle, { color: colors.text }]}>{t.caregiverModeTitle}</Text>
+            <Text style={[styles.caregiverInstructions, { color: colors.textMuted }]}>{t.caregiverCodeInstructions}</Text>
+            <TextInput
+              style={[styles.caregiverInput, { borderColor: caregiverError ? '#e53935' : colors.border, color: colors.text, backgroundColor: colors.inputBg }]}
+              placeholder={t.caregiverCodePlaceholder}
+              placeholderTextColor={colors.placeholder}
+              value={caregiverCode}
+              onChangeText={(v) => { setCaregiverCode(v.replace(/\D/g, '').slice(0, 6)); setCaregiverError(''); }}
+              keyboardType="number-pad"
+              maxLength={6}
+              textAlign="center"
+            />
+            {!!caregiverError && <Text style={styles.caregiverErrorText}>{caregiverError}</Text>}
+            <TouchableOpacity
+              style={[styles.caregiverActivateBtn, { backgroundColor: caregiverLoading || caregiverCode.length !== 6 ? colors.border : colors.red }]}
+              onPress={handleActivateCaregiver}
+              activeOpacity={0.85}
+              disabled={caregiverLoading || caregiverCode.length !== 6}
+            >
+              <Text style={styles.caregiverActivateBtnText}>{caregiverLoading ? t.pleaseWait : t.activate}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setShowCaregiverModal(false)} activeOpacity={0.7} style={styles.caregiverCancelLink}>
+              <Text style={[styles.caregiverCancelText, { color: colors.textMuted }]}>{t.cancel}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 }
@@ -563,14 +626,14 @@ const styles = StyleSheet.create({
   resultInterpretation: { fontSize: 17, fontWeight: 'bold', marginBottom: 8 },
   seeHelpBtn:     { borderWidth: 2, borderRadius: 8, paddingHorizontal: 20, paddingVertical: 5 },
   seeHelpBtnText: { fontSize: 14, fontWeight: 'bold', backgroundColor: 'transparent' },
-  statsCard:      { width: '100%', borderRadius: 14, borderWidth: 1, padding: 8, marginTop: 4 },
-  statsTitle:     { fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8, textAlign: 'center', marginBottom: 6 },
+  statsCard:      { width: '100%', borderRadius: 14, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 5, marginTop: 4 },
+  statsTitle:     { fontSize: 9, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8, textAlign: 'center', marginBottom: 2 },
   statsRow:       { flexDirection: 'row', justifyContent: 'space-between' },
-  statsDivider:   { height: 1, marginVertical: 6 },
+  statsDivider:   { height: 1, marginVertical: 3 },
   statItem:       { flex: 1, alignItems: 'center' },
-  statNumber:     { fontSize: 16, fontWeight: '800', marginBottom: 1 },
-  statLabel:      { fontSize: 9, fontWeight: '500' },
-  statsEmpty:     { textAlign: 'center', fontSize: 10, marginTop: 4 },
+  statNumber:     { fontSize: 12, fontWeight: '800', marginBottom: 0 },
+  statLabel:      { fontSize: 8, fontWeight: '500' },
+  statsEmpty:     { textAlign: 'center', fontSize: 9, marginTop: 2 },
   overlayBg:      { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
   popupScroll:    { width: '100%', flexGrow: 0 },
   popupCard:      { borderRadius: 16, borderWidth: 2, padding: 20, width: '100%', maxWidth: 400 },
@@ -603,4 +666,16 @@ const styles = StyleSheet.create({
   compatBtn:       { borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginTop: 20 },
   compatBtnText:   { fontSize: 15, fontWeight: '700', color: '#fff' },
   divider:         { height: 1, width: '75%', marginBottom: 14 },
+
+  caregiverLink:       { marginBottom: 8, marginTop: 4 },
+  caregiverLinkText:   { fontSize: 13, fontWeight: '600', textDecorationLine: 'underline' },
+  caregiverSheet:      { width: '90%', borderRadius: 20, borderWidth: 1, padding: 24, alignItems: 'center' },
+  caregiverTitle:      { fontSize: 18, fontWeight: '800', marginBottom: 8, textAlign: 'center' },
+  caregiverInstructions: { fontSize: 13, lineHeight: 19, textAlign: 'center', marginBottom: 16 },
+  caregiverInput:      { width: '85%', borderWidth: 2, borderRadius: 10, paddingVertical: 10, fontSize: 22, fontWeight: '800', letterSpacing: 6, marginBottom: 6, textAlign: 'center' },
+  caregiverErrorText:  { fontSize: 12, color: '#e53935', textAlign: 'center', marginBottom: 8 },
+  caregiverActivateBtn:   { width: '100%', borderRadius: 10, paddingVertical: 13, alignItems: 'center', marginTop: 8, marginBottom: 4 },
+  caregiverActivateBtnText: { fontSize: 15, fontWeight: '800', color: '#fff' },
+  caregiverCancelLink: { marginTop: 8 },
+  caregiverCancelText: { fontSize: 13, textDecorationLine: 'underline' },
 });

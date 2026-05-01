@@ -1,7 +1,3 @@
-/**
- * glucoseStore.ts
- */
-
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -14,10 +10,12 @@ export type InsulinAnalogType     = 'standard' | 'ultra-rapid' | 'inhaled';
 export type LongActingInsulinType = 'glargine-u100' | 'glargine-u300' | 'detemir' | 'degludec' | 'nph';
 export type SecurityMethod        = 'none' | 'pin' | 'password' | 'biometrics';
 export type LockTimeout           = 'immediate' | '1min' | '5min' | 'app-close';
-import { syncGlucoseEntry, deleteGlucoseEntry, syncInsulinEntry, syncProfile } from '../utils/firestoreSync';
+
+import { syncGlucoseEntry, deleteGlucoseEntry, syncInsulinEntry, syncProfile, syncSavedMeal, deleteSavedMeal, syncEntryToCaregiverData } from '../utils/firestoreSync';
 import { useSubscriptionStore } from './subscriptionStore';
 
-const isSyncEnabled = () => useSubscriptionStore.getState().isPremiumPaid;
+let _caregiverSyncEnabled = false;
+const isSyncEnabled = () => useSubscriptionStore.getState().isPremiumPaid || _caregiverSyncEnabled;
 
 export interface GlucoseEntry {
   id: string;
@@ -41,10 +39,28 @@ export interface Reminder {
   id: string;
   label: string;
   time: string;
-  days?: string; // 'everyday' | 'YYYY-MM-DD' — undefined treated as 'everyday'
+  days?: string;
   type: 'Rapid-acting' | 'Long-acting';
   units: number;
   active: boolean;
+}
+
+export interface SavedMeal {
+  id: string;
+  date: string;
+  action: 'lower' | 'maintain' | 'raise' | '';
+  items: { name: string; carbs: number; sugars: number; fiber: number; protein: number; fat: number; kcal: number; gi: number; sodium: number; potassium: number }[];
+  totals: { carbs: number; sugars: number; fiber: number; protein: number; fat: number; kcal: number; sodium: number; potassium: number };
+  estimatedGlycemia: number | null;
+  currentGlucose: number | null;
+  unit: string;
+}
+
+// isPremium reflects the patient's premium status when in caregiver mode
+export interface CaregiverSession {
+  code: string;
+  patientName: string;
+  isPremium: boolean;
 }
 
 export interface UserProfile {
@@ -55,6 +71,7 @@ export interface UserProfile {
   diagnosisDate: string;
   doctorName: string;
   clinicName: string;
+  address: string;
 }
 
 export interface AppSettings {
@@ -98,7 +115,21 @@ interface GlucoseStore {
   addInsulinEntry: (entry: InsulinEntry) => void;
   clearInsulinLog: () => void;
 
-  loadFromFirestore: (history: GlucoseEntry[], insulinEntries: InsulinEntry[], profile: Partial<UserProfile>) => void;
+  savedMeals: SavedMeal[];
+  addSavedMeal: (meal: SavedMeal) => void;
+  removeSavedMeal: (id: string) => void;
+
+  caregiverSession: CaregiverSession | null;
+  setCaregiverSession: (session: CaregiverSession | null) => void;
+
+  // Snapshot of the caregiver's own premium status before entering caregiver mode
+  ownPremiumBeforeCaregiver: boolean;
+  setOwnPremiumBeforeCaregiver: (v: boolean) => void;
+
+  caregiverSyncEnabled: boolean;
+  setCaregiverSyncEnabled: (v: boolean) => void;
+
+  loadFromFirestore: (history: GlucoseEntry[], insulinEntries: InsulinEntry[], profile: Partial<UserProfile>, savedMeals?: SavedMeal[]) => void;
   clearLocalData: () => void;
 
   reminders: Reminder[];
@@ -114,33 +145,18 @@ interface GlucoseStore {
 }
 
 const DEFAULT_PROFILE: UserProfile = {
-  name: '',
-  email: '',
-  age: '',
-  diabetesType: '',
-  diagnosisDate: '',
-  doctorName: '',
-  clinicName: '',
+  name: '', email: '', age: '', diabetesType: '',
+  diagnosisDate: '', doctorName: '', clinicName: '', address: '',
 };
 
 const DEFAULT_SETTINGS: AppSettings = {
-  theme: 'light',
-  glucoseUnit: 'mg/dL',
-  language: 'en',
-  notificationsEnabled: true,
-  isf: 50,
-  carbRatio: 10,
-  targetGlucose: 100,
-  insulinAnalogType: 'standard' as InsulinAnalogType,
-  dia: 5,
+  theme: 'light', glucoseUnit: 'mg/dL', language: 'en',
+  notificationsEnabled: true, isf: 50, carbRatio: 10, targetGlucose: 100,
+  insulinAnalogType: 'standard' as InsulinAnalogType, dia: 5,
   longActingInsulinType: 'glargine-u100' as LongActingInsulinType,
-  emergencyNumber: '112',
-  insulinParamsSet: false,
-  glucoseLow: 70,
-  glucoseHigh: 175,
-  securityMethod: 'none',
-  securityHash: '',
-  lockTimeout: '1min',
+  emergencyNumber: '112', insulinParamsSet: false,
+  glucoseLow: 70, glucoseHigh: 175,
+  securityMethod: 'none', securityHash: '', lockTimeout: '1min',
   hasSeenSecuritySetup: false,
 };
 
@@ -161,7 +177,10 @@ export const useGlucoseStore = create<GlucoseStore>()(
       addEntry: (entry) =>
         set((state) => {
           const newEntry = { ...entry, id: generateId() };
-          if (isSyncEnabled()) syncGlucoseEntry(newEntry).catch(() => {});
+          if (isSyncEnabled()) {
+            syncGlucoseEntry(newEntry).catch(() => {});
+            syncEntryToCaregiverData('glucoseHistory', newEntry).catch(() => {});
+          }
           return { history: [...state.history, newEntry] };
         }),
       clearHistory: () => set({ history: [] }),
@@ -174,26 +193,47 @@ export const useGlucoseStore = create<GlucoseStore>()(
       insulinEntries: [],
       addInsulinEntry: (entry) =>
         set((state) => {
-        if (isSyncEnabled()) syncInsulinEntry(entry).catch(() => {});
+          if (isSyncEnabled()) {
+            syncInsulinEntry(entry).catch(() => {});
+            syncEntryToCaregiverData('insulinLog', entry).catch(() => {});
+          }
           return { insulinEntries: [...state.insulinEntries, entry] };
         }),
       clearInsulinLog: () => set({ insulinEntries: [] }),
 
-      loadFromFirestore: (history, insulinEntries, profile) =>
+      savedMeals: [],
+      addSavedMeal: (meal) =>
+        set((state) => {
+          if (isSyncEnabled()) {
+            syncSavedMeal(meal).catch(() => {});
+            syncEntryToCaregiverData('savedMeals', meal).catch(() => {});
+          }
+          return { savedMeals: [meal, ...state.savedMeals] };
+        }),
+      removeSavedMeal: (id) =>
+        set((state) => {
+          if (isSyncEnabled()) deleteSavedMeal(id).catch(() => {});
+          return { savedMeals: state.savedMeals.filter((m) => m.id !== id) };
+        }),
+
+      caregiverSession: null,
+      setCaregiverSession: (session) => set({ caregiverSession: session }),
+
+      ownPremiumBeforeCaregiver: false,
+      setOwnPremiumBeforeCaregiver: (v) => set({ ownPremiumBeforeCaregiver: v }),
+
+      caregiverSyncEnabled: false,
+      setCaregiverSyncEnabled: (v) => { _caregiverSyncEnabled = v; set({ caregiverSyncEnabled: v }); },
+
+      loadFromFirestore: (history, insulinEntries, profile, savedMeals) =>
         set((state) => ({
-          history,
-          insulinEntries,
+          history, insulinEntries,
           profile: { ...state.profile, ...profile },
+          ...(savedMeals !== undefined ? { savedMeals } : {}),
         })),
 
       clearLocalData: () =>
-        set({
-          history: [],
-          insulinEntries: [],
-          glucoseValue: null,
-          totalCarbs: 0,
-          profile: DEFAULT_PROFILE,
-        }),
+        set({ history: [], insulinEntries: [], savedMeals: [], glucoseValue: null, totalCarbs: 0, profile: DEFAULT_PROFILE }),
 
       reminders: [
         { id: generateId(), label: 'Morning rapid insulin', time: '08:00', type: 'Rapid-acting', units: 0,  active: true },
@@ -220,6 +260,9 @@ export const useGlucoseStore = create<GlucoseStore>()(
     {
       name: 'diabeasy-store',
       storage: createJSONStorage(() => AsyncStorage),
+      onRehydrateStorage: () => (state) => {
+        if (state?.caregiverSyncEnabled) _caregiverSyncEnabled = true;
+      },
       merge: (persistedState: any, currentState) => ({
         ...currentState,
         ...persistedState,
@@ -234,8 +277,7 @@ export const useGlucoseStore = create<GlucoseStore>()(
             const [datePart, timePart = '00:00'] = withId.timestamp.split(' ');
             const [d, m, y] = datePart.split('/');
             const [h, min]  = timePart.split(':');
-            const iso = new Date(+y, +m - 1, +d, +h, +min).toISOString();
-            return { ...withId, timestamp: iso };
+            return { ...withId, timestamp: new Date(+y, +m - 1, +d, +h, +min).toISOString() };
           }
           return withId;
         }),

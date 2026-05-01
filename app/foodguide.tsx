@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView,
   TextInput, StyleSheet, Platform, LayoutChangeEvent, Dimensions, LayoutAnimation,
@@ -10,6 +10,8 @@ import { generateId } from '../utils/idUtils';
 import { useTheme } from '../context/AppContext';
 import { PressBtn } from '../components/PressBtn';
 import { useTranslation } from '../hooks/useTranslation';
+import { SavedMeal } from '../store/glucoseStore';
+import { fetchCaregiverMeals } from '../utils/firestoreSync';
 
 const RED = '#EC5557';
 
@@ -21,11 +23,6 @@ interface FoodItem {
   protein: number; fat: number; kcal: number; gi: number; sodium: number; potassium: number;
 }
 interface MealItem extends FoodItem { uniqueId: string; quantity: number }
-interface SavedMeal {
-  id: string; date: string; action: FoodAction; items: FoodItem[];
-  totals: NutrientTotals; estimatedGlycemia: number | null;
-  currentGlucose: number | null; unit: string;
-}
 interface NutrientTotals {
   carbs: number; sugars: number; fiber: number; protein: number;
   fat: number; kcal: number; sodium: number; potassium: number;
@@ -251,10 +248,17 @@ function NutrientGrid({ totals }: { totals: NutrientTotals }) {
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function FoodGuideScreen() {
-  const { glucoseValue, unit, settings, setTotalCarbs } = useGlucoseStore();
+  const { glucoseValue, unit, settings, setTotalCarbs, savedMeals, addSavedMeal, removeSavedMeal, caregiverSession } = useGlucoseStore();
   const { colors, isDark } = useTheme();
   const router = useRouter();
   const t = useTranslation();
+
+  const [caregiverMeals, setCaregiverMeals] = useState<SavedMeal[]>([]);
+  useEffect(() => {
+    if (caregiverSession) {
+      fetchCaregiverMeals(caregiverSession.code).then(setCaregiverMeals).catch(() => {});
+    }
+  }, [caregiverSession]);
 
   const [activeTab,      setActiveTab]      = useState<ActiveTab>('planner');
   const [foodAction,     setFoodAction]     = useState<FoodAction>('');
@@ -262,7 +266,6 @@ export default function FoodGuideScreen() {
   const [searchFocused,  setSearchFocused]  = useState(false);
   const [expandedGroup,  setExpandedGroup]  = useState<string | null>(null);
   const [currentMeal,    setCurrentMeal]    = useState<MealItem[]>([]);
-  const [savedMeals,     setSavedMeals]     = useState<SavedMeal[]>([]);
   const [expandedMealId,    setExpandedMealId]    = useState<string | null>(null);
   const [localGlucoseInput, setLocalGlucoseInput] = useState('');
 
@@ -324,12 +327,12 @@ export default function FoodGuideScreen() {
 
   const saveMeal = () => {
     if (!hasMeal) return;
-    setSavedMeals((prev) => [{
+    addSavedMeal({
       id: generateId(), date: formatNow(), action: foodAction,
       items: currentMeal.flatMap(({ uniqueId: _u, quantity: q, ...rest }) => Array.from({ length: q }, () => ({ ...rest }))),
       totals, estimatedGlycemia: postMeal?.value ?? null,
       currentGlucose: effectiveGlucose, unit: unit ?? 'mg/dL',
-    }, ...prev]);
+    });
     setTotalCarbs(totals.carbs);
     setCurrentMeal([]);
     setActiveTab('history');
@@ -560,27 +563,29 @@ export default function FoodGuideScreen() {
     </>
   );
 
-  const renderHistory = () => (
+  const renderHistory = (meals: SavedMeal[] = savedMeals) => (
     <>
-      {savedMeals.length === 0 ? (
+      {meals.length === 0 ? (
         <>
           <View style={[s.emptyCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
             <Text style={s.emptyIcon}>🥗</Text>
             <Text style={[s.emptyTitle, { color: colors.text }]}>{t.noMealsSaved}</Text>
             <Text style={[s.emptyText, { color: colors.textMuted }]}>{t.noMealsSavedText}</Text>
           </View>
-          <View style={[s.howItWorksCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-            <Text style={[s.howItWorksTitle, { color: colors.text }]}>{t.mealLoggingTips}</Text>
-            {[t.mealTip1, t.mealTip2, t.mealTip3, t.mealTip4, t.mealTip5].map((tip, i) => (
-              <View key={i} style={s.tipRow}>
-                <Text style={[s.tipBullet, { color: colors.red }]}>•</Text>
-                <Text style={[s.tipBody, { color: colors.textMuted }]}>{tip}</Text>
-              </View>
-            ))}
-          </View>
+          {!caregiverSession && (
+            <View style={[s.howItWorksCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+              <Text style={[s.howItWorksTitle, { color: colors.text }]}>{t.mealLoggingTips}</Text>
+              {[t.mealTip1, t.mealTip2, t.mealTip3, t.mealTip4, t.mealTip5].map((tip, i) => (
+                <View key={i} style={s.tipRow}>
+                  <Text style={[s.tipBullet, { color: colors.red }]}>•</Text>
+                  <Text style={[s.tipBody, { color: colors.textMuted }]}>{tip}</Text>
+                </View>
+              ))}
+            </View>
+          )}
         </>
       ) : (
-        savedMeals.map((meal) => {
+        meals.map((meal) => {
           const isOpen = expandedMealId === meal.id;
           const actionColor = meal.action === 'lower' ? '#2e7d32' : meal.action === 'raise' ? RED : '#ef6c00';
           const estCol = meal.estimatedGlycemia !== null ? statusColor(meal.estimatedGlycemia, meal.unit, settings.glucoseLow, settings.glucoseHigh) : '#888';
@@ -630,7 +635,7 @@ export default function FoodGuideScreen() {
                     ))}
                   </View>
                   <PressBtn style={[s.deleteMealBtn, { backgroundColor: 'transparent' }]}
-                    onPress={() => setSavedMeals((prev) => prev.filter((m) => m.id !== meal.id))} activeOpacity={0.75}>
+                    onPress={() => removeSavedMeal(meal.id)} activeOpacity={0.75} disabled={!!caregiverSession}>
                     <Text style={[s.deleteMealBtnText, { color: colors.textMuted }]}>{t.deleteMeal}</Text>
                   </PressBtn>
                 </>
@@ -641,6 +646,22 @@ export default function FoodGuideScreen() {
       )}
     </>
   );
+
+  if (caregiverSession) {
+    return (
+      <ScrollView style={[s.container, { backgroundColor: colors.bg }]} contentContainerStyle={s.contentContainer} showsVerticalScrollIndicator={false}>
+        <Text style={[s.title, { color: colors.text }]}>{t.mealPlanner}</Text>
+        {renderHistory(caregiverMeals)}
+        <TouchableOpacity
+          style={[s.exitCaregiverBtn, { borderColor: colors.red }]}
+          onPress={() => useGlucoseStore.getState().setCaregiverSession(null)}
+          activeOpacity={0.8}
+        >
+          <Text style={[s.exitCaregiverBtnText, { color: colors.red }]}>{t.exitCaregiverMode}</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    );
+  }
 
   return (
     <ScrollView ref={scrollRef} style={[s.container, { backgroundColor: colors.bg }]}
@@ -771,6 +792,8 @@ const s = StyleSheet.create({
   historyItemName:  { fontSize: 13, lineHeight: 20 },
   deleteMealBtn:    { margin: 10, marginTop: 0, paddingVertical: 8, borderRadius: 6, borderWidth: 1.5, borderColor: '#e0e0e0', alignItems: 'center', backgroundColor: 'transparent' },
   deleteMealBtnText:{ fontSize: 13, fontWeight: '600', backgroundColor: 'transparent' },
+  exitCaregiverBtn:     { margin: 16, borderWidth: 1.5, borderRadius: 10, paddingVertical: 14, alignItems: 'center' },
+  exitCaregiverBtnText: { fontSize: 15, fontWeight: '700' },
 
   // ── Shadows ──────────────────────────────────────────────────────────────────
   tabBarShadow:     { shadowColor: '#EC5557', shadowOffset: { width: 2, height: 2 }, shadowOpacity: 0.12, shadowRadius: 4, elevation: 4 },

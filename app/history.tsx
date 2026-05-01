@@ -7,8 +7,8 @@ import {
 import { EmptyState } from '../components/EmptyState';
 import { PressBtn } from '../components/PressBtn';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useGlucoseStore, GlucoseEntry, Unit } from '../store/glucoseStore';
-import { useTheme } from '../context/AppContext';
+import { useGlucoseStore, GlucoseEntry, InsulinEntry, Unit } from '../store/glucoseStore';
+import { fetchCaregiverHistory, fetchCaregiverInsulinLog } from '../utils/firestoreSync';import { useTheme } from '../context/AppContext';
 import { useSubscription, FREE_HISTORY_DAYS } from '../hooks/useSubscription';
 import { UpgradeModal } from '../components/UpgradeModal';
 import Svg, { Polyline, Line, Text as SvgText, Circle, G, Path } from 'react-native-svg';
@@ -39,7 +39,7 @@ function LineChart({ data, colors }: { data: HistoryEntry[]; colors: any }) {
   if (data.length < 2) return null;
 
   const Y_MIN = 0;
-  const Y_MAX = 220;  // headroom above 200 so clipped values still show
+  const Y_MAX = 220;
   const Y_TICKS = [0, 50, 100, 150, 200];
 
   const toY = (val: number) =>
@@ -213,7 +213,24 @@ function PieChart({ normal, high, low, colors }: { normal: number; high: number;
 }
 
 export default function HistoryScreen() {
-  const { history, removeEntry, insulinEntries, profile, settings, } = useGlucoseStore();
+  const { history, removeEntry, insulinEntries, profile, settings, caregiverSession, setCaregiverSession } = useGlucoseStore();
+
+  const [caregiverHistory, setCaregiverHistory] = useState<GlucoseEntry[]>([]);
+  const [caregiverInsulin, setCaregiverInsulin] = useState<InsulinEntry[]>([]);
+
+  // ── Fetch caregiver data using code (not patientUid) ──────────────────────
+useEffect(() => {
+  if (!caregiverSession) return;
+  fetchCaregiverHistory(caregiverSession.code)
+    .then(setCaregiverHistory)
+    .catch(e => console.log('FETCH ERROR:', e?.code, e?.message));
+  fetchCaregiverInsulinLog(caregiverSession.code)
+    .then(setCaregiverInsulin)
+    .catch(() => {});
+}, [caregiverSession?.code]);
+
+  const displayHistory = caregiverSession ? caregiverHistory : history;
+  const displayInsulin = caregiverSession ? caregiverInsulin : insulinEntries;
   const { glucoseLow, glucoseHigh } = settings;
   const { colors, isDark } = useTheme();
   const { isPremium, canUseFullPdf, isTrialActive, hasUsedTrialPdf, markTrialPdfUsed } = useSubscription();
@@ -243,7 +260,6 @@ export default function HistoryScreen() {
   const [showChartModal, setShowChartModal] = useState(false);
   const [showUpgrade,    setShowUpgrade]    = useState(false);
 
-  // ── Readings list custom red scrollbar ──────────────────────────────────────
   const readingsScrollRef       = useRef<ScrollView>(null);
   const readingsScrollYRef      = useRef(0);
   const readingsContentHRef     = useRef(0);
@@ -287,7 +303,6 @@ export default function HistoryScreen() {
       },
     })
   ).current;
-  // ────────────────────────────────────────────────────────────────────────────
 
   const clearFilters = () => {
     setShowFromPicker(false); setShowToPicker(false);
@@ -296,22 +311,26 @@ export default function HistoryScreen() {
     setUnitFilter(''); setFiltersApplied(false);
   };
 
-  const filteredHistory: HistoryEntry[] = useMemo(() => !filtersApplied
-    ? (history as HistoryEntry[])
-    : (history as HistoryEntry[]).filter((entry) => {
-        if (unitFilter && entry.unit !== unitFilter) return false;
-        const entryDate = entry.timestamp.split('T')[0];
-        if (filterDateFrom && filterDateTo) { if (!(entryDate >= filterDateFrom && entryDate <= filterDateTo)) return false; }
-        else if (filterDateFrom) { if (entryDate < filterDateFrom) return false; }
-        else if (filterDateTo)   { if (entryDate > filterDateTo)   return false; }
-        if (filterMin && entry.value < parseFloat(filterMin)) return false;
-        if (filterMax && entry.value > parseFloat(filterMax)) return false;
-        return true;
-      }), [history, filtersApplied, unitFilter, filterDateFrom, filterDateTo, filterMin, filterMax]);
+  const filteredHistory: HistoryEntry[] = useMemo(() => {
+    const toLocalDate = (iso: string) => {
+      const d = new Date(iso);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    };
+    if (!filtersApplied) return displayHistory as HistoryEntry[];
+    return (displayHistory as HistoryEntry[]).filter((entry) => {
+      if (unitFilter && entry.unit !== unitFilter) return false;
+      const entryDate = toLocalDate(entry.timestamp);
+      if (filterDateFrom && filterDateTo) { if (!(entryDate >= filterDateFrom && entryDate <= filterDateTo)) return false; }
+      else if (filterDateFrom) { if (entryDate < filterDateFrom) return false; }
+      else if (filterDateTo)   { if (entryDate > filterDateTo)   return false; }
+      if (filterMin && entry.value < parseFloat(filterMin)) return false;
+      if (filterMax && entry.value > parseFloat(filterMax)) return false;
+      return true;
+    });
+  }, [displayHistory, filtersApplied, unitFilter, filterDateFrom, filterDateTo, filterMin, filterMax]);
 
   const chartData = useMemo(() => {
     const reversed = [...filteredHistory].reverse();
-    // Free users: cap chart to last FREE_HISTORY_DAYS readings
     const capped = isPremium ? reversed : reversed.slice(-FREE_HISTORY_DAYS);
     if (chartWindow === 'all') return capped;
     return capped.slice(-chartWindow);
@@ -342,7 +361,7 @@ export default function HistoryScreen() {
 
   const eHbA1c = avgGlucoseMgDl !== null
     ? ((avgGlucoseMgDl + 46.7) / 28.7).toFixed(1)
-    : null; // ADAG formula: HbA1c = (avgGlucose_mgdl + 46.7) / 28.7
+    : null;
 
   const weeklyAverages = useMemo(() => {
     if (filteredHistory.length === 0) return [];
@@ -395,9 +414,11 @@ export default function HistoryScreen() {
           <Text style={[styles.entryTime,  { color: colors.textMuted }]}>{time}</Text>
           <Text style={[styles.entryValue, { color: colors.text }]}>{entry.value} {entry.unit}</Text>
           <Text style={[styles.entryBadge, { color: barColor }]}>{statusIcon(entry.interpretation)} {interpretationLabel(entry.interpretation)}</Text>
-          <TouchableOpacity onPress={() => removeEntry(entry.id)} activeOpacity={0.7}>
-            <Text style={[styles.deleteBtn, { color: colors.textMuted }]}>{t.delete}</Text>
-          </TouchableOpacity>
+          {!caregiverSession && (
+            <TouchableOpacity onPress={() => removeEntry(entry.id)} activeOpacity={0.7}>
+              <Text style={[styles.deleteBtn, { color: colors.textMuted }]}>{t.delete}</Text>
+            </TouchableOpacity>
+          )}
         </View>
         {!!entry.fasting  && <Text style={[styles.fastingLabel, { color: colors.textMuted }]}>- {fastingDisplayLabel(entry.fasting)}</Text>}
         {!!entry.symptoms && <Text style={[styles.notes, { color: colors.textMuted }]}>{t.notes} {entry.symptoms}</Text>}
@@ -408,10 +429,7 @@ export default function HistoryScreen() {
   const inputStyle = [styles.filterInput, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }];
 
   const exportPDF = async (basic: boolean = false) => {
-    // ── Helpers ────────────────────────────────────────────────────────────────
     const toMgdL = (value: number, unit: Unit) => unit === 'mmol/L' ? value * 18.0182 : value;
-
-    // Basic mode: last 7 days only; full mode: filtered selection
     const sevenDaysAgo = Date.now() - 7 * 86_400_000;
     const pdfData = basic
       ? filteredHistory.filter(e => new Date(e.timestamp).getTime() >= sevenDaysAgo)
@@ -423,7 +441,6 @@ export default function HistoryScreen() {
       return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
     };
 
-    // ── Date range ─────────────────────────────────────────────────────────────
     const fmtIso = (iso: string) => { const d = new Date(iso); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; };
     const sorted    = [...filteredHistory];
     const dateFrom  = filterDateFrom ? fmtIso(filterDateFrom + 'T00:00:00') : (sorted.length > 0 ? fmtIso(sorted[sorted.length - 1].timestamp) : '-');
@@ -431,19 +448,17 @@ export default function HistoryScreen() {
     const genDate   = new Date().toLocaleDateString();
     const genTime   = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    // ── Core stats ─────────────────────────────────────────────────────────────
     const mgdlValues  = pdfData.map(e => toMgdL(e.value, e.unit));
     const n           = mgdlValues.length;
     const avgMgdL     = n > 0 ? mgdlValues.reduce((s, v) => s + v, 0) / n : null;
-    const eHbA1c      = avgMgdL !== null ? ((avgMgdL + 46.7) / 28.7).toFixed(1) : null; // ADAG
+    const eHbA1c      = avgMgdL !== null ? ((avgMgdL + 46.7) / 28.7).toFixed(1) : null;
     const variance    = avgMgdL !== null ? mgdlValues.reduce((s, v) => s + (v - avgMgdL) ** 2, 0) / n : null;
     const stdDev      = variance !== null ? Math.sqrt(variance).toFixed(1) : null;
     const cvPercent   = avgMgdL !== null && variance !== null
       ? ((Math.sqrt(variance) / avgMgdL) * 100).toFixed(1) : null;
     const cvStable    = cvPercent !== null && parseFloat(cvPercent) <= 36;
-    const totalInsulin = insulinEntries.reduce((s, e) => s + e.units, 0);
+    const totalInsulin = displayInsulin.reduce((s, e) => s + e.units, 0);
 
-    // ── 5-band TIR ─────────────────────────────────────────────────────────────
     const total5    = n || 1;
     const veryLow   = mgdlValues.filter(v => v < 54).length;
     const low5      = mgdlValues.filter(v => v >= 54 && v < 70).length;
@@ -460,7 +475,6 @@ export default function HistoryScreen() {
       { label: 'Very High', pct: +((veryHigh / total5) * 100).toFixed(0), color: '#bf360c' },
     ];
 
-    // ── TIR stacked bar SVG ────────────────────────────────────────────────────
     const svgTIRBar = (() => {
       if (n === 0) return '';
       const W = 560, barH = 28, legY = barH + 10, legH = 14, svgH = barH + legY + legH + 4;
@@ -480,7 +494,6 @@ export default function HistoryScreen() {
       return `<svg width="${W}" height="${svgH}" xmlns="http://www.w3.org/2000/svg">${segments}${legend}</svg>`;
     })();
 
-    // ── Reading-context breakdown table ───────────────────────────────────────
     const CONTEXTS = ['Fasting', 'Pre-meal', 'Post-meal', 'Bedtime', 'Post-exercise', 'Random'];
     const contextRows = CONTEXTS.map((ctx, i) => {
       const entries = pdfData.filter(e => e.fasting === ctx);
@@ -495,7 +508,6 @@ export default function HistoryScreen() {
       return `<tr style="background:${bg}"><td style="font-weight:600">${ctx}</td><td>${entries.length}</td><td style="font-weight:700;color:#ec5557">${avg}</td><td>${min}</td><td>${max}</td><td style="color:#2e7d32;font-weight:700">${tir}%</td></tr>`;
     }).filter(Boolean).join('');
 
-    // ── Glucose trend SVG ─────────────────────────────────────────────────────
     const chartEntries = [...pdfData].reverse();
     const svgLineChart = (() => {
       if (chartEntries.length < 2) return '';
@@ -523,7 +535,6 @@ export default function HistoryScreen() {
       return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">${yTicks}<polyline points="${points}" fill="none" stroke="#ec5557" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>${dots}${xLabels}<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H - padB}" stroke="#ddd" stroke-width="1"/><line x1="${padL}" y1="${H - padB}" x2="${W - padR}" y2="${H - padB}" stroke="#ddd" stroke-width="1"/></svg>`;
     })();
 
-    // ── Pie chart SVG ─────────────────────────────────────────────────────────────
     const pdfPieNormal = pdfData.filter(e => e.interpretation === 'Normal').length;
     const pdfPieHigh   = pdfData.filter(e => e.interpretation === 'High').length;
     const pdfPieLow    = pdfData.filter(e => e.interpretation === 'Low').length;
@@ -563,7 +574,6 @@ export default function HistoryScreen() {
       return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">${paths}<circle cx="${cx}" cy="${cy}" r="${innerR}" fill="white"/><text x="${cx}" y="${cy - 5}" text-anchor="middle" font-size="18" font-weight="900" fill="#1a1a1a">${total}</text><text x="${cx}" y="${cy + 12}" text-anchor="middle" font-size="8" fill="#777">readings</text>${legend}</svg>`;
     })();
 
-    // ── Separate log tables ────────────────────────────────────────────────────
     const glucoseRows = [...pdfData].reverse().map((e, i) => {
       const bg  = i % 2 === 0 ? '#ffffff' : '#f7f7f7';
       const gd  = new Date(e.timestamp);
@@ -573,12 +583,11 @@ export default function HistoryScreen() {
       return `<tr style="background:${bg}"><td>${dp}</td><td>${tp}</td><td style="font-weight:700">${e.value} ${e.unit}</td><td style="color:${col};font-weight:700">${e.interpretation}</td><td>${e.fasting || '-'}</td><td>${e.symptoms || '-'}</td></tr>`;
     }).join('');
 
-    const insulinRows = insulinEntries.map((e, i) => {
+    const insulinRows = displayInsulin.map((e, i) => {
       const bg = i % 2 === 0 ? '#ffffff' : '#f7f7f7';
       return `<tr style="background:${bg}"><td>${fmtInsulinDate(e)}</td><td>${e.time}</td><td>${e.type}</td><td style="font-weight:700">${e.units}u</td></tr>`;
     }).join('');
 
-    // ── HTML ───────────────────────────────────────────────────────────────────
     const css = `
       @page{size:A4 portrait;margin:22px 26px}
       body{font-family:Arial,sans-serif;color:#1a1a1a;font-size:11px;margin:0}
@@ -612,66 +621,43 @@ export default function HistoryScreen() {
     `;
 
     const html = `<html><head><meta charset="utf-8"/><style>${css}</style></head><body>
-
       <div class="hdr">
-        <div>
-          <div class="hdr-title">DiabEasy</div>
-          <div class="hdr-sub">Glucose Management Report${basic ? ' · Basic (7-day)' : ''}</div>
-        </div>
-        <div class="hdr-right">
-          Generated: ${genDate} at ${genTime}<br/>
-          Period: ${dateFrom} — ${dateTo}<br/>
-          ${n} readings &nbsp;|&nbsp; ${totalInsulin}u insulin
-        </div>
+        <div><div class="hdr-title">DiabEasy</div><div class="hdr-sub">Glucose Management Report${basic ? ' · Basic (7-day)' : ''}</div></div>
+        <div class="hdr-right">Generated: ${genDate} at ${genTime}<br/>Period: ${dateFrom} — ${dateTo}<br/>${n} readings &nbsp;|&nbsp; ${totalInsulin}u insulin</div>
       </div>
-
       <div class="patient">
         <div class="patient-header"><span class="patient-header-text">Patient Information</span></div>
         <div class="patient-body">
           ${[
-            { label: 'Full Name',      value: profile?.name,          placeholder: 'Not provided — update in Profile' },
-            { label: 'Age',            value: profile?.age,           placeholder: 'Not provided' },
-            { label: 'Diabetes Type',  value: profile?.diabetesType,  placeholder: 'Not specified' },
-            { label: 'Diagnosis Date', value: profile?.diagnosisDate, placeholder: 'Not provided' },
-            { label: 'Physician',      value: profile?.doctorName,    placeholder: 'Not provided — update in Profile' },
-            { label: 'Clinic / Hospital', value: profile?.clinicName, placeholder: 'Not provided' },
+            { label: 'Full Name',         value: profile?.name,          placeholder: 'Not provided — update in Profile' },
+            { label: 'Age',               value: profile?.age,           placeholder: 'Not provided' },
+            { label: 'Diabetes Type',     value: profile?.diabetesType,  placeholder: 'Not specified' },
+            { label: 'Diagnosis Date',    value: profile?.diagnosisDate, placeholder: 'Not provided' },
+            { label: 'Physician',         value: profile?.doctorName,    placeholder: 'Not provided — update in Profile' },
+            { label: 'Clinic / Hospital', value: profile?.clinicName,    placeholder: 'Not provided' },
           ].map(f => `<div class="pf"><div class="pf-label">${f.label}</div>${f.value ? `<div class="pf-value">${f.value}</div>` : `<div class="pf-empty">${f.placeholder}</div>`}</div>`).join('')}
         </div>
       </div>
-
       <div class="metrics">
         <div class="mc"><div class="mv" style="color:#ec5557">${avgMgdL !== null ? avgMgdL.toFixed(1) : '—'}</div><div class="ml">Avg Glucose (mg/dL)</div><div class="mr">Target: ${settings.targetGlucose} mg/dL</div></div>
-        <div class="mc"><div class="mv" style="color:#1565c0">${eHbA1c ?? '—'}%</div><div class="ml">Est. HbA1c (ADAG)</div><div class="mr">Target: &lt;7.0% · from logged readings</div></div>
-        <div class="mc"><div class="mv" style="color:#2e7d32">${tirPct ?? '—'}%</div><div class="ml">Time in Range</div><div class="mr">Target: &gt;70% (70–180 mg/dL)</div></div>
-        <div class="mc"><div class="mv" style="color:#555">${stdDev ?? '—'}</div><div class="ml">Std Deviation (mg/dL)</div><div class="mr">Target: &lt;${(settings.targetGlucose * 0.36).toFixed(0)} mg/dL</div></div>
+        <div class="mc"><div class="mv" style="color:#1565c0">${eHbA1c ?? '—'}%</div><div class="ml">Est. HbA1c (ADAG)</div><div class="mr">Target: &lt;7.0%</div></div>
+        <div class="mc"><div class="mv" style="color:#2e7d32">${tirPct ?? '—'}%</div><div class="ml">Time in Range</div><div class="mr">Target: &gt;70%</div></div>
+        <div class="mc"><div class="mv" style="color:#555">${stdDev ?? '—'}</div><div class="ml">Std Deviation (mg/dL)</div><div class="mr">Target: &lt;${(settings.targetGlucose * 0.36).toFixed(0)}</div></div>
         <div class="mc"><div class="mv" style="color:#555">${cvPercent ?? '—'}%</div><div class="ml">Variability (CV%)</div><div class="mr"><span class="badge ${cvStable ? 'stable' : 'unstable'}">${cvPercent !== null ? (cvStable ? 'Stable ≤36%' : 'Unstable >36%') : '—'}</span></div></div>
         <div class="mc"><div class="mv" style="color:#555">${n}</div><div class="ml">Total Readings</div><div class="mr">${totalInsulin}u insulin logged</div></div>
       </div>
-
       ${!basic ? `
-      <div class="sec">Time in Range</div>
-      ${svgTIRBar || '<p style="color:#aaa;font-size:10px">No data</p>'}
-
-      ${contextRows ? `<div class="sec">Readings by Context</div>
-      <table><thead><tr class="ctx-th"><th class="ctx-th">Context</th><th class="ctx-th">Readings</th><th class="ctx-th">Avg (mg/dL)</th><th class="ctx-th">Min</th><th class="ctx-th">Max</th><th class="ctx-th">In Range</th></tr></thead><tbody>${contextRows}</tbody></table>` : ''}
-
+      <div class="sec">Time in Range</div>${svgTIRBar || '<p style="color:#aaa;font-size:10px">No data</p>'}
+      ${contextRows ? `<div class="sec">Readings by Context</div><table><thead><tr class="ctx-th"><th class="ctx-th">Context</th><th class="ctx-th">Readings</th><th class="ctx-th">Avg (mg/dL)</th><th class="ctx-th">Min</th><th class="ctx-th">Max</th><th class="ctx-th">In Range</th></tr></thead><tbody>${contextRows}</tbody></table>` : ''}
       ${svgLineChart ? `<div class="sec">Glucose Trend</div>${svgLineChart}` : ''}
-
       ${svgPieChart ? `<div class="sec">Readings Breakdown</div>${svgPieChart}` : ''}
-      ` : `<div style="border:1.5px dashed #ec5557;border-radius:8px;padding:10px 14px;margin:14px 0;text-align:center;color:#ec5557;font-size:10px;font-weight:700">📊 Charts &amp; analytics available in Premium — upgrade at diabeasy.app</div>`}
-
+      ` : `<div style="border:1.5px dashed #ec5557;border-radius:8px;padding:10px 14px;margin:14px 0;text-align:center;color:#ec5557;font-size:10px;font-weight:700">📊 Charts &amp; analytics available in Premium</div>`}
       <div class="pg"></div>
-
       <div class="sec">Glucose Log</div>
       <table><thead><tr><th>Date</th><th>Time</th><th>Glucose</th><th>Status</th><th>Context</th><th>Notes</th></tr></thead>
       <tbody>${glucoseRows || '<tr><td colspan="6" style="text-align:center;color:#aaa;padding:10px;font-style:italic">No glucose data</td></tr>'}</tbody></table>
-
-      ${insulinRows ? `<div class="sec" style="margin-top:14px">Insulin Log</div>
-      <table><thead><tr><th>Date</th><th>Time</th><th>Type</th><th>Units</th></tr></thead>
-      <tbody>${insulinRows}</tbody></table>` : ''}
-
-      <div class="footer">DiabEasy is a personal management aid, not a medical device. Always confirm treatment decisions with your healthcare provider. &nbsp;|&nbsp; Generated ${genDate} at ${genTime}</div>
-
+      ${insulinRows ? `<div class="sec" style="margin-top:14px">Insulin Log</div><table><thead><tr><th>Date</th><th>Time</th><th>Type</th><th>Units</th></tr></thead><tbody>${insulinRows}</tbody></table>` : ''}
+      <div class="footer">DiabEasy is a personal management aid, not a medical device. &nbsp;|&nbsp; Generated ${genDate} at ${genTime}</div>
     </body></html>`;
 
     try {
@@ -709,11 +695,11 @@ export default function HistoryScreen() {
 
       {showFromPicker && (
         <DateTimePicker value={filterDateFrom ? new Date(filterDateFrom) : new Date()} mode="date" display="calendar"
-          onChange={(event, date) => { setShowFromPicker(false); if (event.type === 'set' && date) setFilterDateFrom(date.toISOString().split('T')[0]); }} />
+          onChange={(event, date) => { setShowFromPicker(false); if (event.type === 'set' && date) setFilterDateFrom(`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`); }} />
       )}
       {showToPicker && (
         <DateTimePicker value={filterDateTo ? new Date(filterDateTo) : new Date()} mode="date" display="calendar"
-          onChange={(event, date) => { setShowToPicker(false); if (event.type === 'set' && date) setFilterDateTo(date.toISOString().split('T')[0]); }} />
+          onChange={(event, date) => { setShowToPicker(false); if (event.type === 'set' && date) setFilterDateTo(`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`); }} />
       )}
 
       <View style={styles.filterRow}>
@@ -762,15 +748,21 @@ export default function HistoryScreen() {
           >
             <Text style={[styles.clearBtnText, { color: '#fff' }]}>{t.exportBasicPdf}</Text>
           </PressBtn>
-          <TouchableOpacity onPress={() => setShowUpgrade(true)} activeOpacity={0.75} style={styles.upgradeLink}>
-            <Text style={[styles.upgradeLinkText, { color: colors.red }]}>{t.unlockFullReports}</Text>
-          </TouchableOpacity>
+            {caregiverSession ? (
+              <Text style={[styles.upgradeLinkText, { color: colors.textMuted, textAlign: 'center', marginBottom: 12 }]}>
+                {profile.name || caregiverSession.patientName} needs to upgrade to Premium for full reports.
+              </Text>
+            ) : (
+              <TouchableOpacity onPress={() => setShowUpgrade(true)} activeOpacity={0.75} style={styles.upgradeLink}>
+                <Text style={[styles.upgradeLinkText, { color: colors.red }]}>{t.unlockFullReports}</Text>
+              </TouchableOpacity>
+            )}
         </View>
       )}
 
       <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-      {history.length === 0 ? (
+      {displayHistory.length === 0 ? (
         <EmptyState icon="📋" title={t.noReadingsYet} subtitle={t.noReadingsSubtitle} />
       ) : filteredHistory.length === 0 ? (
         <EmptyState icon="🔍" title={t.noMatches} subtitle={t.noMatchesSubtitle} />
@@ -802,13 +794,11 @@ export default function HistoryScreen() {
 
           {rMaxScrY > 0 && (
             <View style={{ position: 'absolute', right: 0, top: 0, width: 8, height: readingsContainerH }}>
-              {/* Track */}
               <View style={{
                 position: 'absolute', right: 2, top: 0,
                 width: 4, height: readingsContainerH,
                 backgroundColor: colors.border, borderRadius: 2, opacity: 0.4,
               }} />
-              {/* Thumb */}
               <View
                 {...thumbPan.panHandlers}
                 style={{
@@ -908,7 +898,6 @@ export default function HistoryScreen() {
             ))}
           </View>
 
-          {/* ── Expanded chart modal ── */}
           <Modal visible={showChartModal} animationType="slide" transparent onRequestClose={() => setShowChartModal(false)}>
             <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
               <View style={{ backgroundColor: colors.bgCard, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '85%' }}>
@@ -979,52 +968,62 @@ export default function HistoryScreen() {
               )}
             </View>
           )}
-
         </View>
       )}
 
       <UpgradeModal visible={showUpgrade} onClose={() => setShowUpgrade(false)} />
 
+      {caregiverSession && (
+        <TouchableOpacity
+          style={[styles.exitCaregiverBtn, { borderColor: colors.red }]}
+          onPress={() => setCaregiverSession(null)}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.exitCaregiverBtnText, { color: colors.red }]}>{t.exitCaregiverMode}</Text>
+        </TouchableOpacity>
+      )}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container:        { flex: 1 },
-  contentContainer: { padding: 16, paddingBottom: 40 },
-  title:            { fontSize: 18, fontWeight: '600', textAlign: 'center', marginBottom: 12 },
+  contentContainer: { padding: 12, paddingBottom: 28 },
+  title:            { fontSize: 18, fontWeight: '600', textAlign: 'center', marginBottom: 10 },
   filterHeading:    { fontSize: 15, marginBottom: 4, textAlign: 'center' },
-  filterRow:        { flexDirection: 'row', gap: 12, marginBottom: 12 },
+  filterRow:        { flexDirection: 'row', gap: 12, marginBottom: 8 },
   filterGroup:      { flex: 1 },
   filterLabel:      { fontSize: 13, marginBottom: 4, textAlign: 'center' },
-  filterInput:      { borderWidth: 1, borderRadius: 6, paddingHorizontal: 10, paddingVertical: Platform.OS === 'ios' ? 8 : 6, fontSize: 14, height: 42 },
-  pillHeading:      { marginTop: 12, marginBottom: 8 },
-  pillRow:          { flexDirection: 'row', gap: 10, marginBottom: 12, justifyContent: 'center' },
-  pill:             { paddingHorizontal: 16, paddingVertical: 6, borderRadius: 6, borderWidth: 1.5, minWidth: 72, alignItems: 'center' },
+  filterInput:      { borderWidth: 1, borderRadius: 6, paddingHorizontal: 10, paddingVertical: Platform.OS === 'ios' ? 6 : 4, fontSize: 14, height: 36 },
+  pillHeading:      { marginTop: 10, marginBottom: 6 },
+  pillRow:          { flexDirection: 'row', gap: 10, marginBottom: 8, justifyContent: 'center' },
+  pill:             { paddingHorizontal: 16, paddingVertical: 5, borderRadius: 6, borderWidth: 1.5, minWidth: 72, alignItems: 'center' },
   pillText:         { fontSize: 14, fontWeight: '500' },
-  filterBtnsRow:    { flexDirection: 'row', justifyContent: 'center', gap: 12, marginBottom: 8 },
-  filterActionBtn:  { alignSelf: 'center', paddingHorizontal: 20, paddingVertical: 8, borderRadius: 6, borderWidth: 1.5, marginBottom: 16 },
+  filterBtnsRow:    { flexDirection: 'row', justifyContent: 'center', gap: 12, marginBottom: 4 },
+  filterActionBtn:  { alignSelf: 'center', paddingHorizontal: 20, paddingVertical: 6, borderRadius: 6, borderWidth: 1.5, marginBottom: 12 },
   filterActionBtnText: { fontSize: 14, fontWeight: '500' },
-  clearBtn:         { alignSelf: 'center', paddingHorizontal: 20, paddingVertical: 8, borderRadius: 6, borderWidth: 1.5, marginBottom: 8 },
+  clearBtn:         { alignSelf: 'center', paddingHorizontal: 20, paddingVertical: 6, borderRadius: 6, borderWidth: 1.5, marginBottom: 6 },
   clearBtnText:     { fontSize: 14, fontWeight: '500' },
-  upgradeLink:      { alignItems: 'center', marginBottom: 12 },
+  upgradeLink:      { alignItems: 'center', marginBottom: 10 },
   upgradeLinkText:  { fontSize: 13, fontWeight: '600' },
-  chartLockBanner:  { borderRadius: 8, borderWidth: 1.5, paddingVertical: 8, paddingHorizontal: 12, marginBottom: 8 },
+  chartLockBanner:  { borderRadius: 8, borderWidth: 1.5, paddingVertical: 6, paddingHorizontal: 12, marginBottom: 6 },
   chartLockText:    { fontSize: 12, fontWeight: '600', textAlign: 'center' },
-  divider:          { height: 1, marginBottom: 16 },
-  historyItem:      { borderRadius: 6, paddingHorizontal: 14, paddingVertical: 6, marginBottom: 6, borderWidth: 1, overflow: 'hidden', borderBottomWidth: 3 },
-  entryRow:         { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
+  divider:          { height: 1, marginBottom: 10 },
+  historyItem:      { borderRadius: 6, paddingHorizontal: 12, paddingVertical: 4, marginBottom: 4, borderWidth: 1, overflow: 'hidden', borderBottomWidth: 3 },
+  entryRow:         { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
   entryDate:        { fontSize: 13, fontWeight: '600' },
   entryTime:        { fontSize: 13 },
   entryValue:       { fontSize: 14, fontWeight: '700' },
   entryBadge:       { fontSize: 13, fontWeight: '600', marginLeft: 'auto' },
-  fastingLabel:     { fontSize: 12, marginTop: 4 },
-  notes:            { fontSize: 12, marginTop: 4, fontStyle: 'italic' },
+  fastingLabel:     { fontSize: 12, marginTop: 3 },
+  notes:            { fontSize: 12, marginTop: 3, fontStyle: 'italic' },
   deleteBtn:        { fontSize: 13, fontWeight: '600', paddingHorizontal: 6 },
-  chartCard:        { borderRadius: 12, borderWidth: 1, padding: 16, marginTop: 16, marginBottom: 16, overflow: 'hidden' },
+  exitCaregiverBtn:     { margin: 12, borderWidth: 1.5, borderRadius: 10, paddingVertical: 11, alignItems: 'center' },
+  exitCaregiverBtnText: { fontSize: 15, fontWeight: '700' },
+  chartCard:        { borderRadius: 12, borderWidth: 1, padding: 12, marginTop: 12, marginBottom: 12, overflow: 'hidden' },
   chartTitle:       { fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 },
   chartSub:         { fontSize: 11, marginBottom: 4 },
-  chartDivider:     { height: 1, marginVertical: 12 },
+  chartDivider:     { height: 1, marginVertical: 8 },
   lineLegend:       { flexDirection: 'row', justifyContent: 'center', gap: 16, marginTop: 4 },
   lineLegendItem:   { flexDirection: 'row', alignItems: 'center', gap: 5 },
   lineLegendDot:    { width: 8, height: 8, borderRadius: 4 },

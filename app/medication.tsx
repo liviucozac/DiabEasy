@@ -4,6 +4,7 @@ import {
   TextInput, StyleSheet, Platform, Alert,
 } from 'react-native';
 import { useGlucoseStore, InsulinEntry, Reminder } from '../store/glucoseStore';
+import { fetchCaregiverInsulinLog } from '../utils/firestoreSync';
 import { calculateIOB, calcCorrectionDose, getAnalogByType, getLongActingByType, INSULIN_ANALOGS, LONG_ACTING_INSULINS } from '../utils/insulinUtils';
 import { scheduleReminder, cancelReminder } from '../utils/notificationUtils';
 import { generateId } from '../utils/idUtils';
@@ -14,20 +15,10 @@ import { PressBtn } from '../components/PressBtn';
 import { ParamTrainingModal } from '../components/ParamTrainingModal';
 import { useTranslation } from '../hooks/useTranslation';
 
-
 const RED = '#EC5557';
 
 type ActiveTab = 'calculator' | 'log' | 'reminders';
 type InsulinType = 'Rapid-acting' | 'Long-acting';
-
-
-function formatNow(): string {
-  const now  = new Date();
-  const dd   = String(now.getDate()).padStart(2, '0');
-  const mm   = String(now.getMonth() + 1).padStart(2, '0');
-  const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  return `${dd}/${mm}/${now.getFullYear()} ${time}`;
-}
 
 function toMgDl(value: number, unit: string): number {
   return unit === 'mmol/L' ? value * 18.0182 : value;
@@ -65,8 +56,6 @@ function InfoRow({ label, value, valueColor }: { label: string; value: string; v
   );
 }
 
-// ─── Insulin Dropdown ─────────────────────────────────────────────────────────
-
 function InsulinDropdown<T extends string>({
   label, selected, options, onSelect,
 }: {
@@ -82,8 +71,6 @@ function InsulinDropdown<T extends string>({
   return (
     <View style={{ marginBottom: 10 }}>
       <Text style={[s.fieldLabel, { color: colors.textMuted }]}>{label}</Text>
-
-      {/* Trigger button — same pill style as the rest of the tab */}
       <TouchableOpacity
         style={[s.dropdownTrigger, { borderColor: colors.red, backgroundColor: colors.bgCard }]}
         onPress={() => setOpen(v => !v)}
@@ -91,12 +78,10 @@ function InsulinDropdown<T extends string>({
       >
         <View style={{ flex: 1 }}>
           <Text style={[s.dropdownTriggerText, { color: colors.text }]}>{current.label}</Text>
-          <Text style={[s.dropdownTriggerSub,  { color: colors.textMuted }]}>{current.sublabel}{current.duration ? `  ·  ${current.duration}` : ''}</Text>
+          <Text style={[s.dropdownTriggerSub, { color: colors.textMuted }]}>{current.sublabel}{current.duration ? `  ·  ${current.duration}` : ''}</Text>
         </View>
         <Text style={[s.dropdownChevron, { color: colors.red }]}>{open ? '▲' : '▼'}</Text>
       </TouchableOpacity>
-
-      {/* Options list */}
       {open && (
         <View style={[s.dropdownList, { borderColor: colors.border, backgroundColor: colors.bgCard }]}>
           {options.map((opt, i) => {
@@ -114,7 +99,7 @@ function InsulinDropdown<T extends string>({
               >
                 <View style={{ flex: 1 }}>
                   <Text style={[s.dropdownItemText, { color: active ? colors.red : colors.text }]}>{opt.label}</Text>
-                  <Text style={[s.dropdownItemSub,  { color: colors.textMuted }]}>{opt.sublabel}{opt.duration ? `  ·  ${opt.duration}` : ''}</Text>
+                  <Text style={[s.dropdownItemSub, { color: colors.textMuted }]}>{opt.sublabel}{opt.duration ? `  ·  ${opt.duration}` : ''}</Text>
                 </View>
                 {active && <Text style={{ color: colors.red, fontWeight: '700', fontSize: 14 }}>✓</Text>}
               </TouchableOpacity>
@@ -125,8 +110,6 @@ function InsulinDropdown<T extends string>({
     </View>
   );
 }
-
-// ─── Calculator Tab ───────────────────────────────────────────────────────────
 
 function CalculatorTab() {
   const { glucoseValue, unit, totalCarbs, settings, insulinEntries, setSettings } = useGlucoseStore();
@@ -141,7 +124,6 @@ function CalculatorTab() {
   const targetMgDl = settings.targetGlucose;
   const currentMgDl = glucoseValue !== null ? toMgDl(glucoseValue, unit) : null;
 
-  // Tick every 60 s so IOB (which depends on elapsed time) stays current
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 60_000);
@@ -157,15 +139,15 @@ function CalculatorTab() {
     return {
       meal:       Math.round(meal),
       correction: Math.round(correction),
-      iob:        Math.round(iob * 10) / 10,   // one decimal
+      iob:        Math.round(iob * 10) / 10,
       total:      Math.round(total),
     };
   }, [now, currentMgDl, targetMgDl, totalCarbs, ISF, CARB_RATIO, insulinEntries, settings.insulinAnalogType, settings.dia]);
 
   const glucoseColor =
-    currentMgDl === null                          ? '#888'
-    : currentMgDl < settings.glucoseLow           ? '#e53935'
-    : currentMgDl <= settings.glucoseHigh         ? '#2e7d32'
+    currentMgDl === null                  ? '#888'
+    : currentMgDl < settings.glucoseLow  ? '#e53935'
+    : currentMgDl <= settings.glucoseHigh ? '#2e7d32'
     : '#ef6c00';
 
   return (
@@ -179,52 +161,28 @@ function CalculatorTab() {
 
       <SectionCard>
         <SectionTitle text={t.glucoseLimits} />
-        <Text style={[s.paramHint, { color: colors.textMuted }]}>
-          {t.glucoseLimitsHint}
-        </Text>
+        <Text style={[s.paramHint, { color: colors.textMuted }]}>{t.glucoseLimitsHint}</Text>
         <View style={s.limitsRow}>
           <View style={s.limitField}>
             <Text style={[s.limitLabel, { color: colors.textMuted }]}>{t.lowThreshold}</Text>
             <TextInput
               style={[s.limitInput, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]}
-              value={limitLowInput}
-              onChangeText={setLimitLowInput}
-              keyboardType="numeric"
-              returnKeyType="done"
-              accessibilityLabel="Low glucose threshold"
-              onBlur={() => {
-                const n = parseFloat(limitLowInput);
-                if (!isNaN(n) && n > 0 && n < settings.glucoseHigh) {
-                  setSettings({ glucoseLow: n });
-                } else {
-                  setLimitLowInput(String(settings.glucoseLow));
-                }
-              }}
+              value={limitLowInput} onChangeText={setLimitLowInput}
+              keyboardType="numeric" returnKeyType="done"
+              onBlur={() => { const n = parseFloat(limitLowInput); if (!isNaN(n) && n > 0 && n < settings.glucoseHigh) setSettings({ glucoseLow: n }); else setLimitLowInput(String(settings.glucoseLow)); }}
             />
           </View>
           <View style={s.limitField}>
             <Text style={[s.limitLabel, { color: colors.textMuted }]}>{t.highThreshold}</Text>
             <TextInput
               style={[s.limitInput, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]}
-              value={limitHighInput}
-              onChangeText={setLimitHighInput}
-              keyboardType="numeric"
-              returnKeyType="done"
-              accessibilityLabel="High glucose threshold"
-              onBlur={() => {
-                const n = parseFloat(limitHighInput);
-                if (!isNaN(n) && n > settings.glucoseLow) {
-                  setSettings({ glucoseHigh: n });
-                } else {
-                  setLimitHighInput(String(settings.glucoseHigh));
-                }
-              }}
+              value={limitHighInput} onChangeText={setLimitHighInput}
+              keyboardType="numeric" returnKeyType="done"
+              onBlur={() => { const n = parseFloat(limitHighInput); if (!isNaN(n) && n > settings.glucoseLow) setSettings({ glucoseHigh: n }); else setLimitHighInput(String(settings.glucoseHigh)); }}
             />
           </View>
         </View>
-        <Text style={[s.limitHint, { color: colors.textFaint }]}>
-          {t.glucoseLimitsFooter(settings.glucoseLow, settings.glucoseHigh)}
-        </Text>
+        <Text style={[s.limitHint, { color: colors.textFaint }]}>{t.glucoseLimitsFooter(settings.glucoseLow, settings.glucoseHigh)}</Text>
       </SectionCard>
 
       <SectionCard>
@@ -248,15 +206,9 @@ function CalculatorTab() {
             <Text style={[s.paramReadLabel, { color: colors.textMuted }]}>{getAnalogByType(settings.insulinAnalogType).label}{'\n'}DIA</Text>
           </View>
         </View>
-
-        <TouchableOpacity
-          style={[s.trainingBtn, { borderColor: RED }]}
-          onPress={() => setShowTraining(true)}
-          activeOpacity={0.75}
-        >
+        <TouchableOpacity style={[s.trainingBtn, { borderColor: RED }]} onPress={() => setShowTraining(true)} activeOpacity={0.75}>
           <Text style={[s.trainingBtnText, { color: RED }]}>{t.whatDoParamsMean}</Text>
         </TouchableOpacity>
-
         <ParamTrainingModal visible={showTraining} onClose={() => setShowTraining(false)} />
       </SectionCard>
 
@@ -264,15 +216,11 @@ function CalculatorTab() {
         <SectionTitle text={t.yourInsulin} />
         <Text style={[s.paramHint, { color: colors.textMuted }]}>{t.yourInsulinHint}</Text>
         <InsulinDropdown<InsulinAnalogType>
-          label={t.rapidActingInsulin}
-          selected={settings.insulinAnalogType}
-          options={INSULIN_ANALOGS}
+          label={t.rapidActingInsulin} selected={settings.insulinAnalogType} options={INSULIN_ANALOGS}
           onSelect={(v) => setSettings({ insulinAnalogType: v, dia: INSULIN_ANALOGS.find(a => a.value === v)?.defaultDia ?? settings.dia })}
         />
         <InsulinDropdown<LongActingInsulinType>
-          label={t.longActingInsulin}
-          selected={settings.longActingInsulinType}
-          options={LONG_ACTING_INSULINS}
+          label={t.longActingInsulin} selected={settings.longActingInsulinType} options={LONG_ACTING_INSULINS}
           onSelect={(v) => setSettings({ longActingInsulinType: v })}
         />
       </SectionCard>
@@ -352,9 +300,9 @@ function CalculatorTab() {
       <SectionCard>
         <SectionTitle text={t.quickReference} />
         {[
-          { emoji: '🍬', title: t.qrLow.title,     body: t.qrLow.body },
-          { emoji: '✅', title: t.qrNormal.title,  body: t.qrNormal.body },
-          { emoji: '💧', title: t.qrHigh.title,    body: t.qrHigh.body },
+          { emoji: '🍬', title: t.qrLow.title,      body: t.qrLow.body },
+          { emoji: '✅', title: t.qrNormal.title,   body: t.qrNormal.body },
+          { emoji: '💧', title: t.qrHigh.title,     body: t.qrHigh.body },
           { emoji: '🚨', title: t.qrVeryHigh.title, body: t.qrVeryHigh.body },
         ].map((ref, i, arr) => (
           <View key={i}>
@@ -373,8 +321,6 @@ function CalculatorTab() {
   );
 }
 
-// ─── Log Tab ──────────────────────────────────────────────────────────────────
-
 function LogTab() {
   const { insulinEntries, addInsulinEntry, clearInsulinLog, settings, glucoseValue, unit } = useGlucoseStore();
   const { colors } = useTheme();
@@ -390,9 +336,7 @@ function LogTab() {
   const glucoseWarning = (() => {
     if (glucoseValue === null) return null;
     const mgDl = toMgDl(glucoseValue, unit ?? 'mg/dL');
-    if (mgDl < 75) {
-      return { kind: 'low' as const, mgDl };
-    }
+    if (mgDl < 75) return { kind: 'low' as const, mgDl };
     if (mgDl > 150) {
       const correction = calcCorrectionDose(mgDl, settings.targetGlucose, settings.isf);
       const iob        = calculateIOB(insulinEntries, settings.insulinAnalogType, settings.dia);
@@ -405,7 +349,8 @@ function LogTab() {
 
   const handleAdd = () => {
     if (units <= 0) { Alert.alert(t.missingInfo, t.pleaseSetUnit); return; }
-    addInsulinEntry({ id: generateId(), units, time: formatTime(timeDate), type: insulinType, timestamp: new Date().toISOString() });    setUnits(0); setTimeDate(new Date());
+    addInsulinEntry({ id: generateId(), units, time: formatTime(timeDate), type: insulinType, timestamp: new Date().toISOString() });
+    setUnits(0); setTimeDate(new Date());
   };
 
   const handleClear = () => {
@@ -417,25 +362,17 @@ function LogTab() {
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 32 }}>
-
       {glucoseWarning?.kind === 'low' && (
         <View style={[s.infoCard, { backgroundColor: colors.lowBg, borderColor: colors.low, marginBottom: 4 }]}>
           <Text style={[s.infoCardTitle, { color: colors.low }]}>{t.bloodSugarTooLow}</Text>
-          <Text style={[s.infoCardBody, { color: colors.textMuted }]}>
-            {t.bloodSugarTooLowBody(glucoseValue!, unit ?? 'mg/dL')}
-          </Text>
+          <Text style={[s.infoCardBody, { color: colors.textMuted }]}>{t.bloodSugarTooLowBody(glucoseValue!, unit ?? 'mg/dL')}</Text>
         </View>
       )}
-
       {glucoseWarning?.kind === 'high' && (
         <View style={[s.infoCard, { backgroundColor: colors.highBg, borderColor: colors.high, marginBottom: 4 }]}>
           <Text style={[s.infoCardTitle, { color: colors.high }]}>{t.bloodSugarElevated}</Text>
-          <Text style={[s.infoCardBody, { color: colors.textMuted }]}>
-            {t.bloodSugarElevatedBody(glucoseValue!, unit ?? 'mg/dL', glucoseWarning.net, glucoseWarning.analog, glucoseWarning.iob)}
-          </Text>
-          <Text style={[s.infoCardBody, { color: colors.textFaint, marginTop: 4, fontStyle: 'italic' }]}>
-            {t.confirmWithProvider}
-          </Text>
+          <Text style={[s.infoCardBody, { color: colors.textMuted }]}>{t.bloodSugarElevatedBody(glucoseValue!, unit ?? 'mg/dL', glucoseWarning.net, glucoseWarning.analog, glucoseWarning.iob)}</Text>
+          <Text style={[s.infoCardBody, { color: colors.textFaint, marginTop: 4, fontStyle: 'italic' }]}>{t.confirmWithProvider}</Text>
         </View>
       )}
 
@@ -445,7 +382,7 @@ function LogTab() {
         <View style={s.typeRow}>
           {(['Rapid-acting', 'Long-acting'] as InsulinType[]).map((tp) => {
             const active = insulinType === tp;
-            const label = tp === 'Rapid-acting' ? t.rapidActing : t.longActing;
+            const label  = tp === 'Rapid-acting' ? t.rapidActing : t.longActing;
             return (
               <TouchableOpacity key={tp}
                 style={[s.typePill, active ? s.primaryBtnShadow : null, { borderColor: colors.red, backgroundColor: active ? colors.red : 'transparent' }]}
@@ -455,20 +392,16 @@ function LogTab() {
             );
           })}
         </View>
-
         <Text style={[s.fieldLabel, { color: colors.textMuted }]}>{t.unitsLabel}</Text>
         <View style={s.stepperRow}>
-          <PressBtn style={[s.stepperBtn, { borderColor: colors.red, backgroundColor: colors.red }, s.primaryBtnShadow]}
-            onPress={() => setUnits((u) => Math.max(u - 1, 0))} activeOpacity={0.75}>
+          <PressBtn style={[s.stepperBtn, { borderColor: colors.red, backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={() => setUnits((u) => Math.max(u - 1, 0))} activeOpacity={0.75}>
             <Text style={s.stepperBtnText}>−</Text>
           </PressBtn>
           <Text style={[s.stepperValue, { color: colors.text }]}>{units}</Text>
-          <PressBtn style={[s.stepperBtn, { borderColor: colors.red, backgroundColor: colors.red }, s.primaryBtnShadow]}
-            onPress={() => setUnits((u) => u + 1)} activeOpacity={0.75}>
+          <PressBtn style={[s.stepperBtn, { borderColor: colors.red, backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={() => setUnits((u) => u + 1)} activeOpacity={0.75}>
             <Text style={s.stepperBtnText}>+</Text>
           </PressBtn>
         </View>
-
         <Text style={[s.fieldLabel, { color: colors.textMuted }]}>{t.timeTaken}</Text>
         <TouchableOpacity style={[s.timeInput, s.timePickerBtn, s.outlineBtnShadow, { backgroundColor: colors.bgCard }]} onPress={() => setShowTimePicker(true)} activeOpacity={0.75}>
           <Text style={[s.timePickerBtnText, { color: colors.text }]}>{formatTime(timeDate)}</Text>
@@ -525,8 +458,6 @@ function LogTab() {
   );
 }
 
-// ─── Reminders Tab ────────────────────────────────────────────────────────────
-
 function ReminderForm({
   title, label, setLabel, timeDate, setTimeDate, days, setDays,
   rType, setRType, rUnits, setRUnits, onSave, onCancel, colors,
@@ -553,7 +484,6 @@ function ReminderForm({
         placeholder={t.reminderLabelPlaceholder} placeholderTextColor="#aaa"
         value={label} onChangeText={setLabel}
         onFocus={() => setLabelFocus(true)} onBlur={() => setLabelFocus(false)} returnKeyType="done" />
-
       <Text style={[s.fieldLabel, { color: colors.textMuted }]}>{t.time}</Text>
       <TouchableOpacity style={[s.timeInput, s.timePickerBtn, s.outlineBtnShadow, { backgroundColor: colors.bgCard }]} onPress={() => setShowTimePicker(true)} activeOpacity={0.75}>
         <Text style={[s.timePickerBtnText, { color: colors.text }]}>{formatTime(timeDate)}</Text>
@@ -562,14 +492,11 @@ function ReminderForm({
         <DateTimePicker value={timeDate} mode="time" display="default"
           onChange={(event, date) => { setShowTimePicker(false); if (event.type === 'set' && date) setTimeDate(date); }} />
       )}
-
       <Text style={[s.fieldLabel, { color: colors.textMuted }]}>{t.schedule}</Text>
       <View style={s.scheduleRow}>
         <TouchableOpacity
           style={[s.schedulePill, { borderColor: colors.red }, days !== 'everyday' && { backgroundColor: colors.red }]}
-          onPress={() => setShowDatePicker(true)}
-          activeOpacity={0.75}
-        >
+          onPress={() => setShowDatePicker(true)} activeOpacity={0.75}>
           <Text style={[s.schedulePillText, { color: days !== 'everyday' ? '#fff' : colors.textMuted }]}>
             {days !== 'everyday' ? formatDateDisplay(days) : t.pickDate}
           </Text>
@@ -577,18 +504,14 @@ function ReminderForm({
         <Text style={[s.scheduleOrText, { color: colors.textMuted }]}>or</Text>
         <TouchableOpacity
           style={[s.schedulePill, { borderColor: colors.red }, days === 'everyday' && { backgroundColor: colors.red }]}
-          onPress={() => setDays('everyday')}
-          activeOpacity={0.75}
-        >
+          onPress={() => setDays('everyday')} activeOpacity={0.75}>
           <Text style={[s.schedulePillText, { color: days === 'everyday' ? '#fff' : colors.textMuted }]}>{t.everyday}</Text>
         </TouchableOpacity>
       </View>
       {showDatePicker && (
         <DateTimePicker
           value={days !== 'everyday' ? new Date(days) : new Date()}
-          mode="date"
-          display="default"
-          minimumDate={new Date()}
+          mode="date" display="default" minimumDate={new Date()}
           onChange={(event, date) => {
             setShowDatePicker(false);
             if (event.type === 'set' && date) {
@@ -600,12 +523,11 @@ function ReminderForm({
           }}
         />
       )}
-
       <Text style={[s.fieldLabel, { color: colors.textMuted }]}>{t.insulinType}</Text>
       <View style={s.typeRow}>
         {(['Rapid-acting', 'Long-acting'] as InsulinType[]).map((tp) => {
           const active = rType === tp;
-          const label = tp === 'Rapid-acting' ? t.rapidActing : t.longActing;
+          const label  = tp === 'Rapid-acting' ? t.rapidActing : t.longActing;
           return (
             <TouchableOpacity key={tp}
               style={[s.typePill, active ? s.primaryBtnShadow : null, { borderColor: colors.red, backgroundColor: active ? colors.red : 'transparent' }]}
@@ -615,20 +537,16 @@ function ReminderForm({
           );
         })}
       </View>
-
       <Text style={[s.fieldLabel, { color: colors.textMuted }]}>{t.unitsLabel}</Text>
       <View style={s.stepperRow}>
-        <PressBtn style={[s.stepperBtn, { borderColor: colors.red, backgroundColor: colors.red }, s.primaryBtnShadow]}
-          onPress={() => setRUnits(Math.max(rUnits - 1, 0))} activeOpacity={0.75}>
+        <PressBtn style={[s.stepperBtn, { borderColor: colors.red, backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={() => setRUnits(Math.max(rUnits - 1, 0))} activeOpacity={0.75}>
           <Text style={s.stepperBtnText}>−</Text>
         </PressBtn>
         <Text style={[s.stepperValue, { color: colors.text }]}>{rUnits}</Text>
-        <PressBtn style={[s.stepperBtn, { borderColor: colors.red, backgroundColor: colors.red }, s.primaryBtnShadow]}
-          onPress={() => setRUnits(rUnits + 1)} activeOpacity={0.75}>
+        <PressBtn style={[s.stepperBtn, { borderColor: colors.red, backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={() => setRUnits(rUnits + 1)} activeOpacity={0.75}>
           <Text style={s.stepperBtnText}>+</Text>
         </PressBtn>
       </View>
-
       <View style={s.formBtnRow}>
         <View style={{ flex: 1 }}>
           <PressBtn style={[s.cancelFormBtn, s.outlineBtnShadow, { backgroundColor: colors.bgCard }]} onPress={onCancel} activeOpacity={0.75}>
@@ -662,17 +580,15 @@ function RemindersTab() {
   const t = useTranslation();
   const { reminders, addReminder, updateReminder, deleteReminder, settings } = useGlucoseStore();
 
-  const [showAddForm,  setShowAddForm]  = useState(false);
-  const [editingId,    setEditingId]    = useState<string | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingId,   setEditingId]   = useState<string | null>(null);
 
-  // Add form state
   const [addLabel,    setAddLabel]    = useState('');
   const [addTimeDate, setAddTimeDate] = useState(new Date());
   const [addDays,     setAddDays]     = useState('everyday');
   const [addType,     setAddType]     = useState<InsulinType>('Rapid-acting');
   const [addUnits,    setAddUnits]    = useState(1);
 
-  // Edit form state
   const [editLabel,    setEditLabel]    = useState('');
   const [editTimeDate, setEditTimeDate] = useState(new Date());
   const [editDays,     setEditDays]     = useState('everyday');
@@ -714,11 +630,8 @@ function RemindersTab() {
   return (
     <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 32 }}>
       <View style={[s.noteCard, { backgroundColor: settings.notificationsEnabled ? colors.normalBg : colors.highBg, borderColor: colors.border }]}>
-        <Text style={s.noteText}>
-          {settings.notificationsEnabled ? t.notificationsActive : t.notificationsOff}
-        </Text>
+        <Text style={s.noteText}>{settings.notificationsEnabled ? t.notificationsActive : t.notificationsOff}</Text>
       </View>
-
       {reminders.length === 0 && !showAddForm ? (
         <View style={[s.emptyCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
           <Text style={s.emptyIcon}>⏰</Text>
@@ -728,17 +641,13 @@ function RemindersTab() {
       ) : (
         reminders.map((r) =>
           editingId === r.id ? (
-            <ReminderForm key={r.id}
-              title={t.editReminder}
-              label={editLabel}    setLabel={setEditLabel}
+            <ReminderForm key={r.id} title={t.editReminder}
+              label={editLabel} setLabel={setEditLabel}
               timeDate={editTimeDate} setTimeDate={setEditTimeDate}
-              days={editDays}      setDays={setEditDays}
-              rType={editType}     setRType={setEditType}
-              rUnits={editUnits}   setRUnits={setEditUnits}
-              onSave={handleSaveEdit}
-              onCancel={() => setEditingId(null)}
-              colors={colors}
-            />
+              days={editDays} setDays={setEditDays}
+              rType={editType} setRType={setEditType}
+              rUnits={editUnits} setRUnits={setEditUnits}
+              onSave={handleSaveEdit} onCancel={() => setEditingId(null)} colors={colors} />
           ) : (
             <View key={r.id} style={[s.reminderCard, !r.active && s.reminderCardInactive, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
               <View style={s.reminderLeft}>
@@ -773,27 +682,20 @@ function RemindersTab() {
           )
         )
       )}
-
       {showAddForm && (
-        <ReminderForm
-          title={t.newReminder}
-          label={addLabel}    setLabel={setAddLabel}
+        <ReminderForm title={t.newReminder}
+          label={addLabel} setLabel={setAddLabel}
           timeDate={addTimeDate} setTimeDate={setAddTimeDate}
-          days={addDays}      setDays={setAddDays}
-          rType={addType}     setRType={setAddType}
-          rUnits={addUnits}   setRUnits={setAddUnits}
-          onSave={handleAdd}
-          onCancel={() => { setShowAddForm(false); setAddDays('everyday'); }}
-          colors={colors}
-        />
+          days={addDays} setDays={setAddDays}
+          rType={addType} setRType={setAddType}
+          rUnits={addUnits} setRUnits={setAddUnits}
+          onSave={handleAdd} onCancel={() => { setShowAddForm(false); setAddDays('everyday'); }} colors={colors} />
       )}
-
       {!showAddForm && editingId === null && (
         <PressBtn style={[s.addReminderBtn, { borderColor: colors.red, backgroundColor: 'transparent' }]} onPress={() => setShowAddForm(true)} activeOpacity={0.75}>
           <Text style={[s.addReminderBtnText, { color: colors.red }]}>{t.addReminder}</Text>
         </PressBtn>
       )}
-
       {!showAddForm && editingId === null && (
         <View style={[s.infoCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
           <Text style={[s.infoCardTitle, { color: colors.text }]}>{t.howRemindersWork}</Text>
@@ -805,12 +707,18 @@ function RemindersTab() {
   );
 }
 
-// ─── Main Screen ──────────────────────────────────────────────────────────────
-
 export default function MedicationScreen() {
   const { colors } = useTheme();
   const t = useTranslation();
+  const { caregiverSession, setCaregiverSession } = useGlucoseStore();
   const [activeTab, setActiveTab] = useState<ActiveTab>('calculator');
+  const [caregiverInsulin, setCaregiverInsulin] = useState<InsulinEntry[]>([]);
+
+  // ── Fetch caregiver insulin log using code ────────────────────────────────
+  useEffect(() => {
+    if (!caregiverSession) return;
+    fetchCaregiverInsulinLog(caregiverSession.code).then(setCaregiverInsulin).catch(() => {});
+  }, [caregiverSession?.code]);
 
   const TABS: { key: ActiveTab; label: string }[] = [
     { key: 'calculator', label: t.calculatorTab },
@@ -818,27 +726,55 @@ export default function MedicationScreen() {
     { key: 'reminders',  label: t.remindersTab },
   ];
 
+  if (caregiverSession) {
+    return (
+      <View style={[s.root, { backgroundColor: colors.bg }]}>
+        <Text style={[s.title, { color: colors.text }]}>{t.medication}</Text>
+        <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }}>
+          {caregiverInsulin.length === 0 ? (
+            <Text style={{ color: colors.textMuted, textAlign: 'center', marginTop: 24 }}>{t.noInsulinLog}</Text>
+          ) : caregiverInsulin.map((e, idx) => {
+            const brandName = e.type === 'Rapid-acting'
+              ? getAnalogByType(useGlucoseStore.getState().settings.insulinAnalogType).sublabel
+              : getLongActingByType(useGlucoseStore.getState().settings.longActingInsulinType).sublabel;
+            return (
+              <View key={e.id} style={[s.logRow, idx < caregiverInsulin.length - 1 && s.logRowBorder, { backgroundColor: colors.bgCard }]}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[s.logType, { color: colors.text }]}>{e.type === 'Rapid-acting' ? t.rapidActing : t.longActing}</Text>
+                  <Text style={[s.logBrandName, { color: colors.textMuted }]}>{brandName}</Text>
+                  <Text style={[s.logTime, { color: colors.textMuted }]}>{e.time}</Text>
+                </View>
+                <Text style={[s.logUnits, { color: colors.red }]}>{e.units}u</Text>
+              </View>
+            );
+          })}
+          <TouchableOpacity
+            style={[s.exitCaregiverBtn, { borderColor: colors.red }]}
+            onPress={() => setCaregiverSession(null)}
+            activeOpacity={0.8}
+          >
+            <Text style={[s.exitCaregiverBtnText, { color: colors.red }]}>{t.exitCaregiverMode}</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </View>
+    );
+  }
+
   return (
     <View style={[s.root, { backgroundColor: colors.bg }]}>
       <Text style={[s.title, { color: colors.text }]}>{t.medication}</Text>
-
-      {/* Sub-tab bar with shadow */}
       <View style={[s.tabBar, { borderColor: colors.red }, s.tabBarShadow]}>
-        {TABS.map((t) => {
-          const active = activeTab === t.key;
+        {TABS.map((tab) => {
+          const active = activeTab === tab.key;
           return (
-            <TouchableOpacity
-              key={t.key}
+            <TouchableOpacity key={tab.key}
               style={[s.tabBtn, { backgroundColor: active ? colors.red : colors.bg }]}
-              onPress={() => setActiveTab(t.key)}
-              activeOpacity={0.8}
-            >
-              <Text style={[s.tabBtnText, { color: active ? '#fff' : colors.red }]}>{t.label}</Text>
+              onPress={() => setActiveTab(tab.key)} activeOpacity={0.8}>
+              <Text style={[s.tabBtnText, { color: active ? '#fff' : colors.red }]}>{tab.label}</Text>
             </TouchableOpacity>
           );
         })}
       </View>
-
       <View style={[s.content, { backgroundColor: colors.bg }]}>
         {activeTab === 'calculator' && <CalculatorTab />}
         {activeTab === 'log'        && <LogTab />}
@@ -910,8 +846,8 @@ const s = StyleSheet.create({
   stepperBtnText: { fontSize: 20, color: '#fff', lineHeight: 24, backgroundColor: 'transparent' },
   stepperValue:   { fontSize: 22, fontWeight: '800', minWidth: 36, textAlign: 'center' },
 
-  timeInput:       { borderWidth: 1.5, borderColor: '#e0e0e0', borderRadius: 6, paddingVertical: Platform.OS === 'ios' ? 9 : 7, paddingHorizontal: 12, fontSize: 14, marginBottom: 4 },
-  timePickerBtn:   { justifyContent: 'center' },
+  timeInput:        { borderWidth: 1.5, borderColor: '#e0e0e0', borderRadius: 6, paddingVertical: Platform.OS === 'ios' ? 9 : 7, paddingHorizontal: 12, fontSize: 14, marginBottom: 4 },
+  timePickerBtn:    { justifyContent: 'center' },
   timePickerBtnText:{ fontSize: 15, fontWeight: '700' },
 
   scheduleRow:     { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
@@ -929,6 +865,7 @@ const s = StyleSheet.create({
   logRowBorder: { borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
   logLeft:      { flex: 1 },
   logType:      { fontSize: 13, fontWeight: '700' },
+  logBrandName: { fontSize: 12, marginTop: 1 },
   logTime:      { fontSize: 12, marginTop: 1 },
   logUnits:     { fontSize: 18, fontWeight: '900' },
 
@@ -963,7 +900,6 @@ const s = StyleSheet.create({
   saveFormBtn:       { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1.5, alignItems: 'center' },
   saveFormBtnText:   { fontSize: 14, color: '#fff', fontWeight: '700' },
 
-  // ── Shadows ──────────────────────────────────────────────────────────────────
   tabBarShadow:     { shadowColor: '#EC5557', shadowOffset: { width: 2, height: 2 }, shadowOpacity: 0.12, shadowRadius: 4, elevation: 4 },
   primaryBtnShadow: { shadowColor: '#7a1010', shadowOffset: { width: 4, height: 4 }, shadowOpacity: 0.45, shadowRadius: 0, elevation: 4 },
   outlineBtnShadow: { shadowColor: '#000', shadowOffset: { width: 1, height: 1 }, shadowOpacity: 0.06, shadowRadius: 2 },
@@ -984,4 +920,6 @@ const s = StyleSheet.create({
   limitLabel:      { fontSize: 11, marginBottom: 4 },
   limitInput:      { borderWidth: 1.5, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 16, fontWeight: '700', textAlign: 'center' },
   limitHint:       { fontSize: 11, textAlign: 'center', marginTop: 8 },
+  exitCaregiverBtn:     { margin: 16, borderWidth: 1.5, borderRadius: 10, paddingVertical: 14, alignItems: 'center' },
+  exitCaregiverBtnText: { fontSize: 15, fontWeight: '700' },
 });
