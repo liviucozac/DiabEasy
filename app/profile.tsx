@@ -77,23 +77,25 @@ function StyledInput({ value, onChangeText, placeholder, keyboardType, secureTex
   );
 }
 
+// ─── Account Section ──────────────────────────────────────────────────────────
+
 function AccountSection({ user }: { user: any }) {
   const { colors } = useTheme();
   const t = useTranslation();
-  const [mode, setMode]               = useState<'login' | 'signup'>('login');
-  const [email, setEmail]             = useState('');
-  const [password, setPassword]       = useState('');
-  const [loading, setLoading]         = useState(false);
-  const [error, setError]             = useState('');
-  const [success, setSuccess]         = useState('');
+  const [mode, setMode]     = useState<'login' | 'signup'>('login');
+  const [email, setEmail]   = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState('');
+  const [success, setSuccess]   = useState('');
 
-  const [showChangePw, setShowChangePw]   = useState(false);
-  const [currentPw, setCurrentPw]         = useState('');
-  const [newPw, setNewPw]                 = useState('');
-  const [confirmPw, setConfirmPw]         = useState('');
-  const [pwLoading, setPwLoading]         = useState(false);
-  const [pwError, setPwError]             = useState('');
-  const [pwSuccess, setPwSuccess]         = useState('');
+  const [showChangePw, setShowChangePw] = useState(false);
+  const [currentPw, setCurrentPw]       = useState('');
+  const [newPw, setNewPw]               = useState('');
+  const [confirmPw, setConfirmPw]       = useState('');
+  const [pwLoading, setPwLoading]       = useState(false);
+  const [pwError, setPwError]           = useState('');
+  const [pwSuccess, setPwSuccess]       = useState('');
 
   const { setPremiumPaid } = useSubscriptionStore();
 
@@ -108,11 +110,8 @@ function AccountSection({ user }: { user: any }) {
         await signUp(email.trim(), password);
       }
       setEmail(''); setPassword('');
-    } catch (e: any) {
-      setError(e.message ?? t.authenticationFailed);
-    } finally {
-      setLoading(false);
-    }
+    } catch (e: any) { setError(e.message ?? t.authenticationFailed); }
+    finally { setLoading(false); }
   };
 
   const handleForgotPassword = async () => {
@@ -121,11 +120,8 @@ function AccountSection({ user }: { user: any }) {
     try {
       await sendPasswordReset(email.trim());
       setSuccess(t.resetEmailSent);
-    } catch (e: any) {
-      setError(e.message ?? t.couldNotSendReset);
-    } finally {
-      setLoading(false);
-    }
+    } catch (e: any) { setError(e.message ?? t.couldNotSendReset); }
+    finally { setLoading(false); }
   };
 
   const handleChangePassword = async () => {
@@ -138,11 +134,8 @@ function AccountSection({ user }: { user: any }) {
       setPwSuccess(t.passwordUpdated);
       setCurrentPw(''); setNewPw(''); setConfirmPw('');
       setTimeout(() => { setShowChangePw(false); setPwSuccess(''); }, 1500);
-    } catch (e: any) {
-      setPwError(e.message ?? t.couldNotUpdatePassword);
-    } finally {
-      setPwLoading(false);
-    }
+    } catch (e: any) { setPwError(e.message ?? t.couldNotUpdatePassword); }
+    finally { setPwLoading(false); }
   };
 
   const handleSignOut = async () => { await signOut(); };
@@ -160,7 +153,6 @@ function AccountSection({ user }: { user: any }) {
             <Text style={[s.avatarEmail, { color: colors.textMuted }]}>{user.email}</Text>
           </View>
         </View>
-
         {!showChangePw ? (
           <>
             <TouchableOpacity onPress={() => { setShowChangePw(true); setPwError(''); setPwSuccess(''); }} activeOpacity={0.7} style={s.changePwLink}>
@@ -227,17 +219,18 @@ function AccountSection({ user }: { user: any }) {
 
 function CaregiverCodeSection({ patientName, patientAddress }: { patientName: string; patientAddress: string }) {
   const { colors } = useTheme();
+  const t = useTranslation();
   const { history, insulinEntries, savedMeals, setCaregiverSyncEnabled } = useGlucoseStore();
   const { isPremium } = useSubscription();
 
-  const [selectedType, setSelectedType] = useState<CaregiverCodeType>('temporary');
-  const [activeCodes,  setActiveCodes]  = useState<ActiveCaregiverCodes>({ temporary: null, permanent: null });
+  const [selectedType, setSelectedType]   = useState<CaregiverCodeType>('temporary');
+  const [activeCodes,  setActiveCodes]    = useState<ActiveCaregiverCodes>({ temporary: null, permanent: null });
   const [tempExpiresAt, setTempExpiresAt] = useState<Date | null>(null);
-  const [loadingCodes, setLoadingCodes] = useState(true);
-  const [generating,   setGenerating]   = useState(false);
-  const [genError,     setGenError]     = useState('');
-  const [revoking,     setRevoking]     = useState<CaregiverCodeType | null>(null);
-  const [showUpgrade,  setShowUpgrade]  = useState(false);
+  const [loadingCodes, setLoadingCodes]   = useState(true);
+  const [generating,   setGenerating]     = useState(false);
+  const [genError,     setGenError]       = useState('');
+  const [revoking,     setRevoking]       = useState<CaregiverCodeType | null>(null);
+  const [showUpgrade,  setShowUpgrade]    = useState(false);
 
   useEffect(() => {
     fetchActiveCaregiverCodes()
@@ -246,10 +239,8 @@ function CaregiverCodeSection({ patientName, patientAddress }: { patientName: st
         if (codes.temporary) {
           firestore().collection('inviteCodes').doc(codes.temporary).get()
             .then(doc => {
-              console.log('EXISTS:', doc.exists());
-              console.log('DATA:', JSON.stringify(doc.data()));
               if (doc.exists()) setTempExpiresAt(doc.data()?.expiresAt?.toDate() ?? null);
-            }).catch(e => console.log('EXPIRY FETCH ERROR:', e));
+            }).catch(() => {});
         }
       })
       .catch(() => {})
@@ -259,24 +250,12 @@ function CaregiverCodeSection({ patientName, patientAddress }: { patientName: st
   const handleGenerate = async () => {
     setGenerating(true); setGenError('');
     try {
-      const code = await generateCaregiverCode(
-        patientName || 'Patient',
-        patientAddress ?? '',
-        selectedType,
-        history,
-        insulinEntries,
-        savedMeals,
-      );
+      const code = await generateCaregiverCode(patientName || 'Patient', patientAddress ?? '', selectedType, history, insulinEntries, savedMeals);
       setCaregiverSyncEnabled(true);
       setActiveCodes(prev => ({ ...prev, [selectedType]: code }));
-      if (selectedType === 'temporary') {
-        setTempExpiresAt(new Date(Date.now() + 24 * 60 * 60 * 1000));
-      }
-    } catch (e: any) {
-      setGenError(e.message ?? 'Failed to generate code. Please try again.');
-    } finally {
-      setGenerating(false);
-    }
+      if (selectedType === 'temporary') setTempExpiresAt(new Date(Date.now() + 24 * 60 * 60 * 1000));
+    } catch (e: any) { setGenError(e.message ?? t.failedToGenerateCode); }
+    finally { setGenerating(false); }
   };
 
   const handleRevoke = async (type: CaregiverCodeType) => {
@@ -287,43 +266,29 @@ function CaregiverCodeSection({ patientName, patientAddress }: { patientName: st
       await revokeCaregiverCode(code);
       setActiveCodes(prev => ({ ...prev, [type]: null }));
       if (type === 'temporary') setTempExpiresAt(null);
-    } catch {
-    } finally {
-      setRevoking(null);
-    }
+    } catch {} finally { setRevoking(null); }
   };
 
   const ActiveCodeCard = ({ type }: { type: CaregiverCodeType }) => {
     const code = activeCodes[type];
     if (!code) return null;
     const isPermanent = type === 'permanent';
-
     const expiryLabel = !isPermanent && tempExpiresAt
-      ? `Expires: ${tempExpiresAt.toLocaleDateString()} at ${tempExpiresAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+      ? t.expiresOn(tempExpiresAt.toLocaleDateString(), tempExpiresAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
       : null;
-
     return (
       <View style={[cg.codeCard, { borderColor: isPermanent ? colors.red : colors.normal, backgroundColor: colors.inputBg }]}>
         <View style={cg.codeCardHeader}>
-          <Text style={[cg.codeCardLabel, { color: colors.textMuted }]}>
-            {isPermanent ? '🔒 Permanent' : '⏳ 24-hour'}
-          </Text>
-          <TouchableOpacity
-            onPress={() => handleRevoke(type)}
-            disabled={revoking === type}
-            activeOpacity={0.75}
-            style={[cg.revokeBtn, { borderColor: '#e53935' }]}
-          >
+          <Text style={[cg.codeCardLabel, { color: colors.textMuted }]}>{isPermanent ? t.codeTypePermanent : t.codeType24h}</Text>
+          <TouchableOpacity onPress={() => handleRevoke(type)} disabled={revoking === type} activeOpacity={0.75} style={[cg.revokeBtn, { borderColor: '#e53935' }]}>
             <Text style={{ fontSize: 12, fontWeight: '700', color: revoking === type ? colors.textMuted : '#e53935' }}>
-              {revoking === type ? 'Revoking…' : 'Revoke'}
+              {revoking === type ? t.revoking : t.revoke}
             </Text>
           </TouchableOpacity>
         </View>
         <Text style={[cg.codeDigits, { color: isPermanent ? colors.red : colors.normal }]}>{code}</Text>
         <Text style={[cg.codeHint, { color: colors.textFaint }]}>
-          {isPermanent
-            ? 'Active until revoked. Share only with a parent or tutor.'
-            : expiryLabel ?? 'Active for 24 hours or until revoked.'}
+          {isPermanent ? t.activeUntilRevoked : expiryLabel ?? t.activeFor24h}
         </Text>
       </View>
     );
@@ -331,92 +296,53 @@ function CaregiverCodeSection({ patientName, patientAddress }: { patientName: st
 
   return (
     <SectionCard>
-      <SectionTitle text="Caregiver Access" />
-
+      <SectionTitle text={t.caregiverAccess} />
       {!isPremium ? (
         <View style={{ alignItems: 'center', paddingVertical: 12, gap: 10 }}>
           <Text style={{ fontSize: 36 }}>👑</Text>
-          <Text style={{ fontSize: 15, fontWeight: '800', color: colors.text, textAlign: 'center' }}>
-            Premium Feature
-          </Text>
+          <Text style={{ fontSize: 15, fontWeight: '800', color: colors.text, textAlign: 'center' }}>{t.caregiverPremiumFeature}</Text>
           <Text style={{ fontSize: 13, color: colors.textMuted, textAlign: 'center', lineHeight: 19 }}>
-            Caregiver access lets doctors and family members view your data in read-only mode. Upgrade to unlock code generation.
+            {t.caregiverPremiumDesc}
           </Text>
-          <TouchableOpacity
-            style={{
-              marginTop: 6, borderRadius: 8, paddingVertical: 11, paddingHorizontal: 24,
-              backgroundColor: colors.red,
-              shadowColor: '#7a1010', shadowOffset: { width: 4, height: 4 },
-              shadowOpacity: 0.45, shadowRadius: 0, elevation: 4,
-            }}
-            onPress={() => setShowUpgrade(true)}
-            activeOpacity={0.75}
-          >
-            <Text style={{ fontSize: 14, fontWeight: '700', color: '#fff' }}>Upgrade to Premium</Text>
+          <TouchableOpacity style={{ marginTop: 6, borderRadius: 8, paddingVertical: 11, paddingHorizontal: 24, backgroundColor: colors.red, shadowColor: '#7a1010', shadowOffset: { width: 4, height: 4 }, shadowOpacity: 0.45, shadowRadius: 0, elevation: 4 }} onPress={() => setShowUpgrade(true)} activeOpacity={0.75}>
+            <Text style={{ fontSize: 14, fontWeight: '700', color: '#fff' }}>{t.upgradeToPremium}</Text>
           </TouchableOpacity>
           <UpgradeModal visible={showUpgrade} onClose={() => setShowUpgrade(false)} />
         </View>
       ) : (
         <>
-          <Text style={[s.sectionHint, { color: colors.textMuted }]}>
-            Share a code with a doctor, parent, or caregiver so they can view your data in read-only mode.
-          </Text>
-
+          <Text style={[s.sectionHint, { color: colors.textMuted }]}>{t.caregiverShareHint}</Text>
           {loadingCodes ? (
-            <Text style={{ fontSize: 12, color: colors.textFaint, textAlign: 'center', marginBottom: 8 }}>Loading…</Text>
+            <Text style={{ fontSize: 12, color: colors.textFaint, textAlign: 'center', marginBottom: 8 }}>{t.pleaseWait}</Text>
           ) : (
             <>
               <ActiveCodeCard type="temporary" />
               <ActiveCodeCard type="permanent" />
             </>
           )}
-
-          {(activeCodes.temporary || activeCodes.permanent) && (
-            <View style={[s.divider, { backgroundColor: colors.border, marginVertical: 14 }]} />
-          )}
-
-          <FieldLabel text="Generate a new code" />
+          {(activeCodes.temporary || activeCodes.permanent) && <View style={[s.divider, { backgroundColor: colors.border, marginVertical: 14 }]} />}
+          <FieldLabel text={t.generateNewCode} />
           <View style={cg.typeRow}>
             {(['temporary', 'permanent'] as CaregiverCodeType[]).map((type) => {
               const active = selectedType === type;
               return (
-                <TouchableOpacity
-                  key={type}
-                  style={[cg.typePill, { borderColor: colors.red, backgroundColor: active ? colors.red : 'transparent' }, active ? s.primaryBtnShadow : null]}
-                  onPress={() => setSelectedType(type)}
-                  activeOpacity={0.75}
-                >
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: active ? '#fff' : colors.textMuted }}>
-                    {type === 'temporary' ? '⏳ 24-hour' : '🔒 Permanent'}
-                  </Text>
+                <TouchableOpacity key={type} style={[cg.typePill, { borderColor: colors.red, backgroundColor: active ? colors.red : 'transparent' }, active ? s.primaryBtnShadow : null]} onPress={() => setSelectedType(type)} activeOpacity={0.75}>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: active ? '#fff' : colors.textMuted }}>{type === 'temporary' ? t.codeType24h : t.codeTypePermanent}</Text>
                 </TouchableOpacity>
               );
             })}
           </View>
-
           {selectedType === 'permanent' && (
             <View style={[cg.warningBox, { backgroundColor: colors.lowBg, borderColor: colors.low }]}>
-              <Text style={[cg.warningText, { color: colors.low }]}>
-                ⚠️  Only share a permanent code with a parent or tutor you fully trust. It stays active until you revoke it.
-              </Text>
+              <Text style={[cg.warningText, { color: colors.low }]}>{t.permanentCodeWarning}</Text>
             </View>
           )}
-
-          {!!genError && (
-            <Text style={{ fontSize: 12, color: '#e53935', marginBottom: 8, textAlign: 'center' }}>{genError}</Text>
-          )}
-
-          <PressBtn
-            style={[s.authBtn, { backgroundColor: generating ? colors.border : colors.red }, s.primaryBtnShadow]}
-            onPress={handleGenerate}
-            activeOpacity={0.75}
-          >
+          {!!genError && <Text style={{ fontSize: 12, color: '#e53935', marginBottom: 8, textAlign: 'center' }}>{genError}</Text>}
+          <PressBtn style={[s.authBtn, { backgroundColor: generating ? colors.border : colors.red }, s.primaryBtnShadow]} onPress={handleGenerate} activeOpacity={0.75}>
             <Text style={s.authBtnText}>
-              {generating
-                ? '…'
-                : activeCodes[selectedType]
-                  ? `Replace ${selectedType === 'temporary' ? '24-hour' : 'permanent'} code`
-                  : `Generate ${selectedType === 'temporary' ? '24-hour' : 'permanent'} code`}
+              {generating ? '…' : activeCodes[selectedType]
+                ? t.replaceCodeBtn(t.codeTypeLabel(selectedType))
+                : t.generateCodeBtn(t.codeTypeLabel(selectedType))}
             </Text>
           </PressBtn>
         </>
@@ -432,102 +358,240 @@ function ProfileTab() {
   const { colors } = useTheme();
   const t = useTranslation();
 
-  const [user,  setUser]  = useState<any>(null);
-  const [draft, setDraft] = useState({ ...profile });
-  const [saved, setSaved] = useState(false);
-  const [showDiagnosisPicker, setShowDiagnosisPicker] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     const unsub = onAuthStateChanged((u) => setUser(u));
     return unsub;
   }, []);
 
-  const set = (field: Partial<typeof draft>) => setDraft(d => ({ ...d, ...field }));
+  const [name,    setName]    = useState(profile.name ?? '');
+  const [dob,     setDob]     = useState(profile.age ?? '');
+  const [showDobPicker, setShowDobPicker] = useState(false);
+
+  const [doctorName,    setDoctorName]    = useState(profile.doctorName ?? '');
+  const [clinicName,    setClinicName]    = useState(profile.clinicName ?? '');
+  const [address,       setAddress]       = useState(profile.address ?? '');
+  const [diagnosisDate, setDiagnosisDate] = useState(profile.diagnosisDate ?? '');
+  const [diabetesType,  setDiabetesType]  = useState<DiabetesType>(profile.diabetesType ?? '');
+  const [showDiagnosisPicker, setShowDiagnosisPicker] = useState(false);
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   const handleSave = () => {
-    setProfile(draft);
+    setProfile({
+      ...(name          ? { name }          : {}),
+      ...(dob           ? { age: dob }      : {}),
+      ...(doctorName    ? { doctorName }    : {}),
+      ...(clinicName    ? { clinicName }    : {}),
+      ...(address       ? { address }       : {}),
+      ...(diagnosisDate ? { diagnosisDate } : {}),
+      ...(diabetesType  ? { diabetesType }  : {}),
+    });
+    setIsEditing(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
 
   const DIABETES_TYPES: DiabetesType[] = ['Type 1', 'Type 2', 'LADA', 'Other'];
 
+  const formatDobDisplay = (iso: string) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+  };
+
+  const parseDobToDate = (iso: string): Date => {
+    if (!iso) return new Date();
+    const d = new Date(iso);
+    return isNaN(d.getTime()) ? new Date() : d;
+  };
+
   return (
     <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 32 }}>
       <AccountSection user={user} />
 
-      {!caregiverSession && user && <CaregiverCodeSection patientName={draft.name} patientAddress={draft.address ?? ''} />}
+      {!caregiverSession && user && <CaregiverCodeSection patientName={profile.name} patientAddress={profile.address ?? ''} />}
 
-      {user && <SectionCard>
-        <SectionTitle text={t.personalInfo} />
-        <FieldLabel text={t.fullName} />
-        <StyledInput value={draft.name} onChangeText={(v) => set({ name: v })} placeholder={t.fullNamePlaceholder} />
-        {!caregiverSession && <>
-          <FieldLabel text={t.age} />
-          <StyledInput value={draft.age} onChangeText={(v) => set({ age: v })} placeholder={t.agePlaceholder} keyboardType="number-pad" />
-          <FieldLabel text={t.diabetesType} />
-          <View style={s.pillRow}>
-            {DIABETES_TYPES.map((tp) => {
-              const active = draft.diabetesType === tp;
-              return (
-                <TouchableOpacity key={tp}
-                  style={[s.pill, active ? s.primaryBtnShadow : null, { borderColor: colors.red, backgroundColor: active ? colors.red : 'transparent' }]}
-                  onPress={() => set({ diabetesType: tp })} activeOpacity={0.75}>
-                  <Text style={[s.pillText, { color: active ? '#fff' : colors.textMuted }]}>{tp}</Text>
-                </TouchableOpacity>
-              );
-            })}
+      {user && (
+        <SectionCard>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <Text style={[s.sectionTitle, { color: colors.textMuted, marginBottom: 0 }]}>{t.personalInfo}</Text>
+            <TouchableOpacity onPress={() => setIsEditing(v => !v)} activeOpacity={0.7}>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: colors.red }}>
+                {isEditing ? t.cancel : t.edit}
+              </Text>
+            </TouchableOpacity>
           </View>
-          <FieldLabel text={t.diagnosisDate} />
-          <TouchableOpacity
-            style={[s.input, s.datePickerBtn, { borderColor: colors.border, backgroundColor: colors.inputBg }]}
-            onPress={() => setShowDiagnosisPicker(true)}
-            activeOpacity={0.75}
-          >
-            <Text style={{ color: draft.diagnosisDate ? colors.text : colors.placeholder, fontSize: 15 }}>
-              {draft.diagnosisDate || t.diagnosisDatePlaceholder}
-            </Text>
-          </TouchableOpacity>
-          {showDiagnosisPicker && (
-            Platform.OS === 'ios' ? (
-              <Modal transparent animationType="fade" onRequestClose={() => setShowDiagnosisPicker(false)}>
-                <View style={s.dateModalOverlay}>
-                  <View style={[s.dateModalSheet, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-                    <DateTimePicker
-                      value={(() => { if (draft.diagnosisDate) { const [m, y] = draft.diagnosisDate.split('/'); const d = new Date(parseInt(y, 10), parseInt(m, 10) - 1, 1); return isNaN(d.getTime()) ? new Date() : d; } return new Date(); })()}
-                      mode="date" display="spinner" maximumDate={new Date()}
-                      onChange={(_, date) => { if (date) { set({ diagnosisDate: `${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}` }); } }}
-                    />
-                    <TouchableOpacity style={[s.dateModalDone, { backgroundColor: colors.red }]} onPress={() => setShowDiagnosisPicker(false)}>
-                      <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>{t.done}</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </Modal>
-            ) : (
-              <DateTimePicker
-                value={(() => { if (draft.diagnosisDate) { const [m, y] = draft.diagnosisDate.split('/'); const d = new Date(parseInt(y, 10), parseInt(m, 10) - 1, 1); return isNaN(d.getTime()) ? new Date() : d; } return new Date(); })()}
-                mode="date" display="spinner" maximumDate={new Date()}
-                onChange={(_, date) => { setShowDiagnosisPicker(false); if (date) { set({ diagnosisDate: `${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}` }); } }}
-              />
-            )
+
+          {/* ── Full Name ── */}
+          <FieldLabel text={t.fullName} />
+          {isEditing ? (
+            <StyledInput value={name} onChangeText={setName} placeholder={t.fullNamePlaceholder} />
+          ) : (
+            <View style={[s.lockedRow, { borderColor: colors.border, backgroundColor: colors.bgSecondary }]}>
+              <Text style={[s.lockedValue, { color: colors.text }]}>{profile.name || name || '—'}</Text>
+            </View>
           )}
-          <FieldLabel text={t.doctorName} />
-          <StyledInput value={draft.doctorName} onChangeText={(v) => set({ doctorName: v })} placeholder={t.doctorNamePlaceholder} />
-          <FieldLabel text={t.clinicHospital} />
-          <StyledInput value={draft.clinicName} onChangeText={(v) => set({ clinicName: v })} placeholder={t.clinicPlaceholder} />
-          <FieldLabel text={t.address} />
-          <StyledInput value={draft.address ?? ''} onChangeText={(v) => set({ address: v })} placeholder={t.addressPlaceholder} />
-        </>}
-        <PressBtn
-          style={[s.saveProfileBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]}
-          onPress={handleSave}
-          activeOpacity={0.8}
-          accessibilityLabel={t.saveProfile}
-        >
-          <Text style={s.saveProfileBtnText}>{saved ? t.savedCheck : t.saveProfile}</Text>
-        </PressBtn>
-      </SectionCard>}
+
+          {/* ── Date of Birth ── */}
+          <FieldLabel text={t.dateOfBirth} />
+          {isEditing ? (
+            <>
+              <TouchableOpacity
+                style={[s.input, s.datePickerBtn, { borderColor: colors.border, backgroundColor: colors.inputBg }]}
+                onPress={() => setShowDobPicker(true)}
+                activeOpacity={0.75}
+              >
+                <Text style={{ color: dob ? colors.text : colors.placeholder, fontSize: 15 }}>
+                  {dob ? formatDobDisplay(dob) : t.dobPlaceholder}
+                </Text>
+              </TouchableOpacity>
+              {showDobPicker && (
+                Platform.OS === 'ios' ? (
+                  <Modal transparent animationType="fade" onRequestClose={() => setShowDobPicker(false)}>
+                    <View style={s.dateModalOverlay}>
+                      <View style={[s.dateModalSheet, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                        <DateTimePicker
+                          value={parseDobToDate(dob)}
+                          mode="date" display="spinner" maximumDate={new Date()}
+                          onChange={(_, date) => { if (date) setDob(date.toISOString()); }}
+                        />
+                        <TouchableOpacity style={[s.dateModalDone, { backgroundColor: colors.red }]} onPress={() => setShowDobPicker(false)}>
+                          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>{t.done}</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </Modal>
+                ) : (
+                  <DateTimePicker
+                    value={parseDobToDate(dob)}
+                    mode="date" display="spinner" maximumDate={new Date()}
+                    onChange={(_, date) => { setShowDobPicker(false); if (date) setDob(date.toISOString()); }}
+                  />
+                )
+              )}
+            </>
+          ) : (
+            <View style={[s.lockedRow, { borderColor: colors.border, backgroundColor: colors.bgSecondary }]}>
+              <Text style={[s.lockedValue, { color: colors.text }]}>
+                {profile.age ? formatDobDisplay(profile.age) : dob ? formatDobDisplay(dob) : '—'}
+              </Text>
+            </View>
+          )}
+
+          {!caregiverSession && (
+            <>
+              {/* ── Diabetes Type ── */}
+              <FieldLabel text={t.diabetesType} />
+              {isEditing ? (
+                <View style={s.pillRow}>
+                  {DIABETES_TYPES.map((tp) => {
+                    const active = diabetesType === tp;
+                    return (
+                      <TouchableOpacity key={tp}
+                        style={[s.pill, active ? s.primaryBtnShadow : null, { borderColor: colors.red, backgroundColor: active ? colors.red : 'transparent' }]}
+                        onPress={() => setDiabetesType(tp)} activeOpacity={0.75}>
+                        <Text style={[s.pillText, { color: active ? '#fff' : colors.textMuted }]}>{tp}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              ) : (
+                <View style={[s.lockedRow, { borderColor: colors.border, backgroundColor: colors.bgSecondary }]}>
+                  <Text style={[s.lockedValue, { color: colors.text }]}>{profile.diabetesType || diabetesType || '—'}</Text>
+                </View>
+              )}
+
+              {/* ── Diagnosis Date ── */}
+              <FieldLabel text={t.diagnosisDate} />
+              {isEditing ? (
+                <>
+                  <TouchableOpacity
+                    style={[s.input, s.datePickerBtn, { borderColor: colors.border, backgroundColor: colors.inputBg }]}
+                    onPress={() => setShowDiagnosisPicker(true)}
+                    activeOpacity={0.75}
+                  >
+                    <Text style={{ color: diagnosisDate ? colors.text : colors.placeholder, fontSize: 15 }}>
+                      {diagnosisDate || t.diagnosisDatePlaceholder}
+                    </Text>
+                  </TouchableOpacity>
+                  {showDiagnosisPicker && (
+                    Platform.OS === 'ios' ? (
+                      <Modal transparent animationType="fade" onRequestClose={() => setShowDiagnosisPicker(false)}>
+                        <View style={s.dateModalOverlay}>
+                          <View style={[s.dateModalSheet, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                            <DateTimePicker
+                              value={(() => { if (diagnosisDate) { const [m, y] = diagnosisDate.split('/'); const d = new Date(parseInt(y, 10), parseInt(m, 10) - 1, 1); return isNaN(d.getTime()) ? new Date() : d; } return new Date(); })()}
+                              mode="date" display="spinner" maximumDate={new Date()}
+                              onChange={(_, date) => { if (date) setDiagnosisDate(`${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`); }}
+                            />
+                            <TouchableOpacity style={[s.dateModalDone, { backgroundColor: colors.red }]} onPress={() => setShowDiagnosisPicker(false)}>
+                              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>{t.done}</Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      </Modal>
+                    ) : (
+                      <DateTimePicker
+                        value={(() => { if (diagnosisDate) { const [m, y] = diagnosisDate.split('/'); const d = new Date(parseInt(y, 10), parseInt(m, 10) - 1, 1); return isNaN(d.getTime()) ? new Date() : d; } return new Date(); })()}
+                        mode="date" display="spinner" maximumDate={new Date()}
+                        onChange={(_, date) => { setShowDiagnosisPicker(false); if (date) setDiagnosisDate(`${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`); }}
+                      />
+                    )
+                  )}
+                </>
+              ) : (
+                <View style={[s.lockedRow, { borderColor: colors.border, backgroundColor: colors.bgSecondary }]}>
+                  <Text style={[s.lockedValue, { color: colors.text }]}>{profile.diagnosisDate || diagnosisDate || '—'}</Text>
+                </View>
+              )}
+
+              {/* ── Doctor Name ── */}
+              <FieldLabel text={t.doctorName} />
+              {isEditing ? (
+                <StyledInput value={doctorName} onChangeText={setDoctorName} placeholder={t.doctorNamePlaceholder} />
+              ) : (
+                <View style={[s.lockedRow, { borderColor: colors.border, backgroundColor: colors.bgSecondary }]}>
+                  <Text style={[s.lockedValue, { color: colors.text }]}>{profile.doctorName || doctorName || '—'}</Text>
+                </View>
+              )}
+
+              {/* ── Clinic / Hospital ── */}
+              <FieldLabel text={t.clinicHospital} />
+              {isEditing ? (
+                <StyledInput value={clinicName} onChangeText={setClinicName} placeholder={t.clinicPlaceholder} />
+              ) : (
+                <View style={[s.lockedRow, { borderColor: colors.border, backgroundColor: colors.bgSecondary }]}>
+                  <Text style={[s.lockedValue, { color: colors.text }]}>{profile.clinicName || clinicName || '—'}</Text>
+                </View>
+              )}
+
+              {/* ── Address ── */}
+              <FieldLabel text={t.address} />
+              {isEditing ? (
+                <StyledInput value={address} onChangeText={setAddress} placeholder={t.addressPlaceholder} />
+              ) : (
+                <View style={[s.lockedRow, { borderColor: colors.border, backgroundColor: colors.bgSecondary }]}>
+                  <Text style={[s.lockedValue, { color: colors.text }]}>{profile.address || address || '—'}</Text>
+                </View>
+              )}
+            </>
+          )}
+
+          {isEditing && (
+            <PressBtn
+              style={[s.saveProfileBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]}
+              onPress={handleSave}
+              activeOpacity={0.8}
+            >
+              <Text style={s.saveProfileBtnText}>{saved ? t.savedCheck : t.saveProfile}</Text>
+            </PressBtn>
+          )}
+        </SectionCard>
+      )}
     </ScrollView>
   );
 }
@@ -538,17 +602,17 @@ function SettingsTab() {
   const { settings, setSettings, clearHistory, clearInsulinLog, caregiverSession } = useGlucoseStore();
   const { colors } = useTheme();
   const t = useTranslation();
-  const [showTraining,    setShowTraining]    = useState(false);
-  const [isfFocused,      setIsfFocused]      = useState(false);
-  const [ratioFocused,    setRatioFocused]    = useState(false);
-  const [targetFocused,   setTargetFocused]   = useState(false);
-  const [diaFocused,      setDiaFocused]      = useState(false);
-  const [secNewPin,       setSecNewPin]       = useState('');
-  const [secConfirmPin,   setSecConfirmPin]   = useState('');
-  const [secNewPass,      setSecNewPass]      = useState('');
-  const [secConfirmPass,  setSecConfirmPass]  = useState('');
-  const [secError,        setSecError]        = useState('');
-  const [secSuccess,      setSecSuccess]      = useState('');
+  const [showTraining,   setShowTraining]   = useState(false);
+  const [isfFocused,     setIsfFocused]     = useState(false);
+  const [ratioFocused,   setRatioFocused]   = useState(false);
+  const [targetFocused,  setTargetFocused]  = useState(false);
+  const [diaFocused,     setDiaFocused]     = useState(false);
+  const [secNewPin,      setSecNewPin]      = useState('');
+  const [secConfirmPin,  setSecConfirmPin]  = useState('');
+  const [secNewPass,     setSecNewPass]     = useState('');
+  const [secConfirmPass, setSecConfirmPass] = useState('');
+  const [secError,       setSecError]       = useState('');
+  const [secSuccess,     setSecSuccess]     = useState('');
 
   const LOCK_TIMEOUT_OPTIONS: { label: string; value: LockTimeout }[] = [
     { label: t.lockImmediate, value: 'immediate' },
@@ -590,8 +654,8 @@ function SettingsTab() {
       setSecNewPin(''); setSecConfirmPin('');
       setSecSuccess(t.pinSaved);
     } else if (settings.securityMethod === 'password') {
-      if (secNewPass.length < 7)         { setSecError(t.passwordMin7); return; }
-      if (secNewPass !== secConfirmPass)  { setSecError(t.passwordsDoNotMatch); return; }
+      if (secNewPass.length < 7)        { setSecError(t.passwordMin7); return; }
+      if (secNewPass !== secConfirmPass) { setSecError(t.passwordsDoNotMatch); return; }
       setSettings({ securityHash: hashValue(secNewPass) });
       setSecNewPass(''); setSecConfirmPass('');
       setSecSuccess(t.passwordSaved);
@@ -605,27 +669,15 @@ function SettingsTab() {
   ];
 
   const handleClearData = () => {
-    Alert.alert(
-      t.clearAllDataConfirmTitle,
-      t.clearAllDataConfirmBody,
-      [
-        { text: t.cancel, style: 'cancel' },
-        {
-          text: t.yesDeleteEverything,
-          style: 'destructive',
-          onPress: () => {
-            Alert.alert(
-              t.areYouSure,
-              t.lastChance,
-              [
-                { text: t.goBack, style: 'cancel' },
-                { text: t.deletePermanently, style: 'destructive', onPress: () => { clearHistory(); clearInsulinLog(); } },
-              ]
-            );
-          },
-        },
-      ]
-    );
+    Alert.alert(t.clearAllDataConfirmTitle, t.clearAllDataConfirmBody, [
+      { text: t.cancel, style: 'cancel' },
+      { text: t.yesDeleteEverything, style: 'destructive', onPress: () => {
+        Alert.alert(t.areYouSure, t.lastChance, [
+          { text: t.goBack, style: 'cancel' },
+          { text: t.deletePermanently, style: 'destructive', onPress: () => { clearHistory(); clearInsulinLog(); } },
+        ]);
+      }},
+    ]);
   };
 
   return (
@@ -663,70 +715,69 @@ function SettingsTab() {
           })}
         </View>
         <Divider />
-        <View style={s.settingRow}>
-          <View style={{ flex: 1 }}>
-            <Text style={[s.settingLabel, { color: colors.text }]}>{t.language}</Text>
-          </View>
-          <View style={s.pillRow}>
-            {(['en', 'ro'] as const).map((lang) => {
-              const active = (settings.language ?? 'en') === lang;
-              return (
-                <TouchableOpacity key={lang}
-                  style={[s.pill, active ? s.primaryBtnShadow : null, { borderColor: colors.red, backgroundColor: active ? colors.red : 'transparent' }]}
-                  onPress={() => setSettings({ language: lang })} activeOpacity={0.75}>
-                  <Text style={[s.pillText, { color: active ? '#fff' : colors.textMuted }]}>{lang === 'en' ? '🇬🇧 EN' : '🇷🇴 RO'}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
-      </SectionCard>
-
-      {!caregiverSession && <SectionCard>
-        <SectionTitle text={t.insulinCalcDefaults} />
-        <Text style={[s.sectionHint, { color: colors.textMuted }]}>{t.insulinCalcHint}</Text>
-        <FieldLabel text={t.rapidActingInsulinType} />
+        <FieldLabel text={t.chooseLanguage} />
         <View style={s.pillRow}>
-          {INSULIN_ANALOGS.map((analog) => {
-            const active = settings.insulinAnalogType === analog.value;
+          {(['en', 'ro', 'it', 'de', 'fr', 'nl'] as const).map((lang) => {
+            const active = (settings.language ?? 'en') === lang;
+            const label = lang === 'en' ? '🇬🇧 EN' : lang === 'ro' ? '🇷🇴 RO' : lang === 'it' ? '🇮🇹 IT' : lang === 'de' ? '🇩🇪 DE' : lang === 'fr' ? '🇫🇷 FR' : '🇳🇱 NL';
             return (
-              <TouchableOpacity key={analog.value}
+              <TouchableOpacity key={lang}
                 style={[s.pill, active ? s.primaryBtnShadow : null, { borderColor: colors.red, backgroundColor: active ? colors.red : 'transparent' }]}
-                onPress={() => setSettings({ insulinAnalogType: analog.value as InsulinAnalogType, dia: analog.defaultDia })}
-                activeOpacity={0.75}>
-                <Text style={[s.pillText, { color: active ? '#fff' : colors.textMuted }]}>{analog.label}</Text>
+                onPress={() => setSettings({ language: lang })} activeOpacity={0.75}>
+                <Text style={[s.pillText, { color: active ? '#fff' : colors.textMuted }]}>{label}</Text>
               </TouchableOpacity>
             );
           })}
         </View>
-        <Text style={[s.sectionHint, { color: colors.textFaint, marginTop: 2 }]}>
-          {getAnalogByType(settings.insulinAnalogType).sublabel}
-        </Text>
-        <View style={s.paramGrid}>
-          {[
-            { label: t.targetGlycemia, value: String(settings.targetGlucose), focused: targetFocused, setFocused: setTargetFocused, onChange: (v: string) => { const n = parseFloat(v); if (!isNaN(n)) setSettings({ targetGlucose: n, insulinParamsSet: true }); } },
-            { label: t.isfParam,       value: String(settings.isf),           focused: isfFocused,    setFocused: setIsfFocused,    onChange: (v: string) => { const n = parseFloat(v); if (!isNaN(n)) setSettings({ isf: n, insulinParamsSet: true }); } },
-            { label: t.carbRatioParam, value: String(settings.carbRatio),     focused: ratioFocused,  setFocused: setRatioFocused,  onChange: (v: string) => { const n = parseFloat(v); if (!isNaN(n)) setSettings({ carbRatio: n, insulinParamsSet: true }); } },
-            { label: t.diaParam,       value: String(settings.dia),           focused: diaFocused,    setFocused: setDiaFocused,    onChange: (v: string) => { const n = parseFloat(v); if (!isNaN(n)) setSettings({ dia: n }); } },
-          ].map((param, i) => (
-            <View key={i} style={s.paramItem}>
-              <Text style={[s.paramLabel, { color: colors.textMuted }]}>{param.label}</Text>
-              <TextInput
-                style={[s.paramInput, param.focused && { borderColor: colors.red }, { color: colors.text, backgroundColor: colors.inputBg }]}
-                keyboardType="decimal-pad" value={param.value} onChangeText={param.onChange}
-                onFocus={() => param.setFocused(true)} onBlur={() => param.setFocused(false)} returnKeyType="done"
-              />
-            </View>
-          ))}
-        </View>
-        <PressBtn style={[s.authBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={() => setSettings({ insulinParamsSet: true })} activeOpacity={0.8}>
-          <Text style={s.authBtnText}>{t.saveParameters}</Text>
-        </PressBtn>
-        <TouchableOpacity style={[s.trainingBtn, { borderColor: colors.red }]} onPress={() => setShowTraining(true)} activeOpacity={0.75}>
-          <Text style={[s.trainingBtnText, { color: colors.red }]}>{t.whatDoParamsMean}</Text>
-        </TouchableOpacity>
-        <ParamTrainingModal visible={showTraining} onClose={() => setShowTraining(false)} />
-      </SectionCard>}
+      </SectionCard>
+
+      {!caregiverSession && (
+        <SectionCard>
+          <SectionTitle text={t.insulinCalcDefaults} />
+          <Text style={[s.sectionHint, { color: colors.textMuted }]}>{t.insulinCalcHint}</Text>
+          <FieldLabel text={t.rapidActingInsulinType} />
+          <View style={s.pillRow}>
+            {INSULIN_ANALOGS.map((analog) => {
+              const active = settings.insulinAnalogType === analog.value;
+              return (
+                <TouchableOpacity key={analog.value}
+                  style={[s.pill, active ? s.primaryBtnShadow : null, { borderColor: colors.red, backgroundColor: active ? colors.red : 'transparent' }]}
+                  onPress={() => setSettings({ insulinAnalogType: analog.value as InsulinAnalogType, dia: analog.defaultDia })}
+                  activeOpacity={0.75}>
+                  <Text style={[s.pillText, { color: active ? '#fff' : colors.textMuted }]}>{analog.label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          <Text style={[s.sectionHint, { color: colors.textFaint, marginTop: 2 }]}>
+            {getAnalogByType(settings.insulinAnalogType).sublabel}
+          </Text>
+          <View style={s.paramGrid}>
+            {[
+              { label: t.targetGlycemia, value: String(settings.targetGlucose), focused: targetFocused, setFocused: setTargetFocused, onChange: (v: string) => { const n = parseFloat(v); if (!isNaN(n)) setSettings({ targetGlucose: n, insulinParamsSet: true }); } },
+              { label: t.isfParam,       value: String(settings.isf),           focused: isfFocused,    setFocused: setIsfFocused,    onChange: (v: string) => { const n = parseFloat(v); if (!isNaN(n)) setSettings({ isf: n, insulinParamsSet: true }); } },
+              { label: t.carbRatioParam, value: String(settings.carbRatio),     focused: ratioFocused,  setFocused: setRatioFocused,  onChange: (v: string) => { const n = parseFloat(v); if (!isNaN(n)) setSettings({ carbRatio: n, insulinParamsSet: true }); } },
+              { label: t.diaParam,       value: String(settings.dia),           focused: diaFocused,    setFocused: setDiaFocused,    onChange: (v: string) => { const n = parseFloat(v); if (!isNaN(n)) setSettings({ dia: n }); } },
+            ].map((param, i) => (
+              <View key={i} style={s.paramItem}>
+                <Text style={[s.paramLabel, { color: colors.textMuted }]}>{param.label}</Text>
+                <TextInput
+                  style={[s.paramInput, param.focused && { borderColor: colors.red }, { color: colors.text, backgroundColor: colors.inputBg }]}
+                  keyboardType="decimal-pad" value={param.value} onChangeText={param.onChange}
+                  onFocus={() => param.setFocused(true)} onBlur={() => param.setFocused(false)} returnKeyType="done"
+                />
+              </View>
+            ))}
+          </View>
+          <PressBtn style={[s.authBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={() => setSettings({ insulinParamsSet: true })} activeOpacity={0.8}>
+            <Text style={s.authBtnText}>{t.saveParameters}</Text>
+          </PressBtn>
+          <TouchableOpacity style={[s.trainingBtn, { borderColor: colors.red }]} onPress={() => setShowTraining(true)} activeOpacity={0.75}>
+            <Text style={[s.trainingBtnText, { color: colors.red }]}>{t.whatDoParamsMean}</Text>
+          </TouchableOpacity>
+          <ParamTrainingModal visible={showTraining} onClose={() => setShowTraining(false)} />
+        </SectionCard>
+      )}
 
       <SectionCard>
         <SectionTitle text={t.security} />
@@ -738,8 +789,7 @@ function SettingsTab() {
             return (
               <TouchableOpacity key={opt.value}
                 style={[s.pill, active ? s.primaryBtnShadow : null, { borderColor: colors.red, backgroundColor: active ? colors.red : 'transparent' }]}
-                onPress={() => handleMethodChange(opt.value)} activeOpacity={0.75}
-                accessibilityLabel={opt.label} accessibilityRole="radio" accessibilityState={{ checked: active }}>
+                onPress={() => handleMethodChange(opt.value)} activeOpacity={0.75}>
                 <Text style={[s.pillText, { color: active ? '#fff' : colors.textMuted }]}>{opt.icon} {opt.label}</Text>
               </TouchableOpacity>
             );
@@ -748,10 +798,10 @@ function SettingsTab() {
         {settings.securityMethod === 'pin' && (
           <View style={{ gap: 8, marginTop: 10 }}>
             <FieldLabel text={t.newPin} />
-            <StyledInput value={secNewPin} onChangeText={setSecNewPin} placeholder="••••" keyboardType="number-pad" maxLength={4} secureTextEntry accessibilityLabel={t.newPin} />
+            <StyledInput value={secNewPin} onChangeText={setSecNewPin} placeholder="••••" keyboardType="number-pad" maxLength={4} secureTextEntry />
             <FieldLabel text={t.confirmPin} />
-            <StyledInput value={secConfirmPin} onChangeText={setSecConfirmPin} placeholder="••••" keyboardType="number-pad" maxLength={4} secureTextEntry accessibilityLabel={t.confirmPin} />
-            <PressBtn style={[s.authBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={handleSaveCredential} accessibilityLabel={t.savePin}>
+            <StyledInput value={secConfirmPin} onChangeText={setSecConfirmPin} placeholder="••••" keyboardType="number-pad" maxLength={4} secureTextEntry />
+            <PressBtn style={[s.authBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={handleSaveCredential}>
               <Text style={s.authBtnText}>{t.savePin}</Text>
             </PressBtn>
           </View>
@@ -759,10 +809,10 @@ function SettingsTab() {
         {settings.securityMethod === 'password' && (
           <View style={{ gap: 8, marginTop: 10 }}>
             <FieldLabel text={t.newPasswordSetting} />
-            <StyledInput value={secNewPass} onChangeText={setSecNewPass} placeholder={t.newPasswordSetting} secureTextEntry accessibilityLabel={t.newPasswordSetting} />
+            <StyledInput value={secNewPass} onChangeText={setSecNewPass} placeholder={t.newPasswordSetting} secureTextEntry />
             <FieldLabel text={t.confirmPin} />
-            <StyledInput value={secConfirmPass} onChangeText={setSecConfirmPass} placeholder={t.confirmPasswordPlaceholder} secureTextEntry accessibilityLabel={t.confirmPin} />
-            <PressBtn style={[s.authBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={handleSaveCredential} accessibilityLabel={t.savePasswordBtn}>
+            <StyledInput value={secConfirmPass} onChangeText={setSecConfirmPass} placeholder={t.confirmPasswordPlaceholder} secureTextEntry />
+            <PressBtn style={[s.authBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={handleSaveCredential}>
               <Text style={s.authBtnText}>{t.savePasswordBtn}</Text>
             </PressBtn>
           </View>
@@ -779,8 +829,7 @@ function SettingsTab() {
                 return (
                   <TouchableOpacity key={opt.value}
                     style={[s.pill, active ? s.primaryBtnShadow : null, { borderColor: colors.red, backgroundColor: active ? colors.red : 'transparent' }]}
-                    onPress={() => setSettings({ lockTimeout: opt.value })} activeOpacity={0.75}
-                    accessibilityLabel={opt.label} accessibilityRole="radio" accessibilityState={{ checked: active }}>
+                    onPress={() => setSettings({ lockTimeout: opt.value })} activeOpacity={0.75}>
                     <Text style={[s.pillText, { color: active ? '#fff' : colors.textMuted }]}>{opt.label}</Text>
                   </TouchableOpacity>
                 );
@@ -790,24 +839,28 @@ function SettingsTab() {
         )}
       </SectionCard>
 
-      {!caregiverSession && <SectionCard>
-        <SectionTitle text={t.notifications} />
-        <View style={s.settingRow}>
-          <View style={{ flex: 1 }}>
-            <Text style={[s.settingLabel, { color: colors.text }]}>{t.enableNotifications}</Text>
-            <Text style={[s.settingSubLabel, { color: colors.textFaint }]}>{t.enableNotificationsSubtitle}</Text>
+      {!caregiverSession && (
+        <SectionCard>
+          <SectionTitle text={t.notifications} />
+          <View style={s.settingRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={[s.settingLabel, { color: colors.text }]}>{t.enableNotifications}</Text>
+              <Text style={[s.settingSubLabel, { color: colors.textFaint }]}>{t.enableNotificationsSubtitle}</Text>
+            </View>
+            <Switch value={settings.notificationsEnabled} onValueChange={(v) => setSettings({ notificationsEnabled: v })} trackColor={{ false: '#ccc', true: RED }} thumbColor="#fff" />
           </View>
-          <Switch value={settings.notificationsEnabled} onValueChange={(v) => setSettings({ notificationsEnabled: v })} trackColor={{ false: '#ccc', true: RED }} thumbColor="#fff" />
-        </View>
-      </SectionCard>}
+        </SectionCard>
+      )}
 
-      {!caregiverSession && <SectionCard>
-        <SectionTitle text={t.data} />
-        <PressBtn style={[s.dangerBtn]} onPress={handleClearData} activeOpacity={0.75}>
-          <Text style={s.dangerBtnText}>{t.clearAllData}</Text>
-        </PressBtn>
-        <Text style={[s.dangerHint, { color: colors.textFaint }]}>{t.clearAllDataHint}</Text>
-      </SectionCard>}
+      {!caregiverSession && (
+        <SectionCard>
+          <SectionTitle text={t.data} />
+          <PressBtn style={[s.dangerBtn]} onPress={handleClearData} activeOpacity={0.75}>
+            <Text style={s.dangerBtnText}>{t.clearAllData}</Text>
+          </PressBtn>
+          <Text style={[s.dangerHint, { color: colors.textFaint }]}>{t.clearAllDataHint}</Text>
+        </SectionCard>
+      )}
 
       <SectionCard>
         <SectionTitle text={t.about} />
@@ -877,17 +930,17 @@ const s = StyleSheet.create({
   divider:      { height: 1, marginVertical: 8 },
   fieldLabel:   { fontSize: 12, fontWeight: '600', marginBottom: 4, marginTop: 8 },
 
-  input: { borderWidth: 1.5, borderRadius: 6, paddingVertical: Platform.OS === 'ios' ? 9 : 7, paddingHorizontal: 12, fontSize: 14, marginBottom: 4 },
+  input:        { borderWidth: 1.5, borderRadius: 6, paddingVertical: Platform.OS === 'ios' ? 9 : 7, paddingHorizontal: 12, fontSize: 14, marginBottom: 4 },
+  lockedRow:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderRadius: 6, paddingVertical: Platform.OS === 'ios' ? 9 : 7, paddingHorizontal: 12, marginBottom: 4 },
+  lockedValue:  { fontSize: 14, fontWeight: '600', flex: 1 },
+  editBtn:      { fontSize: 13, fontWeight: '700', paddingLeft: 12 },
 
   authBtn:        { borderRadius: 8, paddingVertical: 12, alignItems: 'center', marginTop: 12 },
   authBtnText:    { fontSize: 15, color: '#fff', fontWeight: '700', backgroundColor: 'transparent' },
   secMsg:         { fontSize: 13, textAlign: 'center', marginTop: 8, fontWeight: '600' },
-  authToggleRow:  { flexDirection: 'row', justifyContent: 'center', marginTop: 10 },
-  authToggleText: { fontSize: 13 },
-  authToggleLink: { fontSize: 13, fontWeight: '700' },
-  forgotLink:       { fontSize: 13, textDecorationLine: 'underline' },
-  changePwLink:     { alignItems: 'center', marginTop: 10 },
-  changePwLinkText: { fontSize: 13, textDecorationLine: 'underline' },
+  forgotLink:     { fontSize: 13, textDecorationLine: 'underline' },
+  changePwLink:   { alignItems: 'center', marginTop: 10 },
+  changePwLinkText:{ fontSize: 13, textDecorationLine: 'underline' },
 
   datePickerBtn:    { justifyContent: 'center', paddingHorizontal: 14 },
   dateModalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' },
@@ -904,16 +957,15 @@ const s = StyleSheet.create({
   signOutBtnText: { fontSize: 14, fontWeight: '700', backgroundColor: 'transparent' },
 
   pillRow:       { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
-  pill:          { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 6, borderWidth: 1.5, borderColor: '#e0e0e0', backgroundColor: 'transparent' },
+  pill:          { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 6, borderWidth: 1.5, backgroundColor: 'transparent' },
   pillText:      { fontSize: 13, fontWeight: '600', backgroundColor: 'transparent' },
-  pillTextActive:{ color: '#fff', backgroundColor: 'transparent' },
 
   settingRow:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4 },
   settingLabel:   { fontSize: 14, fontWeight: '600' },
   settingSubLabel:{ fontSize: 12, marginTop: 2 },
 
   paramGrid:  { flexDirection: 'row', gap: 8 },
-  paramItem:  { flex: 1 },
+  paramItem:  { flex: 1, justifyContent: 'flex-end' },
   paramLabel: { fontSize: 11, marginBottom: 6, textAlign: 'center', lineHeight: 15 },
   paramInput: { borderWidth: 1.5, borderColor: '#e0e0e0', borderRadius: 6, paddingVertical: Platform.OS === 'ios' ? 7 : 5, paddingHorizontal: 8, fontSize: 15, fontWeight: '700', textAlign: 'center' },
 
@@ -934,15 +986,18 @@ const s = StyleSheet.create({
   tabBarShadow:     { shadowColor: '#EC5557', shadowOffset: { width: 2, height: 2 }, shadowOpacity: 0.12, shadowRadius: 4, elevation: 4 },
   primaryBtnShadow: { shadowColor: '#7a1010', shadowOffset: { width: 4, height: 4 }, shadowOpacity: 0.45, shadowRadius: 0, elevation: 4 },
   outlineBtnShadow: { shadowColor: '#000', shadowOffset: { width: 1, height: 1 }, shadowOpacity: 0.06, shadowRadius: 2 },
-  dangerBtnShadow:  { shadowColor: '#e53935', shadowOffset: { width: 2, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 3 },
 
   trainingBtn:     { marginTop: 14, borderWidth: 1.5, borderRadius: 8, paddingVertical: 9, alignItems: 'center' },
   trainingBtnText: { fontSize: 13, fontWeight: '600' },
 
-  codeBox:  { borderWidth: 2, borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginTop: 4 },
-  codeText: { fontSize: 36, fontWeight: '800', letterSpacing: 8 },
   saveProfileBtn:     { marginTop: 16, borderRadius: 10, paddingVertical: 13, alignItems: 'center' },
   saveProfileBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
+
+  authToggleRow:  { flexDirection: 'row', justifyContent: 'center', marginTop: 10 },
+  authToggleText: { fontSize: 13 },
+  authToggleLink: { fontSize: 13, fontWeight: '700' },
+  codeBox:  { borderWidth: 2, borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginTop: 4 },
+  codeText: { fontSize: 36, fontWeight: '800', letterSpacing: 8 },
 });
 
 const cg = StyleSheet.create({

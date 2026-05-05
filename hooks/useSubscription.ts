@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useSubscriptionStore } from '../store/subscriptionStore';
 
 export const TRIAL_DAYS       = 14;
@@ -10,11 +9,6 @@ export function useSubscription() {
     hasUsedTrialPdf, oneTimePdfPurchased,
     startTrial, markTrialPdfUsed,
   } = useSubscriptionStore();
-
-  // Auto-start 14-day trial on very first app open
-  useEffect(() => {
-    if (!trialStartDate) startTrial();
-  }, []);
 
   const msElapsed   = trialStartDate ? Date.now() - new Date(trialStartDate).getTime() : 0;
   const daysElapsed = Math.floor(msElapsed / 86_400_000);
@@ -37,5 +31,6 @@ export function useSubscription() {
     hasUsedTrialPdf,
     oneTimePdfPurchased,
     markTrialPdfUsed,
+    startTrial,
   };
 }

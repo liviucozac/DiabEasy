@@ -12,8 +12,15 @@ interface Props {
 
 export function UpgradeModal({ visible, onClose }: Props) {
   const { colors } = useTheme();
-  const { setPremiumPaid, setOneTimePdfPurchased } = useSubscriptionStore();
+  const { setPremiumPaid, setOneTimePdfPurchased, startTrial, trialStartDate } = useSubscriptionStore();
   const t = useTranslation();
+
+  const trialAvailable = !trialStartDate;
+
+  const handleTrial = () => {
+    startTrial();
+    onClose();
+  };
 
   const handleSubscribe = () => {
     // TODO: replace with RevenueCat purchase when ready to publish
@@ -57,6 +64,21 @@ export function UpgradeModal({ visible, onClose }: Props) {
                 ))}
               </View>
             </View>
+
+            {trialAvailable && (
+              <>
+                <PressBtn
+                  style={[s.trialBtn, { backgroundColor: colors.normal }, s.btnShadow]}
+                  onPress={handleTrial}
+                >
+                  <Text style={s.primaryBtnText}>🎁 Try Premium for 14 days — Free</Text>
+                </PressBtn>
+                <Text style={[s.btnNote, { color: colors.textMuted }]}>
+                  No payment required. Explore all premium features.
+                </Text>
+                <View style={[s.divider, { backgroundColor: colors.border }]} />
+              </>
+            )}
 
             <PressBtn
               style={[s.primaryBtn, { backgroundColor: colors.red }, s.btnShadow]}
@@ -104,6 +126,7 @@ const s = StyleSheet.create({
   featureRow:     { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginBottom: 7 },
   featureIcon:    { fontSize: 11, fontWeight: '700', marginTop: 1, width: 12 },
   featureText:    { flex: 1, fontSize: 11, lineHeight: 16 },
+  trialBtn:       { borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginBottom: 6 },
   primaryBtn:     { borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginBottom: 6 },
   primaryBtnText: { fontSize: 15, fontWeight: '800', color: '#fff' },
   btnShadow:      { shadowColor: '#7a1010', shadowOffset: { width: 3, height: 3 }, shadowOpacity: 0.45, shadowRadius: 0, elevation: 4 },

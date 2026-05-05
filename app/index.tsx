@@ -209,7 +209,9 @@ export default function HomeScreen() {
   const { colors, isDark } = useTheme();
   const t = useTranslation();
 
-  const [unit, setUnit]                     = useState<Unit>(globalUnit ?? 'mg/dL');
+  const { setSettings } = useGlucoseStore();
+  const unit = settings.glucoseUnit ?? 'mg/dL';
+  const setUnit = (u: Unit) => setSettings({ glucoseUnit: u });
   const [inputValue, setInputValue]         = useState('');
   const [inputFocused, setInputFocused]     = useState(false);
   const [fasting, setFasting]               = useState<FastingType>('');
@@ -288,7 +290,7 @@ export default function HomeScreen() {
     const interpretation = getInterpretation(reading.value, reading.unit, settings.glucoseLow, settings.glucoseHigh);
     const colorClass     = getColorClass(reading.value, reading.unit, settings.glucoseLow, settings.glucoseHigh);
     setGlucoseValue(reading.value);
-    setUnit(reading.unit);
+    setUnit(reading.unit); setSettings({ glucoseUnit: reading.unit });
     setGlobalGlucose(reading.value, reading.unit);
     addEntry({ value: reading.value, unit: reading.unit, timestamp: reading.timestamp, interpretation, fasting: '', symptoms: '' });
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -372,17 +374,17 @@ export default function HomeScreen() {
           </Text>
 
           <View style={styles.unitToggleRow}>
-            <TouchableOpacity onPress={() => setUnit('mg/dL')} activeOpacity={0.8}>
+            <TouchableOpacity onPress={() => { setUnit('mg/dL'); setSettings({ glucoseUnit: 'mg/dL' }); }} activeOpacity={0.8}>
               <Text style={[styles.unitLabel, { color: unit === 'mg/dL' ? colors.red : colors.textMuted }]}>mg/dL</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.sliderTrack, { backgroundColor: colors.border }]}
-              onPress={() => setUnit(unit === 'mg/dL' ? 'mmol/L' : 'mg/dL')}
+              onPress={() => { const u = unit === 'mg/dL' ? 'mmol/L' : 'mg/dL'; setUnit(u); setSettings({ glucoseUnit: u }); }}
               activeOpacity={0.8}
             >
               <View style={[styles.sliderKnob, { backgroundColor: colors.text }, unit === 'mmol/L' && styles.sliderKnobRight]} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setUnit('mmol/L')} activeOpacity={0.8}>
+            <TouchableOpacity onPress={() => { setUnit('mmol/L'); setSettings({ glucoseUnit: 'mmol/L' }); }} activeOpacity={0.8}>
               <Text style={[styles.unitLabel, { color: unit === 'mmol/L' ? colors.red : colors.textMuted }]}>mmol/L</Text>
             </TouchableOpacity>
           </View>
@@ -482,7 +484,7 @@ export default function HomeScreen() {
 
           <TouchableOpacity onPress={() => {
               if (!auth().currentUser) {
-                Alert.alert('Sign in required', 'You need to be signed in to use caregiver mode. Go to the Profile tab to create an account or sign in.');
+                Alert.alert(t.signInRequired, t.signInRequiredBody);
                 return;
               }
               setShowCaregiverModal(true); setCaregiverError(''); setCaregiverCode('');

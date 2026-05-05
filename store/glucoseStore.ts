@@ -113,6 +113,7 @@ interface GlucoseStore {
 
   insulinEntries: InsulinEntry[];
   addInsulinEntry: (entry: InsulinEntry) => void;
+  removeInsulinEntry: (id: string) => void;
   clearInsulinLog: () => void;
 
   savedMeals: SavedMeal[];
@@ -192,13 +193,15 @@ export const useGlucoseStore = create<GlucoseStore>()(
 
       insulinEntries: [],
       addInsulinEntry: (entry) =>
-        set((state) => {
-          if (isSyncEnabled()) {
-            syncInsulinEntry(entry).catch(() => {});
-            syncEntryToCaregiverData('insulinLog', entry).catch(() => {});
-          }
-          return { insulinEntries: [...state.insulinEntries, entry] };
-        }),
+      set((state) => {
+        syncInsulinEntry(entry).catch(() => {});
+        if (isSyncEnabled()) {
+          syncEntryToCaregiverData('insulinLog', entry).catch(() => {});
+        }
+        return { insulinEntries: [...state.insulinEntries, entry] };
+      }),
+      removeInsulinEntry: (id) =>
+        set((state) => ({ insulinEntries: state.insulinEntries.filter((e) => e.id !== id) })),
       clearInsulinLog: () => set({ insulinEntries: [] }),
 
       savedMeals: [],

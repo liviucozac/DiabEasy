@@ -45,7 +45,6 @@ if (Platform.OS === 'android') {
 function AuthGateScreen() {
   const { colors } = useTheme();
   const t = useTranslation();
-  const { settings, setSettings } = useGlucoseStore();
   const { setPremiumPaid } = useSubscriptionStore();
 
   const [mode, setMode]                 = useState<'login' | 'signup'>('login');
@@ -67,9 +66,17 @@ function AuthGateScreen() {
       }
       checkFirebasePremium().then(ok => { if (ok) setPremiumPaid(true); }).catch(() => {});
       setEmail(''); setPassword('');
-    } catch (e: any) {
-      setError(e.message ?? t.authenticationFailed);
-    } finally {
+      } catch (e: any) {
+        if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found') {
+          setError('Wrong email and/or password. Please try again.');
+        } else if (e.code === 'auth/too-many-requests') {
+          setError('Too many failed attempts. Please try again later.');
+        } else if (e.code === 'auth/invalid-email') {
+          setError('Please enter a valid email address.');
+        } else {
+          setError(e.message ?? t.authenticationFailed);
+        }
+      } finally {
       setLoading(false);
     }
   };
@@ -98,7 +105,7 @@ function AuthGateScreen() {
         keyboardShouldPersistTaps="handled"
       >
         {/* Logo */}
-        <View style={{ alignItems: 'center', marginBottom: 32 }}>
+        <View style={{ alignItems: 'center', marginBottom: 20 }}>
           <Image source={{ uri: 'https://i.imgur.com/XRrP3SM.png' }} style={{ width: 72, height: 72 }} resizeMode="contain" />
           <Text style={{ fontSize: 28, fontWeight: '800', color: colors.red, marginTop: 8 }}>DiabEasy</Text>
           <Text style={{ fontSize: 14, color: colors.textMuted, marginTop: 4 }}>{t.yourDiabetesCompanion}</Text>
@@ -162,29 +169,6 @@ function AuthGateScreen() {
           </TouchableOpacity>
         )}
 
-        {/* Theme toggle */}
-        <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 10, marginTop: 32 }}>
-          {(['light', 'dark', 'system'] as const).map((th) => {
-            const active = (settings.theme ?? 'system') === th;
-            const icon = th === 'light' ? '☀️' : th === 'dark' ? '🌙' : '⚙️';
-            return (
-              <TouchableOpacity
-                key={th}
-                onPress={() => setSettings({ theme: th })}
-                style={{
-                  paddingHorizontal: 14, paddingVertical: 7, borderRadius: 8,
-                  borderWidth: 1.5, borderColor: active ? colors.red : colors.border,
-                  backgroundColor: active ? colors.red : 'transparent',
-                }}
-                activeOpacity={0.75}
-              >
-                <Text style={{ fontSize: 13, fontWeight: '600', color: active ? '#fff' : colors.textMuted }}>
-                  {icon} {th.charAt(0).toUpperCase() + th.slice(1)}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
 
       </ScrollView>
     </KeyboardAvoidingView>
@@ -198,6 +182,7 @@ function RoleSelectionScreen({ onPatient, onCaregiver }: {
   onCaregiver: (session: { code: string; patientName: string; isPremium: boolean }) => void;
 }) {
   const { colors } = useTheme();
+  const t = useTranslation();
   const [code, setCode]         = useState('');
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
@@ -205,7 +190,7 @@ function RoleSelectionScreen({ onPatient, onCaregiver }: {
 
   const handleCaregiverActivate = async () => {
     if (code.trim().length < 6) {
-      setError('Please enter the 6-digit caregiver code.');
+      setError(t.invalidCode);
       return;
     }
     setLoading(true); setError('');
@@ -213,7 +198,7 @@ function RoleSelectionScreen({ onPatient, onCaregiver }: {
       const session = await redeemCaregiverCode(code.trim());
       onCaregiver(session);
     } catch (e: any) {
-      setError('Invalid or expired code. Please check the code and try again.');
+      setError(t.invalidCode);
     } finally {
       setLoading(false);
     }
@@ -230,11 +215,11 @@ function RoleSelectionScreen({ onPatient, onCaregiver }: {
         showsVerticalScrollIndicator={false}
       >
         {/* Logo */}
-        <View style={{ alignItems: 'center', marginBottom: 28 }}>
+        <View style={{ alignItems: 'center', marginBottom: 20 }}>
           <Image source={{ uri: 'https://i.imgur.com/XRrP3SM.png' }} style={{ width: 64, height: 64 }} resizeMode="contain" />
           <Text style={{ fontSize: 24, fontWeight: '800', color: colors.red, marginTop: 8 }}>DiabEasy</Text>
           <Text style={{ fontSize: 15, color: colors.textMuted, marginTop: 8, textAlign: 'center', lineHeight: 22 }}>
-            How would you like to use the app today?
+            {t.howWouldYouLikeToUseApp}
           </Text>
         </View>
 
@@ -251,10 +236,10 @@ function RoleSelectionScreen({ onPatient, onCaregiver }: {
         >
           <Text style={{ fontSize: 22, marginBottom: 6 }}>🩸</Text>
           <Text style={{ fontSize: 17, fontWeight: '800', color: colors.text, marginBottom: 4 }}>
-            I'm a patient
+            {t.imAPatient}
           </Text>
           <Text style={{ fontSize: 13, color: colors.textMuted, lineHeight: 19 }}>
-            Log glucose readings, track insulin, manage my diabetes data.
+            {t.patientModeDesc}
           </Text>
         </TouchableOpacity>
 
@@ -271,10 +256,10 @@ function RoleSelectionScreen({ onPatient, onCaregiver }: {
         >
           <Text style={{ fontSize: 22, marginBottom: 6 }}>👩‍⚕️</Text>
           <Text style={{ fontSize: 17, fontWeight: '800', color: colors.text, marginBottom: 4 }}>
-            I'm a caregiver
+            {t.imACaregiver}
           </Text>
           <Text style={{ fontSize: 13, color: colors.textMuted, lineHeight: 19 }}>
-            View a patient's data in read-only mode using their 6-digit code.
+            {t.caregiverModeDesc}
           </Text>
         </TouchableOpacity>
 
@@ -282,7 +267,7 @@ function RoleSelectionScreen({ onPatient, onCaregiver }: {
         {showCode && (
           <View style={{ marginTop: 4 }}>
             <Text style={{ fontSize: 12, fontWeight: '600', color: colors.textMuted, marginBottom: 6 }}>
-              Enter the patient's 6-digit code
+              {t.enterPatientCode}
             </Text>
             <TextInput
               style={{
@@ -311,13 +296,13 @@ function RoleSelectionScreen({ onPatient, onCaregiver }: {
               disabled={loading}
             >
               <Text style={{ fontSize: 15, color: '#fff', fontWeight: '700' }}>
-                {loading ? 'Verifying…' : 'Activate caregiver mode'}
+                {loading ? t.verifying : t.activateCaregiverMode}
               </Text>
             </TouchableOpacity>
           </View>
         )}
 
-       {/* Sign out option */}
+        {/* Sign out option */}
         <TouchableOpacity
           onPress={async () => {
             const { signOut } = await import('../utils/firebaseAuth');
@@ -327,7 +312,7 @@ function RoleSelectionScreen({ onPatient, onCaregiver }: {
           style={{ alignItems: 'center', marginTop: 24 }}
         >
           <Text style={{ fontSize: 13, color: colors.textMuted, textDecorationLine: 'underline' }}>
-            Sign out
+            {t.signOut}
           </Text>
         </TouchableOpacity>
 
@@ -392,14 +377,15 @@ function AnimatedTabIcon({ name, color, focused }: { name: string; color: string
 function TabsLayout() {
   const { colors } = useTheme();
   const { caregiverSession } = useGlucoseStore();
+  const t = useTranslation();
 
   const ALL_TAB_SCREENS = [
-    { name: 'index',      title: 'Home',    icon: 'home' },
-    { name: 'history',    title: 'History', icon: 'time' },
-    { name: 'foodguide',  title: 'Food',    icon: 'nutrition' },
-    { name: 'medication', title: 'Meds',    icon: 'medical' },
-    { name: 'emergency',  title: 'SOS',     icon: 'warning' },
-    { name: 'profile',    title: 'Profile', icon: 'person' },
+    { name: 'index',      title: t.tabHome,    icon: 'home' },
+    { name: 'history',    title: t.tabHistory, icon: 'time' },
+    { name: 'foodguide',  title: t.tabFood,    icon: 'nutrition' },
+    { name: 'medication', title: t.tabMeds,    icon: 'medical' },
+    { name: 'emergency',  title: t.tabSos,     icon: 'warning' },
+    { name: 'profile',    title: t.tabProfile, icon: 'person' },
   ];
 
   const CAREGIVER_TABS = ['history', 'foodguide', 'medication', 'profile'];

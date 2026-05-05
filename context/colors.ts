@@ -47,8 +47,8 @@ export const COLORS = {
 
   dark: {
     // Brand — darker reds for dark mode
-    red:        '#9c2522',
-    redDark:    '#7a1c1a',
+    red:        '#c44244',
+    redDark:    '#993133',
 
     // Backgrounds
     bg:         '#121212',
@@ -65,9 +65,9 @@ export const COLORS = {
     textFaint:  '#666666',
 
     // Status colours
-    low:        '#9c2522',
+    low:        '#c24648',
     normal:     '#43a047',
-    high:       '#ef6c00',
+    high:       '#efa300',
 
     // Status backgrounds — darker tints
     lowBg:      '#2a1515',

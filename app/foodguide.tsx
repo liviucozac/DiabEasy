@@ -634,10 +634,12 @@ export default function FoodGuideScreen() {
                       <Text key={idx} style={[s.historyItemName, { color: colors.textMuted }]}>• {t.foodNames[item.name] ?? item.name}</Text>
                     ))}
                   </View>
-                  <PressBtn style={[s.deleteMealBtn, { backgroundColor: 'transparent' }]}
-                    onPress={() => removeSavedMeal(meal.id)} activeOpacity={0.75} disabled={!!caregiverSession}>
-                    <Text style={[s.deleteMealBtnText, { color: colors.textMuted }]}>{t.deleteMeal}</Text>
-                  </PressBtn>
+                    {!caregiverSession && (
+                      <PressBtn style={[s.deleteMealBtn, { backgroundColor: 'transparent' }]}
+                        onPress={() => removeSavedMeal(meal.id)} activeOpacity={0.75}>
+                        <Text style={[s.deleteMealBtnText, { color: colors.textMuted }]}>{t.deleteMeal}</Text>
+                      </PressBtn>
+                    )}
                 </>
               )}
             </View>

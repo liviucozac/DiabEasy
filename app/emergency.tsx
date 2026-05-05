@@ -208,7 +208,7 @@ export default function EmergencyScreen() {
           <View style={s.pickerHeader}>
             <Text style={[s.pickerTitle, { color: colors.text }]}>{t.chooseContact}</Text>
             <TouchableOpacity onPress={() => setShowContactPicker(false)} activeOpacity={0.7}>
-              <Text style={[s.pickerClose, { color: colors.red }]}>✕ Close</Text>
+              <Text style={[s.pickerClose, { color: colors.red }]}>✕ {t.close}</Text>
             </TouchableOpacity>
           </View>
           <TextInput
@@ -243,25 +243,30 @@ export default function EmergencyScreen() {
         <Text style={[s.emergencyCallTitle, { color: colors.red }]}>{t.needImmediateHelp}</Text>
         <Text style={[s.emergencyCallSub, { color: colors.textMuted }]}>
           {caregiverSession
-            ? t.caregiverEmergencySub(caregiverSession.patientName, caregiverSession.patientAddress ?? '')
+            ? t.caregiverEmergencySub(caregiverSession.patientName, '')
             : t.emergencyCallSub}
         </Text>
         <Animated.View style={{ transform: [{ scale: pulseAnim }], width: '100%', alignItems: 'center' }}>
-          <PressBtn
-            style={[s.callBtn, { backgroundColor: colors.red }, s.callBtnShadow]}
-            onPress={callEmergency}
-          >
+        <PressBtn
+          style={[s.callBtn, { backgroundColor: colors.red }, s.callBtnShadow]}
+          onPress={callEmergency}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%' }}>
             <Text style={s.callBtnIcon}>📞</Text>
-            <Text style={s.callBtnText}>{t.callEmergency(emergencyNumber)}</Text>
-          </PressBtn>
+            <Text style={s.callBtnText}>Call Emergency Services</Text>
+          </View>
+        </PressBtn>
         </Animated.View>
+
+        {/* In caregiver mode — no location, just exit button */}
         {caregiverSession ? (
-          caregiverSession.patientAddress ? (
-            <View style={s.locationBlock}>
-              <Text style={[s.locationLabel, { color: colors.textMuted }]}>{t.patientAddress}</Text>
-              <Text style={[s.locationLine, { color: colors.text }]}>📍 {caregiverSession.patientAddress}</Text>
-            </View>
-          ) : null
+          <TouchableOpacity
+            style={[s.hospitalBtn, { borderColor: colors.red, marginTop: 10 }]}
+            onPress={() => setCaregiverSession(null)}
+            activeOpacity={0.75}
+          >
+            <Text style={[s.hospitalBtnText, { color: colors.red }]}>{t.exitCaregiverMode}</Text>
+          </TouchableOpacity>
         ) : (
           <>
             {(locationLoading || locationAddress !== '') && (
@@ -287,15 +292,6 @@ export default function EmergencyScreen() {
               </TouchableOpacity>
             )}
           </>
-        )}
-        {caregiverSession && (
-          <TouchableOpacity
-            style={[s.hospitalBtn, { borderColor: colors.red, marginTop: 10 }]}
-            onPress={() => setCaregiverSession(null)}
-            activeOpacity={0.75}
-          >
-            <Text style={[s.hospitalBtnText, { color: colors.red }]}>Exit Caregiver Mode</Text>
-          </TouchableOpacity>
         )}
       </View>
 
@@ -472,7 +468,7 @@ const s = StyleSheet.create({
   emergencyCallCard: { borderRadius: 14, borderWidth: 2, padding: 18, marginBottom: 14, alignItems: 'center' },
   emergencyCallTitle:{ fontSize: 16, fontWeight: '800', marginBottom: 6 },
   emergencyCallSub:  { fontSize: 13, textAlign: 'center', lineHeight: 19, marginBottom: 14 },
-  callBtn:           { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 13, marginBottom: 10 },
+  callBtn:           { borderRadius: 10, paddingHorizontal: 24, paddingVertical: 13, marginBottom: 10, width: '100%' },
   callBtnIcon:       { fontSize: 18 },
   callBtnText:       { fontSize: 16, fontWeight: '800', color: '#fff', backgroundColor: 'transparent' },
   locationBlock:     { marginTop: 14, alignItems: 'center' },
@@ -491,26 +487,26 @@ const s = StyleSheet.create({
   emptyText:    { fontSize: 13, textAlign: 'center', paddingVertical: 10 },
   input:        { borderWidth: 1.5, borderRadius: 6, paddingVertical: Platform.OS === 'ios' ? 9 : 7, paddingHorizontal: 12, fontSize: 14, marginBottom: 10 },
 
-  mapBtnRow: { flexDirection: 'row', gap: 10, alignSelf: 'stretch' },
-  mapBtn: { flex: 1, borderRadius: 7, paddingVertical: 10, alignItems: 'center', height: 42 },
-  mapBtnOutline:{ borderWidth: 1.5 },
-  mapBtnText:   { fontSize: 13, fontWeight: '700', color: '#fff', backgroundColor: 'transparent' },
+  mapBtnRow:         { flexDirection: 'row', gap: 10, alignSelf: 'stretch' },
+  mapBtn:            { flex: 1, borderRadius: 7, paddingVertical: 10, alignItems: 'center', height: 42 },
+  mapBtnOutline:     { borderWidth: 1.5 },
+  mapBtnText:        { fontSize: 13, fontWeight: '700', color: '#fff', backgroundColor: 'transparent' },
   mapBtnOutlineText: { backgroundColor: 'transparent' },
 
-  addBtnRow:        { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  addFromPhoneBtn:  { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6, borderWidth: 1.5 },
+  addBtnRow:           { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  addFromPhoneBtn:     { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6, borderWidth: 1.5 },
   addFromPhoneBtnText: { fontSize: 12, fontWeight: '700', backgroundColor: 'transparent' },
-  addContactLink:    { fontSize: 13, fontWeight: '700' },
+  addContactLink:      { fontSize: 13, fontWeight: '700' },
 
-  contactRow:        { flexDirection: 'row', alignItems: 'center', paddingVertical: 10 },
-  contactRowBorder:  { borderTopWidth: 1, borderTopColor: '#f0f0f0' },
-  contactInfo:       { flex: 1 },
-  contactName:       { fontSize: 14, fontWeight: '700' },
-  contactMeta:       { fontSize: 12, marginTop: 1 },
-  contactActions:    { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  contactCallBtn:    { width: 34, height: 34, borderRadius: 17, backgroundColor: 'transparent', borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  contactRow:       { flexDirection: 'row', alignItems: 'center', paddingVertical: 10 },
+  contactRowBorder: { borderTopWidth: 1, borderTopColor: '#f0f0f0' },
+  contactInfo:      { flex: 1 },
+  contactName:      { fontSize: 14, fontWeight: '700' },
+  contactMeta:      { fontSize: 12, marginTop: 1 },
+  contactActions:   { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  contactCallBtn:   { width: 34, height: 34, borderRadius: 17, backgroundColor: 'transparent', borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   contactCallBtnText:{ fontSize: 16 },
-  contactDeleteBtn:  { fontSize: 16, fontWeight: '700', paddingHorizontal: 4 },
+  contactDeleteBtn: { fontSize: 16, fontWeight: '700', paddingHorizontal: 4 },
 
   addForm:       { marginTop: 4 },
   fieldLabel:    { fontSize: 12, fontWeight: '600', marginBottom: 4, marginTop: 8 },
@@ -530,10 +526,10 @@ const s = StyleSheet.create({
   actionTitle:     { fontSize: 13, fontWeight: '700', marginBottom: 6, marginTop: 4 },
   actionItem:      { fontSize: 13, lineHeight: 20, marginBottom: 4 },
 
-  dosGrid:         { marginTop: 8 },
-  dosRow:          { paddingVertical: 7 },
-  dosRowBorder:    { borderTopWidth: 1, borderTopColor: '#f5f5f5' },
-  dosText:         { fontSize: 13, lineHeight: 19, fontWeight: '600' },
+  dosGrid:     { marginTop: 8 },
+  dosRow:      { paddingVertical: 7 },
+  dosRowBorder:{ borderTopWidth: 1, borderTopColor: '#f5f5f5' },
+  dosText:     { fontSize: 13, lineHeight: 19, fontWeight: '600' },
 
   pickerOverlay: { borderRadius: 12, borderWidth: 1, padding: 16, marginBottom: 12 },
   pickerHeader:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },

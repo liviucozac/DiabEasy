@@ -155,6 +155,7 @@ function ExpandedLineChart({ data, colors }: { data: HistoryEntry[]; colors: any
 }
 
 function PieChart({ normal, high, low, colors }: { normal: number; high: number; low: number; colors: any }) {
+  const t = useTranslation();
   const total = normal + high + low;
   if (total === 0) return null;
 
@@ -198,7 +199,7 @@ function PieChart({ normal, high, low, colors }: { normal: number; high: number;
         ))}
         <Circle cx={cx} cy={cy} r={R * 0.42} fill={colors.bgCard} />
         <SvgText x={cx} y={cy - 6} fontSize={18} fontWeight="900" fill={colors.text} textAnchor="middle">{total}</SvgText>
-        <SvgText x={cx} y={cy + 12} fontSize={9} fill={colors.textMuted} textAnchor="middle">readings</SvgText>
+        <SvgText x={cx} y={cy + 12} fontSize={9} fill={colors.textMuted} textAnchor="middle">{t.readings.toLowerCase()}</SvgText>
       </Svg>
       <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, marginTop: 8 }}>
         {arcs.map((arc, i) => (

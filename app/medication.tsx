@@ -322,7 +322,7 @@ function CalculatorTab() {
 }
 
 function LogTab() {
-  const { insulinEntries, addInsulinEntry, clearInsulinLog, settings, glucoseValue, unit } = useGlucoseStore();
+  const { insulinEntries, addInsulinEntry, removeInsulinEntry, clearInsulinLog, settings, glucoseValue, unit } = useGlucoseStore();
   const { colors } = useTheme();
   const t = useTranslation();
 
@@ -330,8 +330,10 @@ function LogTab() {
   const [units,          setUnits]          = useState(0);
   const [timeDate,       setTimeDate]       = useState(new Date());
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const formatTime = (d: Date) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+  const formatDate = (d: Date) => `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
 
   const glucoseWarning = (() => {
     if (glucoseValue === null) return null;
@@ -349,7 +351,12 @@ function LogTab() {
 
   const handleAdd = () => {
     if (units <= 0) { Alert.alert(t.missingInfo, t.pleaseSetUnit); return; }
-    addInsulinEntry({ id: generateId(), units, time: formatTime(timeDate), type: insulinType, timestamp: new Date().toISOString() });
+    addInsulinEntry({
+      id: generateId(), units,
+      time: formatTime(timeDate),
+      type: insulinType,
+      timestamp: timeDate.toISOString(),
+    });
     setUnits(0); setTimeDate(new Date());
   };
 
@@ -402,6 +409,23 @@ function LogTab() {
             <Text style={s.stepperBtnText}>+</Text>
           </PressBtn>
         </View>
+
+        <Text style={[s.fieldLabel, { color: colors.textMuted }]}>Date</Text>
+        <TouchableOpacity style={[s.timeInput, s.timePickerBtn, s.outlineBtnShadow, { backgroundColor: colors.bgCard }]} onPress={() => setShowDatePicker(true)} activeOpacity={0.75}>
+          <Text style={[s.timePickerBtnText, { color: colors.text }]}>{formatDate(timeDate)}</Text>
+        </TouchableOpacity>
+        {showDatePicker && (
+          <DateTimePicker value={timeDate} mode="date" display="default" maximumDate={new Date()}
+            onChange={(event, date) => {
+              setShowDatePicker(false);
+              if (event.type === 'set' && date) {
+                const updated = new Date(timeDate);
+                updated.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
+                setTimeDate(updated);
+              }
+            }} />
+        )}
+
         <Text style={[s.fieldLabel, { color: colors.textMuted }]}>{t.timeTaken}</Text>
         <TouchableOpacity style={[s.timeInput, s.timePickerBtn, s.outlineBtnShadow, { backgroundColor: colors.bgCard }]} onPress={() => setShowTimePicker(true)} activeOpacity={0.75}>
           <Text style={[s.timePickerBtnText, { color: colors.text }]}>{formatTime(timeDate)}</Text>
@@ -410,6 +434,7 @@ function LogTab() {
           <DateTimePicker value={timeDate} mode="time" display="default"
             onChange={(event, date) => { setShowTimePicker(false); if (event.type === 'set' && date) setTimeDate(date); }} />
         )}
+
         <PressBtn style={[s.addEntryBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={handleAdd}>
           <Text style={s.addEntryBtnText}>{t.addToLog}</Text>
         </PressBtn>
@@ -443,12 +468,19 @@ function LogTab() {
               ? getAnalogByType(settings.insulinAnalogType).sublabel
               : getLongActingByType(settings.longActingInsulinType).sublabel;
             return (
-              <View key={idx} style={[s.logRow, idx < insulinEntries.length - 1 && s.logRowBorder, { backgroundColor: colors.bgCard }]}>
+              <View key={entry.id} style={[s.logRow, idx < insulinEntries.length - 1 && s.logRowBorder, { backgroundColor: colors.bgCard }]}>
                 <View style={s.logLeft}>
                   <Text style={[s.logType, { color: colors.text }]}>{entry.type}</Text>
                   <Text style={[s.logTime, { color: colors.textMuted }]}>{brandName}  ·  {t.at} {entry.time}</Text>
                 </View>
                 <Text style={[s.logUnits, { color: colors.red }]}>{entry.units}u</Text>
+                <TouchableOpacity
+                  onPress={() => removeInsulinEntry(entry.id)}
+                  activeOpacity={0.7}
+                  style={{ paddingLeft: 12, paddingVertical: 4 }}
+                >
+                  <Text style={{ fontSize: 16, color: colors.textMuted, fontWeight: '700' }}>✕</Text>
+                </TouchableOpacity>
               </View>
             );
           })
@@ -501,7 +533,7 @@ function ReminderForm({
             {days !== 'everyday' ? formatDateDisplay(days) : t.pickDate}
           </Text>
         </TouchableOpacity>
-        <Text style={[s.scheduleOrText, { color: colors.textMuted }]}>or</Text>
+        <Text style={[s.scheduleOrText, { color: colors.textMuted }]}>{t.or}</Text>
         <TouchableOpacity
           style={[s.schedulePill, { borderColor: colors.red }, days === 'everyday' && { backgroundColor: colors.red }]}
           onPress={() => setDays('everyday')} activeOpacity={0.75}>
