@@ -25,6 +25,15 @@ import {
 } from '../utils/firestoreSync';
 import { useSubscriptionStore } from '../store/subscriptionStore';
 import { router } from 'expo-router';
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+
+// ─── Configure Google Sign-In ─────────────────────────────────────────────────
+
+GoogleSignin.configure({
+  webClientId: '150645699717-s1emc44hle6kkkqopjqsrs7cef7chkjl.apps.googleusercontent.com',
+});
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -47,16 +56,21 @@ function AuthGateScreen() {
   const t = useTranslation();
   const { setPremiumPaid } = useSubscriptionStore();
 
-  const [mode, setMode]                 = useState<'login' | 'signup'>('login');
-  const [email, setEmail]               = useState('');
-  const [password, setPassword]         = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading]           = useState(false);
-  const [error, setError]               = useState('');
-  const [success, setSuccess]           = useState('');
+  const [mode, setMode]                         = useState<'login' | 'signup'>('login');
+  const [email, setEmail]                       = useState('');
+  const [password, setPassword]                 = useState('');
+  const [showPassword, setShowPassword]         = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading]                   = useState(false);
+  const [error, setError]                       = useState('');
+  const [success, setSuccess]                   = useState('');
+  const [confirmPassword, setConfirmPassword]   = useState('');
+
+  // ─── Email / Password Auth ────────────────────────────────────────────────
 
   const handleAuth = async () => {
     if (!email.trim() || !password.trim()) { setError(t.pleaseEnterEmailAndPassword); return; }
+    if (mode === 'signup' && password !== confirmPassword) { setError(t.passwordsDoNotMatch); return; }
     setLoading(true); setError(''); setSuccess('');
     try {
       if (mode === 'login') {
@@ -65,18 +79,18 @@ function AuthGateScreen() {
         await signUp(email.trim(), password);
       }
       checkFirebasePremium().then(ok => { if (ok) setPremiumPaid(true); }).catch(() => {});
-      setEmail(''); setPassword('');
-      } catch (e: any) {
-        if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found') {
-          setError('Wrong email and/or password. Please try again.');
-        } else if (e.code === 'auth/too-many-requests') {
-          setError('Too many failed attempts. Please try again later.');
-        } else if (e.code === 'auth/invalid-email') {
-          setError('Please enter a valid email address.');
-        } else {
-          setError(e.message ?? t.authenticationFailed);
-        }
-      } finally {
+      setEmail(''); setPassword(''); setConfirmPassword('');
+    } catch (e: any) {
+      if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found') {
+        setError('Wrong email and/or password. Please try again.');
+      } else if (e.code === 'auth/too-many-requests') {
+        setError('Too many failed attempts. Please try again later.');
+      } else if (e.code === 'auth/invalid-email') {
+        setError('Please enter a valid email address.');
+      } else {
+        setError(e.message ?? t.authenticationFailed);
+      }
+    } finally {
       setLoading(false);
     }
   };
@@ -89,6 +103,25 @@ function AuthGateScreen() {
       setSuccess(t.resetEmailSent);
     } catch (e: any) {
       setError(e.message ?? t.couldNotSendReset);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ─── Google Sign-In ───────────────────────────────────────────────────────
+
+  const handleGoogleSignIn = async () => {
+    setLoading(true); setError('');
+    try {
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+      const googleCredential = auth.GoogleAuthProvider.credential(userInfo.data?.idToken ?? '');
+      await auth().signInWithCredential(googleCredential);
+      checkFirebasePremium().then(ok => { if (ok) setPremiumPaid(true); }).catch(() => {});
+    } catch (e: any) {
+      if (e.code !== statusCodes.SIGN_IN_CANCELLED) {
+        setError('Google sign-in failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -116,7 +149,7 @@ function AuthGateScreen() {
           {(['login', 'signup'] as const).map((m) => (
             <TouchableOpacity key={m}
               style={{ flex: 1, paddingVertical: 10, alignItems: 'center', backgroundColor: mode === m ? colors.red : 'transparent' }}
-              onPress={() => { setMode(m); setError(''); setSuccess(''); }} activeOpacity={0.8}>
+              onPress={() => { setMode(m); setError(''); setSuccess(''); setConfirmPassword(''); }} activeOpacity={0.8}>
               <Text style={{ fontSize: 14, fontWeight: '700', color: mode === m ? '#fff' : colors.red }}>
                 {m === 'login' ? t.signIn : t.signUp}
               </Text>
@@ -145,10 +178,30 @@ function AuthGateScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Confirm Password (signup only) */}
+        {mode === 'signup' && (
+          <>
+            <Text style={{ fontSize: 12, fontWeight: '600', color: colors.textMuted, marginBottom: 4, marginTop: 10 }}>
+              {t.confirmPasswordLabel}
+            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderRadius: 6, borderColor: colors.border, backgroundColor: colors.inputBg, marginBottom: 10 }}>
+              <TextInput
+                style={{ flex: 1, paddingVertical: Platform.OS === 'ios' ? 10 : 8, paddingHorizontal: 12, fontSize: 14, color: colors.text }}
+                value={confirmPassword} onChangeText={setConfirmPassword}
+                placeholder={t.confirmPasswordLabel} placeholderTextColor={colors.placeholder}
+                secureTextEntry={!showConfirmPassword} returnKeyType="done"
+              />
+              <TouchableOpacity onPress={() => setShowConfirmPassword(v => !v)} activeOpacity={0.7} style={{ paddingHorizontal: 12 }}>
+                <Text style={{ fontSize: 16 }}>{showConfirmPassword ? '🙈' : '👁️'}</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
+
         {!!error   && <Text style={{ fontSize: 12, color: '#e53935', marginTop: 8, textAlign: 'center' }}>{error}</Text>}
         {!!success && <Text style={{ fontSize: 12, color: '#2e7d32', marginTop: 8, textAlign: 'center' }}>{success}</Text>}
 
-        {/* Sign in button */}
+        {/* Sign in / Create Account button */}
         <TouchableOpacity
           style={{
             borderRadius: 8, paddingVertical: 13, alignItems: 'center',
@@ -163,12 +216,42 @@ function AuthGateScreen() {
           </Text>
         </TouchableOpacity>
 
+        {/* Forgot password */}
         {mode === 'login' && (
           <TouchableOpacity onPress={handleForgotPassword} activeOpacity={0.7} style={{ alignItems: 'center', marginTop: 10 }}>
             <Text style={{ fontSize: 13, color: colors.textMuted, textDecorationLine: 'underline' }}>{t.forgotPassword}</Text>
           </TouchableOpacity>
         )}
 
+        {/* Divider */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 16, gap: 10 }}>
+          <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+          <Text style={{ fontSize: 12, color: colors.textMuted }}>or</Text>
+          <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+        </View>
+
+        {/* Google Sign-In button */}
+        <TouchableOpacity
+          onPress={handleGoogleSignIn}
+          disabled={loading}
+          activeOpacity={0.8}
+          style={{
+            flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+            gap: 10, borderWidth: 1.5, borderRadius: 8, paddingVertical: 12,
+            borderColor: colors.border, backgroundColor: colors.bgCard,
+            shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
+            opacity: loading ? 0.6 : 1,
+          }}
+        >
+          {/* Google G */}
+          <View style={{ width: 22, height: 22, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ fontSize: 16, fontWeight: '900', color: '#4285F4' }}>G</Text>
+          </View>
+          <Text style={{ fontSize: 15, fontWeight: '600', color: colors.text }}>
+            Continue with Google
+          </Text>
+        </TouchableOpacity>
 
       </ScrollView>
     </KeyboardAvoidingView>
@@ -304,14 +387,21 @@ function RoleSelectionScreen({ onPatient, onCaregiver }: {
 
         {/* Sign out option */}
         <TouchableOpacity
-          onPress={async () => {
-            const { signOut } = await import('../utils/firebaseAuth');
-            await signOut();
-          }}
+          onPress={async () => { await auth().signOut(); }}
           activeOpacity={0.7}
-          style={{ alignItems: 'center', marginTop: 24 }}
+          style={{
+            marginTop: 24,
+            alignSelf: 'center',
+            borderWidth: 1,
+            borderColor: colors.textMuted,
+            borderRadius: 8,
+            paddingVertical: 12,
+            paddingHorizontal: 32,
+            alignItems: 'center',
+            minWidth: 160,
+          }}
         >
-          <Text style={{ fontSize: 13, color: colors.textMuted, textDecorationLine: 'underline' }}>
+          <Text style={{ fontSize: 14, fontWeight: '600', color: colors.textMuted }}>
             {t.signOut}
           </Text>
         </TouchableOpacity>
@@ -428,6 +518,7 @@ function TabsLayout() {
     </Tabs>
   );
 }
+
 // ─── Root content ─────────────────────────────────────────────────────────────
 
 function RootContent() {
@@ -493,6 +584,12 @@ function RootContent() {
           ]);
           loadFromFirestore(history, insulinEntries, userData?.profile ?? {});
           if (isPremium) useSubscriptionStore.getState().setPremiumPaid(true);
+
+          const userRef = firestore().collection('users').doc(u.uid);
+          const userSnap = await userRef.get();
+          if (!userSnap.exists()) {
+            await userRef.set({ createdAt: new Date().toISOString() }, { merge: true });
+          }
         } catch (e) {
           console.error('Firestore load error:', e);
         }
@@ -500,7 +597,6 @@ function RootContent() {
         clearLocalData();
         setRoleChosen(false);
         setCaregiverSession(null);
-        // Reset premium to false on sign out — will be re-checked on next login
         useSubscriptionStore.getState().setPremiumPaid(false);
       }
     });
@@ -515,7 +611,6 @@ function RootContent() {
     return (
       <RoleSelectionScreen
         onPatient={() => {
-          // Restore own premium if coming back from caregiver mode
           if (caregiverSession) {
             useSubscriptionStore.getState().setPremiumPaid(ownPremiumBeforeCaregiver);
           }
@@ -523,10 +618,8 @@ function RootContent() {
           setRoleChosen(true);
         }}
         onCaregiver={(session) => {
-          // Snapshot own premium before overriding with patient's
           const ownPremium = useSubscriptionStore.getState().isPremiumPaid;
           setOwnPremiumBeforeCaregiver(ownPremium);
-          // Apply patient's premium status
           useSubscriptionStore.getState().setPremiumPaid(session.isPremium);
           setCaregiverSession(session);
           setRoleChosen(true);

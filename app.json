@@ -80,7 +80,8 @@
           "bluetoothAlwaysPermission": "Allow DiabEasy to use Bluetooth to connect to your glucometer."
         }
       ],
-      "@react-native-google-signin/google-signin"
+      "@react-native-google-signin/google-signin",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,

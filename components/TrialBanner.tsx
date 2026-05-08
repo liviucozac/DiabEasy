@@ -16,16 +16,8 @@ export function TrialBanner() {
   // Paid premium user
   if (isPremiumPaid) {
     return (
-      <View style={[s.banner, { backgroundColor: colors.normalBg, borderColor: colors.normal }]}>
-        // Premium user
-<Text style={[s.text, { color: colors.normal }]}>{t.premiumAccount}</Text>
-
-// Free user
-<Text style={[s.text, { color: colors.textMuted }]}>{t.tryPremiumFree}</Text>
-<Text style={s.btnText}>{t.tryFree}</Text>
-
-// Trial expired
-<Text style={[s.text, { color: colors.low }]}>{t.trialExpired}</Text>
+      <View style={s.row}>
+        <Text style={[s.status, { color: colors.normal }]}>{t.premiumAccount}</Text>
       </View>
     );
   }
@@ -35,19 +27,11 @@ export function TrialBanner() {
     const urgent = daysLeftInTrial <= 3;
     return (
       <>
-        <View style={[s.banner, {
-          backgroundColor: urgent ? colors.lowBg : colors.normalBg,
-          borderColor:     urgent ? colors.low   : colors.normal,
-        }]}>
-          <Text style={[s.text, { color: urgent ? colors.low : colors.normal }]}>
-            {urgent ? '⚠️' : '⏳'}{' '}
-            {t.trialDaysLeft(daysLeftInTrial)}
+        <View style={s.row}>
+          <Text style={[s.status, { color: urgent ? colors.low : colors.normal }]}>
+            {urgent ? '⚠️' : '⏳'} {t.trialDaysLeft(daysLeftInTrial)}
           </Text>
-          <TouchableOpacity
-            onPress={() => setShowUpgrade(true)}
-            activeOpacity={0.8}
-            style={[s.btn, { backgroundColor: colors.red }]}
-          >
+          <TouchableOpacity onPress={() => setShowUpgrade(true)} activeOpacity={0.8} style={[s.btn, { backgroundColor: colors.red }]}>
             <Text style={s.btnText}>{t.upgrade}</Text>
           </TouchableOpacity>
         </View>
@@ -60,14 +44,10 @@ export function TrialBanner() {
   if (!trialStartDate) {
     return (
       <>
-        <View style={[s.banner, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-          <Text style={[s.text, { color: colors.textMuted }]}>🎁 Try Premium free for 7 days</Text>
-          <TouchableOpacity
-            onPress={() => setShowUpgrade(true)}
-            activeOpacity={0.8}
-            style={[s.btn, { backgroundColor: colors.red }]}
-          >
-            <Text style={s.btnText}>Try Free</Text>
+        <View style={s.row}>
+          <Text style={[s.status, { color: colors.textMuted }]}>{t.tryPremiumFree}</Text>
+          <TouchableOpacity onPress={() => setShowUpgrade(true)} activeOpacity={0.8} style={[s.btn, { backgroundColor: colors.red }]}>
+            <Text style={s.btnText}>{t.tryFree}</Text>
           </TouchableOpacity>
         </View>
         <UpgradeModal visible={showUpgrade} onClose={() => setShowUpgrade(false)} />
@@ -75,16 +55,12 @@ export function TrialBanner() {
     );
   }
 
-  // Trial expired, not premium
+  // Trial expired
   return (
     <>
-      <View style={[s.banner, { backgroundColor: colors.lowBg, borderColor: colors.low }]}>
-        <Text style={[s.text, { color: colors.low }]}>⚠️ Trial expired — upgrade to keep premium features</Text>
-        <TouchableOpacity
-          onPress={() => setShowUpgrade(true)}
-          activeOpacity={0.8}
-          style={[s.btn, { backgroundColor: colors.red }]}
-        >
+      <View style={s.row}>
+        <Text style={[s.status, { color: colors.low }]}>{t.trialExpired}</Text>
+        <TouchableOpacity onPress={() => setShowUpgrade(true)} activeOpacity={0.8} style={[s.btn, { backgroundColor: colors.red }]}>
           <Text style={s.btnText}>{t.upgrade}</Text>
         </TouchableOpacity>
       </View>
@@ -94,8 +70,8 @@ export function TrialBanner() {
 }
 
 const s = StyleSheet.create({
-  banner:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 10, borderWidth: 1.5, paddingVertical: 10, paddingHorizontal: 14, marginBottom: 12 },
-  text:    { fontSize: 13, fontWeight: '600', flex: 1, lineHeight: 18 },
-  btn:     { borderRadius: 8, paddingHorizontal: 14, paddingVertical: 6, marginLeft: 10 },
+  row:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 12, gap: 10 },
+  status:  { fontSize: 13, fontWeight: '700' },
+  btn:     { borderRadius: 8, paddingHorizontal: 14, paddingVertical: 6 },
   btnText: { fontSize: 12, fontWeight: '800', color: '#fff' },
 });
