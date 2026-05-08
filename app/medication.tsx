@@ -24,6 +24,13 @@ function toMgDl(value: number, unit: string): number {
   return unit === 'mmol/L' ? value * 18.0182 : value;
 }
 
+function formatDateShort(dateValue?: string | Date): string {
+  if (!dateValue) return '';
+  const d = dateValue instanceof Date ? dateValue : new Date(dateValue);
+  if (Number.isNaN(d.getTime())) return '';
+  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+}
+
 function SectionCard({ children }: { children: React.ReactNode }) {
   const { colors, isDark } = useTheme();
   return (
@@ -35,7 +42,7 @@ function SectionCard({ children }: { children: React.ReactNode }) {
       shadowOpacity: isDark ? 0.3 : 0.09,
       shadowRadius: 14,
       elevation: isDark ? 5 : 4,
-    }]}>
+    }]}> 
       {children}
     </View>
   );
@@ -83,7 +90,7 @@ function InsulinDropdown<T extends string>({
         <Text style={[s.dropdownChevron, { color: colors.red }]}>{open ? '▲' : '▼'}</Text>
       </TouchableOpacity>
       {open && (
-        <View style={[s.dropdownList, { borderColor: colors.border, backgroundColor: colors.bgCard }]}>
+        <View style={[s.dropdownList, { borderColor: colors.border, backgroundColor: colors.bgCard }]}> 
           {options.map((opt, i) => {
             const active = opt.value === selected;
             return (
@@ -226,19 +233,19 @@ function CalculatorTab() {
       </SectionCard>
 
       {!settings.insulinParamsSet ? (
-        <View style={[s.emptyCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+        <View style={[s.emptyCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}> 
           <Text style={s.emptyIcon}>🔒</Text>
           <Text style={[s.emptyTitle, { color: colors.text }]}>{t.paramsNotSet}</Text>
           <Text style={[s.emptyText, { color: colors.textMuted }]}>{t.paramsNotSetText}</Text>
         </View>
       ) : glucoseValue === null ? (
-        <View style={[s.emptyCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+        <View style={[s.emptyCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}> 
           <Text style={s.emptyIcon}>🩸</Text>
           <Text style={[s.emptyTitle, { color: colors.text }]}>{t.noGlucoseReading}</Text>
           <Text style={[s.emptyText, { color: colors.textMuted }]}>{t.noGlucoseReadingText}</Text>
         </View>
       ) : currentMgDl !== null && targetMgDl > currentMgDl ? (
-        <View style={[s.warningBanner, { borderColor: '#2e7d32', backgroundColor: colors.normalBg, marginBottom: 10 }]}>
+        <View style={[s.warningBanner, { borderColor: '#2e7d32', backgroundColor: colors.normalBg, marginBottom: 10 }]}> 
           <Text style={[s.warningText, { color: colors.normal }]}>{t.targetBelowCurrent(settings.targetGlucose, glucoseValue!, unit)}</Text>
           <Text style={[s.warningText, { color: colors.normal, marginTop: 6, fontWeight: '400' }]}>{t.noInsulinNeeded}</Text>
         </View>
@@ -273,12 +280,12 @@ function CalculatorTab() {
             </View>
           </View>
           {result && result.iob > 0 && (
-            <View style={[s.warningBanner, { borderColor: colors.normal, backgroundColor: colors.normalBg, marginBottom: 10 }]}>
+            <View style={[s.warningBanner, { borderColor: colors.normal, backgroundColor: colors.normalBg, marginBottom: 10 }]}> 
               <Text style={[s.warningText, { color: colors.normal }]}>{t.iobActive(result.iob)}</Text>
             </View>
           )}
           {currentMgDl !== null && currentMgDl < 75 && (
-            <View style={[s.warningBanner, { borderColor: '#e53935', backgroundColor: colors.lowBg }]}>
+            <View style={[s.warningBanner, { borderColor: '#e53935', backgroundColor: colors.lowBg }]}> 
               <Text style={[s.warningText, { color: colors.low }]}>{t.bloodSugarLowNoInsulin}</Text>
             </View>
           )}
@@ -286,7 +293,7 @@ function CalculatorTab() {
             const rawDose = Math.max(0, Math.round(calcCorrectionDose(currentMgDl, settings.targetGlucose, settings.isf)));
             if (rawDose === 0) return null;
             return (
-              <View style={[s.warningBanner, { borderColor: '#ef6c00', backgroundColor: colors.highBg }]}>
+              <View style={[s.warningBanner, { borderColor: '#ef6c00', backgroundColor: colors.highBg }]}> 
                 <Text style={[s.warningText, { color: colors.high }]}>
                   {t.highCorrectionDose(rawDose, getAnalogByType(settings.insulinAnalogType).label, currentMgDl > 250)}
                 </Text>
@@ -322,7 +329,7 @@ function CalculatorTab() {
 }
 
 function LogTab() {
-  const { insulinEntries, addInsulinEntry, removeInsulinEntry, clearInsulinLog, settings, glucoseValue, unit } = useGlucoseStore();
+  const { insulinEntries, addInsulinEntry, removeInsulinEntry, clearInsulinLog, settings, glucoseValue, unit, caregiverSession } = useGlucoseStore();
   const { colors } = useTheme();
   const t = useTranslation();
 
@@ -332,8 +339,13 @@ function LogTab() {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
+  // ── Filters ──────────────────────────────────────────────────────────────
+  const [filterFrom,     setFilterFrom]     = useState('');
+  const [filterTo,       setFilterTo]       = useState('');
+  const [showFromPicker, setShowFromPicker] = useState(false);
+  const [showToPicker,   setShowToPicker]   = useState(false);
+
   const formatTime = (d: Date) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-  const formatDate = (d: Date) => `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
 
   const glucoseWarning = (() => {
     if (glucoseValue === null) return null;
@@ -357,7 +369,8 @@ function LogTab() {
       type: insulinType,
       timestamp: timeDate.toISOString(),
     });
-    setUnits(0); setTimeDate(new Date());
+    setUnits(0);
+    setTimeDate(new Date());
   };
 
   const handleClear = () => {
@@ -365,6 +378,26 @@ function LogTab() {
       { text: t.cancel, style: 'cancel' },
       { text: t.clear, style: 'destructive', onPress: clearInsulinLog },
     ]);
+  };
+
+  // ── Filtered entries ──────────────────────────────────────────────────────
+  const filteredEntries = useMemo(() => {
+    const toLocalDate = (iso: string) => {
+      const d = new Date(iso);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    };
+    return [...insulinEntries].reverse().filter(e => {
+      const ed = toLocalDate(e.timestamp);
+      if (filterFrom && ed < filterFrom) return false;
+      if (filterTo   && ed > filterTo)   return false;
+      return true;
+    });
+  }, [insulinEntries, filterFrom, filterTo]);
+
+  const fmtFilterDate = (iso: string) => {
+    if (!iso) return '';
+    const [y, m, d] = iso.split('-');
+    return `${d}/${m}/${y}`;
   };
 
   return (
@@ -383,72 +416,148 @@ function LogTab() {
         </View>
       )}
 
-      <SectionCard>
-        <SectionTitle text={t.newEntry} />
-        <Text style={[s.fieldLabel, { color: colors.textMuted }]}>{t.insulinType}</Text>
-        <View style={s.typeRow}>
-          {(['Rapid-acting', 'Long-acting'] as InsulinType[]).map((tp) => {
-            const active = insulinType === tp;
-            const label  = tp === 'Rapid-acting' ? t.rapidActing : t.longActing;
-            return (
-              <TouchableOpacity key={tp}
-                style={[s.typePill, active ? s.primaryBtnShadow : null, { borderColor: colors.red, backgroundColor: active ? colors.red : 'transparent' }]}
-                onPress={() => setInsulinType(tp)} activeOpacity={0.75}>
-                <Text style={[s.typePillText, { color: colors.red }, active && s.typePillTextActive]}>{label}</Text>
+      {/* ── New Entry Form ── */}
+      {!caregiverSession && (
+        <SectionCard>
+          <SectionTitle text={t.newEntry} />
+
+          {/* Insulin type */}
+          <Text style={[s.fieldLabel, { color: colors.textMuted }]}>{t.insulinType}</Text>
+          <View style={s.typeRow}>
+            {(['Rapid-acting', 'Long-acting'] as InsulinType[]).map((tp) => {
+              const active = insulinType === tp;
+              const label  = tp === 'Rapid-acting' ? t.rapidActing : t.longActing;
+              return (
+                <TouchableOpacity key={tp}
+                  style={[s.typePill, active ? s.primaryBtnShadow : null, { borderColor: colors.red, backgroundColor: active ? colors.red : 'transparent' }]}
+                  onPress={() => setInsulinType(tp)} activeOpacity={0.75}>
+                  <Text style={[s.typePillText, { color: colors.red }, active && s.typePillTextActive]}>{label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {/* Units */}
+          <Text style={[s.fieldLabel, { color: colors.textMuted }]}>{t.unitsLabel}</Text>
+          <View style={s.stepperRow}>
+            <PressBtn style={[s.stepperBtn, { borderColor: colors.red, backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={() => setUnits((u) => Math.max(u - 1, 0))} activeOpacity={0.75}>
+              <Text style={s.stepperBtnText}>−</Text>
+            </PressBtn>
+            <Text style={[s.stepperValue, { color: colors.text }]}>{units}</Text>
+            <PressBtn style={[s.stepperBtn, { borderColor: colors.red, backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={() => setUnits((u) => u + 1)} activeOpacity={0.75}>
+              <Text style={s.stepperBtnText}>+</Text>
+            </PressBtn>
+          </View>
+
+          {/* Date + Time on same row */}
+          <View style={{ flexDirection: 'row', gap: 10, marginTop: 6 }}>
+            <View style={{ flex: 1 }}>
+              <Text style={[s.fieldLabel, { color: colors.textMuted, marginTop: 0 }]}>Date</Text>
+              <TouchableOpacity
+                style={[s.timeInput, s.timePickerBtn, s.outlineBtnShadow, { backgroundColor: colors.bgCard }]}
+                onPress={() => setShowDatePicker(true)} activeOpacity={0.75}>
+                <Text style={[s.timePickerBtnText, { color: colors.text }]}>{formatDateShort(timeDate)}</Text>
               </TouchableOpacity>
-            );
-          })}
-        </View>
-        <Text style={[s.fieldLabel, { color: colors.textMuted }]}>{t.unitsLabel}</Text>
-        <View style={s.stepperRow}>
-          <PressBtn style={[s.stepperBtn, { borderColor: colors.red, backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={() => setUnits((u) => Math.max(u - 1, 0))} activeOpacity={0.75}>
-            <Text style={s.stepperBtnText}>−</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[s.fieldLabel, { color: colors.textMuted, marginTop: 0 }]}>{t.timeTaken}</Text>
+              <TouchableOpacity
+                style={[s.timeInput, s.timePickerBtn, s.outlineBtnShadow, { backgroundColor: colors.bgCard }]}
+                onPress={() => setShowTimePicker(true)} activeOpacity={0.75}>
+                <Text style={[s.timePickerBtnText, { color: colors.text }]}>{formatTime(timeDate)}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {showDatePicker && (
+            <DateTimePicker value={timeDate} mode="date" display="default" maximumDate={new Date()}
+              onChange={(event, date) => {
+                setShowDatePicker(false);
+                if (event.type === 'set' && date) {
+                  const updated = new Date(timeDate);
+                  updated.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
+                  setTimeDate(updated);
+                }
+              }} />
+          )}
+          {showTimePicker && (
+            <DateTimePicker value={timeDate} mode="time" display="default"
+              onChange={(event, date) => {
+                setShowTimePicker(false);
+                if (event.type === 'set' && date) {
+                  const updated = new Date(timeDate);
+                  updated.setHours(date.getHours(), date.getMinutes(), 0, 0);
+                  setTimeDate(updated);
+                }
+              }} />
+          )}
+
+          <PressBtn style={[s.addEntryBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={handleAdd}>
+            <Text style={s.addEntryBtnText}>{t.addToLog}</Text>
           </PressBtn>
-          <Text style={[s.stepperValue, { color: colors.text }]}>{units}</Text>
-          <PressBtn style={[s.stepperBtn, { borderColor: colors.red, backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={() => setUnits((u) => u + 1)} activeOpacity={0.75}>
-            <Text style={s.stepperBtnText}>+</Text>
-          </PressBtn>
-        </View>
+        </SectionCard>
+      )}
 
-        <Text style={[s.fieldLabel, { color: colors.textMuted }]}>Date</Text>
-        <TouchableOpacity style={[s.timeInput, s.timePickerBtn, s.outlineBtnShadow, { backgroundColor: colors.bgCard }]} onPress={() => setShowDatePicker(true)} activeOpacity={0.75}>
-          <Text style={[s.timePickerBtnText, { color: colors.text }]}>{formatDate(timeDate)}</Text>
-        </TouchableOpacity>
-        {showDatePicker && (
-          <DateTimePicker value={timeDate} mode="date" display="default" maximumDate={new Date()}
-            onChange={(event, date) => {
-              setShowDatePicker(false);
-              if (event.type === 'set' && date) {
-                const updated = new Date(timeDate);
-                updated.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
-                setTimeDate(updated);
-              }
-            }} />
-        )}
-
-        <Text style={[s.fieldLabel, { color: colors.textMuted }]}>{t.timeTaken}</Text>
-        <TouchableOpacity style={[s.timeInput, s.timePickerBtn, s.outlineBtnShadow, { backgroundColor: colors.bgCard }]} onPress={() => setShowTimePicker(true)} activeOpacity={0.75}>
-          <Text style={[s.timePickerBtnText, { color: colors.text }]}>{formatTime(timeDate)}</Text>
-        </TouchableOpacity>
-        {showTimePicker && (
-          <DateTimePicker value={timeDate} mode="time" display="default"
-            onChange={(event, date) => { setShowTimePicker(false); if (event.type === 'set' && date) setTimeDate(date); }} />
-        )}
-
-        <PressBtn style={[s.addEntryBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={handleAdd}>
-          <Text style={s.addEntryBtnText}>{t.addToLog}</Text>
-        </PressBtn>
-      </SectionCard>
-
+      {/* ── Insulin Log ── */}
       <SectionCard>
         <View style={s.logHeader}>
           <SectionTitle text={t.insulinLog} />
-          {insulinEntries.length > 0 && (
+          {insulinEntries.length > 0 && !caregiverSession && (
             <PressBtn onPress={handleClear} activeOpacity={0.75}>
               <Text style={[s.clearLogText, { color: colors.red }]}>{t.clearAll}</Text>
             </PressBtn>
           )}
         </View>
+
+        {/* Date filters */}
+        <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 11, color: colors.textMuted, marginBottom: 3, fontWeight: '600' }}>From</Text>
+            <TouchableOpacity
+              style={[s.timeInput, { justifyContent: 'center', paddingVertical: 6, marginBottom: 0 }]}
+              onPress={() => setShowFromPicker(true)} activeOpacity={0.75}>
+              <Text style={{ color: filterFrom ? colors.text : colors.placeholder, fontSize: 13 }}>
+                {filterFrom ? fmtFilterDate(filterFrom) : 'Select date'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 11, color: colors.textMuted, marginBottom: 3, fontWeight: '600' }}>To</Text>
+            <TouchableOpacity
+              style={[s.timeInput, { justifyContent: 'center', paddingVertical: 6, marginBottom: 0 }]}
+              onPress={() => setShowToPicker(true)} activeOpacity={0.75}>
+              <Text style={{ color: filterTo ? colors.text : colors.placeholder, fontSize: 13 }}>
+                {filterTo ? fmtFilterDate(filterTo) : 'Select date'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          {(filterFrom || filterTo) && (
+            <TouchableOpacity
+              onPress={() => { setFilterFrom(''); setFilterTo(''); }}
+              activeOpacity={0.7}
+              style={{ justifyContent: 'flex-end', paddingBottom: 6 }}>
+              <Text style={{ fontSize: 12, color: colors.red, fontWeight: '600' }}>Clear</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {showFromPicker && (
+          <DateTimePicker value={filterFrom ? new Date(filterFrom) : new Date()} mode="date" display="calendar"
+            onChange={(event, date) => {
+              setShowFromPicker(false);
+              if (event.type === 'set' && date)
+                setFilterFrom(`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`);
+            }} />
+        )}
+        {showToPicker && (
+          <DateTimePicker value={filterTo ? new Date(filterTo) : new Date()} mode="date" display="calendar"
+            onChange={(event, date) => {
+              setShowToPicker(false);
+              if (event.type === 'set' && date)
+                setFilterTo(`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`);
+            }} />
+        )}
+
         {insulinEntries.length === 0 ? (
           <>
             <Text style={s.emptyLogText}>{t.noEntriesYet}</Text>
@@ -462,25 +571,28 @@ function LogTab() {
               ))}
             </View>
           </>
+        ) : filteredEntries.length === 0 ? (
+          <Text style={[s.emptyLogText, { color: colors.textMuted }]}>No entries for selected date range.</Text>
         ) : (
-          [...insulinEntries].reverse().map((entry, idx) => {
+          filteredEntries.map((entry, idx) => {
             const brandName = entry.type === 'Rapid-acting'
               ? getAnalogByType(settings.insulinAnalogType).sublabel
               : getLongActingByType(settings.longActingInsulinType).sublabel;
+            const entryDate = formatDateShort(entry.timestamp);
             return (
-              <View key={entry.id} style={[s.logRow, idx < insulinEntries.length - 1 && s.logRowBorder, { backgroundColor: colors.bgCard }]}>
+              <View key={entry.id} style={[s.logRowCompact, idx < filteredEntries.length - 1 && s.logRowBorder, { backgroundColor: colors.bgCard }]}>
                 <View style={s.logLeft}>
                   <Text style={[s.logType, { color: colors.text }]}>{entry.type}</Text>
-                  <Text style={[s.logTime, { color: colors.textMuted }]}>{brandName}  ·  {t.at} {entry.time}</Text>
+                  <Text style={[s.logTime, { color: colors.textMuted }]}>
+                    {brandName}  ·  {entryDate}  ·  {entry.time}
+                  </Text>
                 </View>
                 <Text style={[s.logUnits, { color: colors.red }]}>{entry.units}u</Text>
-                <TouchableOpacity
-                  onPress={() => removeInsulinEntry(entry.id)}
-                  activeOpacity={0.7}
-                  style={{ paddingLeft: 12, paddingVertical: 4 }}
-                >
-                  <Text style={{ fontSize: 16, color: colors.textMuted, fontWeight: '700' }}>✕</Text>
-                </TouchableOpacity>
+                {!caregiverSession && (
+                  <TouchableOpacity onPress={() => removeInsulinEntry(entry.id)} activeOpacity={0.7} style={{ paddingLeft: 10 }}>
+                    <Text style={{ fontSize: 14, color: colors.textMuted, fontWeight: '700' }}>✕</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             );
           })
@@ -529,7 +641,7 @@ function ReminderForm({
         <TouchableOpacity
           style={[s.schedulePill, { borderColor: colors.red }, days !== 'everyday' && { backgroundColor: colors.red }]}
           onPress={() => setShowDatePicker(true)} activeOpacity={0.75}>
-          <Text style={[s.schedulePillText, { color: days !== 'everyday' ? '#fff' : colors.textMuted }]}>
+          <Text style={[s.schedulePillText, { color: days !== 'everyday' ? '#fff' : colors.textMuted }]}> 
             {days !== 'everyday' ? formatDateDisplay(days) : t.pickDate}
           </Text>
         </TouchableOpacity>
@@ -661,11 +773,11 @@ function RemindersTab() {
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 32 }}>
-      <View style={[s.noteCard, { backgroundColor: settings.notificationsEnabled ? colors.normalBg : colors.highBg, borderColor: colors.border }]}>
+      <View style={[s.noteCard, { backgroundColor: settings.notificationsEnabled ? colors.normalBg : colors.highBg, borderColor: colors.border }]}> 
         <Text style={s.noteText}>{settings.notificationsEnabled ? t.notificationsActive : t.notificationsOff}</Text>
       </View>
       {reminders.length === 0 && !showAddForm ? (
-        <View style={[s.emptyCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+        <View style={[s.emptyCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}> 
           <Text style={s.emptyIcon}>⏰</Text>
           <Text style={[s.emptyTitle, { color: colors.text }]}>{t.noRemindersYet}</Text>
           <Text style={[s.emptyText, { color: colors.textMuted }]}>{t.noRemindersYetText}</Text>
@@ -681,10 +793,10 @@ function RemindersTab() {
               rUnits={editUnits} setRUnits={setEditUnits}
               onSave={handleSaveEdit} onCancel={() => setEditingId(null)} colors={colors} />
           ) : (
-            <View key={r.id} style={[s.reminderCard, !r.active && s.reminderCardInactive, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+            <View key={r.id} style={[s.reminderCard, !r.active && s.reminderCardInactive, { backgroundColor: colors.bgCard, borderColor: colors.border }]}> 
               <View style={s.reminderLeft}>
                 <Text style={[s.reminderLabel, { color: colors.text }, !r.active && s.reminderLabelInactive]}>{r.label}</Text>
-                <Text style={[s.reminderSub, { color: colors.textMuted }]}>
+                <Text style={[s.reminderSub, { color: colors.textMuted }]}> 
                   {(r.days ?? 'everyday') === 'everyday' ? t.everyday : formatDateDisplay(r.days!)} · {r.time} · {r.type === 'Rapid-acting'
                     ? getAnalogByType(settings.insulinAnalogType).sublabel
                     : getLongActingByType(settings.longActingInsulinType).sublabel} · {r.units}u
@@ -729,7 +841,7 @@ function RemindersTab() {
         </PressBtn>
       )}
       {!showAddForm && editingId === null && (
-        <View style={[s.infoCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+        <View style={[s.infoCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}> 
           <Text style={[s.infoCardTitle, { color: colors.text }]}>{t.howRemindersWork}</Text>
           <Text style={[s.infoCardBody, { color: colors.textMuted }]}>{t.howRemindersWorkBody}</Text>
           <Text style={[s.infoCardBody, { marginTop: 6, color: colors.textMuted }]}>{t.howRemindersWorkBody2}</Text>
@@ -760,7 +872,7 @@ export default function MedicationScreen() {
 
   if (caregiverSession) {
     return (
-      <View style={[s.root, { backgroundColor: colors.bg }]}>
+      <View style={[s.root, { backgroundColor: colors.bg }]}> 
         <Text style={[s.title, { color: colors.text }]}>{t.medication}</Text>
         <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }}>
           {caregiverInsulin.length === 0 ? (
@@ -769,12 +881,17 @@ export default function MedicationScreen() {
             const brandName = e.type === 'Rapid-acting'
               ? getAnalogByType(useGlucoseStore.getState().settings.insulinAnalogType).sublabel
               : getLongActingByType(useGlucoseStore.getState().settings.longActingInsulinType).sublabel;
+
+            const entryDate = formatDateShort(e.timestamp);
+
             return (
-              <View key={e.id} style={[s.logRow, idx < caregiverInsulin.length - 1 && s.logRowBorder, { backgroundColor: colors.bgCard }]}>
+              <View key={e.id} style={[s.logRow, idx < caregiverInsulin.length - 1 && s.logRowBorder, { backgroundColor: colors.bgCard }]}> 
                 <View style={{ flex: 1 }}>
                   <Text style={[s.logType, { color: colors.text }]}>{e.type === 'Rapid-acting' ? t.rapidActing : t.longActing}</Text>
                   <Text style={[s.logBrandName, { color: colors.textMuted }]}>{brandName}</Text>
-                  <Text style={[s.logTime, { color: colors.textMuted }]}>{e.time}</Text>
+                  <Text style={[s.logTime, { color: colors.textMuted }]}> 
+                    {entryDate ? `${entryDate} · ` : ''}{e.time}
+                  </Text>
                 </View>
                 <Text style={[s.logUnits, { color: colors.red }]}>{e.units}u</Text>
               </View>
@@ -793,7 +910,7 @@ export default function MedicationScreen() {
   }
 
   return (
-    <View style={[s.root, { backgroundColor: colors.bg }]}>
+    <View style={[s.root, { backgroundColor: colors.bg }]}> 
       <Text style={[s.title, { color: colors.text }]}>{t.medication}</Text>
       <View style={[s.tabBar, { borderColor: colors.red }, s.tabBarShadow]}>
         {TABS.map((tab) => {
@@ -807,7 +924,7 @@ export default function MedicationScreen() {
           );
         })}
       </View>
-      <View style={[s.content, { backgroundColor: colors.bg }]}>
+      <View style={[s.content, { backgroundColor: colors.bg }]}> 
         {activeTab === 'calculator' && <CalculatorTab />}
         {activeTab === 'log'        && <LogTab />}
         {activeTab === 'reminders'  && <RemindersTab />}
@@ -857,6 +974,8 @@ const s = StyleSheet.create({
   emptyTitle: { fontSize: 15, fontWeight: '700', marginBottom: 4 },
   emptyText:  { fontSize: 13, textAlign: 'center', lineHeight: 20 },
 
+  logRowCompact: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 12 },
+
   refRow:    { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 6 },
   refEmoji:  { fontSize: 18, width: 26, textAlign: 'center', marginTop: 1 },
   refText:   { flex: 1 },
@@ -893,13 +1012,13 @@ const s = StyleSheet.create({
   logHeader:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
   clearLogText: { fontSize: 12, fontWeight: '600' },
   emptyLogText: { fontSize: 13, color: '#aaaaaa', textAlign: 'center', paddingVertical: 12 },
-  logRow:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10 },
+  logRow:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 16},
   logRowBorder: { borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
   logLeft:      { flex: 1 },
   logType:      { fontSize: 13, fontWeight: '700' },
   logBrandName: { fontSize: 12, marginTop: 1 },
   logTime:      { fontSize: 12, marginTop: 1 },
-  logUnits:     { fontSize: 18, fontWeight: '900' },
+  logUnits:     { fontSize: 18, fontWeight: '900', marginLeft: 12, minWidth: 44, textAlign: 'right',},
 
   reminderCard:         { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderRadius: 10, borderWidth: 1, padding: 14, marginBottom: 10 },
   reminderCardInactive: { opacity: 0.5 },

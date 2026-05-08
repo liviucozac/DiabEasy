@@ -53,7 +53,7 @@ export function TrialBanner() {
     return (
       <>
         <View style={[s.banner, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-          <Text style={[s.text, { color: colors.textMuted }]}>🎁 Try Premium free for 14 days</Text>
+          <Text style={[s.text, { color: colors.textMuted }]}>🎁 Try Premium free for 7 days</Text>
           <TouchableOpacity
             onPress={() => setShowUpgrade(true)}
             activeOpacity={0.8}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView,
-  TextInput, StyleSheet, Platform, Alert, Switch, Modal,
+  TextInput, StyleSheet, Platform, Alert, Switch, Modal, Linking
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useGlucoseStore, DiabetesType, ThemeType, InsulinAnalogType, SecurityMethod, LockTimeout } from '../store/glucoseStore';
@@ -21,6 +21,9 @@ import { useSubscriptionStore } from '../store/subscriptionStore';
 import { useTranslation } from '../hooks/useTranslation';
 import { useSubscription } from '../hooks/useSubscription';
 import { UpgradeModal } from '../components/UpgradeModal';
+import { router } from 'expo-router';
+
+
 
 const RED = '#EC5557';
 
@@ -74,6 +77,171 @@ function StyledInput({ value, onChangeText, placeholder, keyboardType, secureTex
       maxLength={maxLength} accessibilityLabel={accessibilityLabel}
       onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} returnKeyType="done"
     />
+  );
+}
+
+// ─── PIN Setup Section ────────────────────────────────────────────────────────
+
+function PinSetupSection({ hasPin, onSave, secNewPin, setSecNewPin, secConfirmPin, setSecConfirmPin }: {
+  hasPin: boolean; onSave: () => void;
+  secNewPin: string; setSecNewPin: (v: string) => void;
+  secConfirmPin: string; setSecConfirmPin: (v: string) => void;
+}) {
+  const { colors } = useTheme();
+  const { settings } = useGlucoseStore();
+  const t = useTranslation();
+  const [changing, setChanging]       = useState(!hasPin);
+  const [showPin, setShowPin]         = useState(false);
+  const [currentPin, setCurrentPin]   = useState('');
+  const [verified, setVerified]       = useState(!hasPin);
+  const [verifyError, setVerifyError] = useState('');
+
+  const handleVerify = () => {
+    if (hashValue(currentPin) === settings.securityHash) {
+      setVerified(true);
+      setVerifyError('');
+      setCurrentPin('');
+    } else {
+      setVerifyError('Incorrect PIN. Try again.');
+    }
+  };
+
+  if (hasPin && !changing) {
+    return (
+      <TouchableOpacity
+        style={{ marginTop: 10, borderRadius: 8, paddingVertical: 10, alignItems: 'center', borderWidth: 1.5, borderColor: colors.red, backgroundColor: 'transparent' }}
+        onPress={() => { setChanging(true); setVerified(false); setCurrentPin(''); setVerifyError(''); }}
+        activeOpacity={0.75}
+      >
+        <Text style={{ fontSize: 14, fontWeight: '700', color: colors.red }}>🔢 Change PIN</Text>
+      </TouchableOpacity>
+    );
+  }
+
+  // Step 1 — verify current PIN
+  if (hasPin && !verified) {
+    return (
+      <View style={{ gap: 8, marginTop: 10 }}>
+        <FieldLabel text="Current PIN" />
+        <View style={{ flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderRadius: 6, borderColor: colors.border, backgroundColor: colors.inputBg }}>
+          <TextInput
+            style={{ flex: 1, paddingVertical: Platform.OS === 'ios' ? 9 : 7, paddingHorizontal: 12, fontSize: 14, color: colors.text }}
+            value={currentPin} onChangeText={setCurrentPin}
+            placeholder="••••" placeholderTextColor={colors.placeholder}
+            keyboardType="number-pad" maxLength={4} secureTextEntry={!showPin}
+          />
+          <TouchableOpacity onPress={() => setShowPin(v => !v)} activeOpacity={0.7} style={{ paddingHorizontal: 12 }}>
+            <Text style={{ fontSize: 16 }}>{showPin ? '🙈' : '👁️'}</Text>
+          </TouchableOpacity>
+        </View>
+        {!!verifyError && <Text style={{ fontSize: 12, color: '#e53935' }}>{verifyError}</Text>}
+        <PressBtn style={[s.authBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={handleVerify}>
+          <Text style={s.authBtnText}>Verify PIN</Text>
+        </PressBtn>
+        <TouchableOpacity onPress={() => { setChanging(false); setCurrentPin(''); setVerifyError(''); }} activeOpacity={0.7} style={{ alignItems: 'center', marginTop: 4 }}>
+          <Text style={{ fontSize: 13, color: colors.textMuted, textDecorationLine: 'underline' }}>{t.cancel}</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // Step 2 — set new PIN
+  return (
+    <View style={{ gap: 8, marginTop: 10 }}>
+      <FieldLabel text={t.newPin} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderRadius: 6, borderColor: colors.border, backgroundColor: colors.inputBg }}>
+        <TextInput
+          style={{ flex: 1, paddingVertical: Platform.OS === 'ios' ? 9 : 7, paddingHorizontal: 12, fontSize: 14, color: colors.text }}
+          value={secNewPin} onChangeText={setSecNewPin}
+          placeholder="••••" placeholderTextColor={colors.placeholder}
+          keyboardType="number-pad" maxLength={4} secureTextEntry={!showPin}
+        />
+        <TouchableOpacity onPress={() => setShowPin(v => !v)} activeOpacity={0.7} style={{ paddingHorizontal: 12 }}>
+          <Text style={{ fontSize: 16 }}>{showPin ? '🙈' : '👁️'}</Text>
+        </TouchableOpacity>
+      </View>
+      <FieldLabel text={t.confirmPin} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderRadius: 6, borderColor: colors.border, backgroundColor: colors.inputBg }}>
+        <TextInput
+          style={{ flex: 1, paddingVertical: Platform.OS === 'ios' ? 9 : 7, paddingHorizontal: 12, fontSize: 14, color: colors.text }}
+          value={secConfirmPin} onChangeText={setSecConfirmPin}
+          placeholder="••••" placeholderTextColor={colors.placeholder}
+          keyboardType="number-pad" maxLength={4} secureTextEntry={!showPin}
+        />
+        <TouchableOpacity onPress={() => setShowPin(v => !v)} activeOpacity={0.7} style={{ paddingHorizontal: 12 }}>
+          <Text style={{ fontSize: 16 }}>{showPin ? '🙈' : '👁️'}</Text>
+        </TouchableOpacity>
+      </View>
+      <PressBtn style={[s.authBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={() => { onSave(); if (hasPin) setChanging(false); }}>
+        <Text style={s.authBtnText}>{t.savePin}</Text>
+      </PressBtn>
+      {hasPin && (
+        <TouchableOpacity onPress={() => { setChanging(false); setSecNewPin(''); setSecConfirmPin(''); setVerified(false); }} activeOpacity={0.7} style={{ alignItems: 'center', marginTop: 4 }}>
+          <Text style={{ fontSize: 13, color: colors.textMuted, textDecorationLine: 'underline' }}>{t.cancel}</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+}
+
+// ─── Password Setup Section ───────────────────────────────────────────────────
+
+function PasswordSetupSection({ hasPassword, onSave, secNewPass, setSecNewPass, secConfirmPass, setSecConfirmPass }: {
+  hasPassword: boolean; onSave: () => void;
+  secNewPass: string; setSecNewPass: (v: string) => void;
+  secConfirmPass: string; setSecConfirmPass: (v: string) => void;
+}) {
+  const { colors } = useTheme();
+  const t = useTranslation();
+  const [changing, setChanging] = useState(!hasPassword);
+  const [showPass, setShowPass] = useState(false);
+
+  if (hasPassword && !changing) {
+    return (
+      <TouchableOpacity
+        style={{ marginTop: 10, borderRadius: 8, paddingVertical: 10, alignItems: 'center', borderWidth: 1.5, borderColor: colors.red, backgroundColor: 'transparent' }}
+        onPress={() => setChanging(true)} activeOpacity={0.75}
+      >
+        <Text style={{ fontSize: 14, fontWeight: '700', color: colors.red }}>🔑 {t.changePassword ?? 'Change Password'}</Text>
+      </TouchableOpacity>
+    );
+  }
+
+  return (
+    <View style={{ gap: 8, marginTop: 10 }}>
+      <FieldLabel text={t.newPasswordSetting} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderRadius: 6, borderColor: colors.border, backgroundColor: colors.inputBg }}>
+        <TextInput
+          style={{ flex: 1, paddingVertical: Platform.OS === 'ios' ? 9 : 7, paddingHorizontal: 12, fontSize: 14, color: colors.text }}
+          value={secNewPass} onChangeText={setSecNewPass}
+          placeholder={t.newPasswordSetting} placeholderTextColor={colors.placeholder}
+          secureTextEntry={!showPass}
+        />
+        <TouchableOpacity onPress={() => setShowPass(v => !v)} activeOpacity={0.7} style={{ paddingHorizontal: 12 }}>
+          <Text style={{ fontSize: 16 }}>{showPass ? '🙈' : '👁️'}</Text>
+        </TouchableOpacity>
+      </View>
+      <FieldLabel text={t.confirmPin} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderRadius: 6, borderColor: colors.border, backgroundColor: colors.inputBg }}>
+        <TextInput
+          style={{ flex: 1, paddingVertical: Platform.OS === 'ios' ? 9 : 7, paddingHorizontal: 12, fontSize: 14, color: colors.text }}
+          value={secConfirmPass} onChangeText={setSecConfirmPass}
+          placeholder={t.confirmPasswordPlaceholder} placeholderTextColor={colors.placeholder}
+          secureTextEntry={!showPass}
+        />
+        <TouchableOpacity onPress={() => setShowPass(v => !v)} activeOpacity={0.7} style={{ paddingHorizontal: 12 }}>
+          <Text style={{ fontSize: 16 }}>{showPass ? '🙈' : '👁️'}</Text>
+        </TouchableOpacity>
+      </View>
+      <PressBtn style={[s.authBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={() => { onSave(); if (hasPassword) setChanging(false); }}>
+        <Text style={s.authBtnText}>{t.savePasswordBtn}</Text>
+      </PressBtn>
+      {hasPassword && (
+        <TouchableOpacity onPress={() => { setChanging(false); setSecNewPass(''); setSecConfirmPass(''); }} activeOpacity={0.7} style={{ alignItems: 'center', marginTop: 4 }}>
+          <Text style={{ fontSize: 13, color: colors.textMuted, textDecorationLine: 'underline' }}>{t.cancel}</Text>
+        </TouchableOpacity>
+      )}
+    </View>
   );
 }
 
@@ -156,7 +324,7 @@ function AccountSection({ user }: { user: any }) {
         {!showChangePw ? (
           <>
             <TouchableOpacity onPress={() => { setShowChangePw(true); setPwError(''); setPwSuccess(''); }} activeOpacity={0.7} style={s.changePwLink}>
-              <Text style={[s.changePwLinkText, { color: colors.red }]}>{t.changePassword}</Text>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: colors.red }}>🔑 Change Password</Text>
             </TouchableOpacity>
             <PressBtn style={[s.signOutBtn, { borderColor: colors.red }]} onPress={handleSignOut} activeOpacity={0.75}>
               <Text style={[s.signOutBtnText, { color: colors.red }]}>{t.signOut}</Text>
@@ -716,13 +884,19 @@ function SettingsTab() {
         </View>
         <Divider />
         <FieldLabel text={t.chooseLanguage} />
-        <View style={s.pillRow}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 }}>
           {(['en', 'ro', 'it', 'de', 'fr', 'nl'] as const).map((lang) => {
             const active = (settings.language ?? 'en') === lang;
             const label = lang === 'en' ? '🇬🇧 EN' : lang === 'ro' ? '🇷🇴 RO' : lang === 'it' ? '🇮🇹 IT' : lang === 'de' ? '🇩🇪 DE' : lang === 'fr' ? '🇫🇷 FR' : '🇳🇱 NL';
             return (
               <TouchableOpacity key={lang}
-                style={[s.pill, active ? s.primaryBtnShadow : null, { borderColor: colors.red, backgroundColor: active ? colors.red : 'transparent' }]}
+                style={[active ? s.primaryBtnShadow : null, {
+                  borderColor: colors.red,
+                  backgroundColor: active ? colors.red : 'transparent',
+                  borderWidth: 1.5, borderRadius: 6,
+                  paddingHorizontal: 14, paddingVertical: 7,
+                  width: '30%', alignItems: 'center',
+                }]}
                 onPress={() => setSettings({ language: lang })} activeOpacity={0.75}>
                 <Text style={[s.pillText, { color: active ? '#fff' : colors.textMuted }]}>{label}</Text>
               </TouchableOpacity>
@@ -795,30 +969,32 @@ function SettingsTab() {
             );
           })}
         </View>
+
         {settings.securityMethod === 'pin' && (
-          <View style={{ gap: 8, marginTop: 10 }}>
-            <FieldLabel text={t.newPin} />
-            <StyledInput value={secNewPin} onChangeText={setSecNewPin} placeholder="••••" keyboardType="number-pad" maxLength={4} secureTextEntry />
-            <FieldLabel text={t.confirmPin} />
-            <StyledInput value={secConfirmPin} onChangeText={setSecConfirmPin} placeholder="••••" keyboardType="number-pad" maxLength={4} secureTextEntry />
-            <PressBtn style={[s.authBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={handleSaveCredential}>
-              <Text style={s.authBtnText}>{t.savePin}</Text>
-            </PressBtn>
-          </View>
+          <PinSetupSection
+            hasPin={!!settings.securityHash}
+            onSave={handleSaveCredential}
+            secNewPin={secNewPin}
+            setSecNewPin={setSecNewPin}
+            secConfirmPin={secConfirmPin}
+            setSecConfirmPin={setSecConfirmPin}
+          />
         )}
+
         {settings.securityMethod === 'password' && (
-          <View style={{ gap: 8, marginTop: 10 }}>
-            <FieldLabel text={t.newPasswordSetting} />
-            <StyledInput value={secNewPass} onChangeText={setSecNewPass} placeholder={t.newPasswordSetting} secureTextEntry />
-            <FieldLabel text={t.confirmPin} />
-            <StyledInput value={secConfirmPass} onChangeText={setSecConfirmPass} placeholder={t.confirmPasswordPlaceholder} secureTextEntry />
-            <PressBtn style={[s.authBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={handleSaveCredential}>
-              <Text style={s.authBtnText}>{t.savePasswordBtn}</Text>
-            </PressBtn>
-          </View>
+          <PasswordSetupSection
+            hasPassword={!!settings.securityHash}
+            onSave={handleSaveCredential}
+            secNewPass={secNewPass}
+            setSecNewPass={setSecNewPass}
+            secConfirmPass={secConfirmPass}
+            setSecConfirmPass={setSecConfirmPass}
+          />
         )}
+
         {!!secError   && <Text style={[s.secMsg, { color: '#e53935' }]}>{secError}</Text>}
         {!!secSuccess && <Text style={[s.secMsg, { color: '#2e7d32' }]}>{secSuccess}</Text>}
+
         {settings.securityMethod !== 'none' && (
           <>
             <Divider />
@@ -868,15 +1044,28 @@ function SettingsTab() {
         <Divider />
         <View style={s.aboutRow}><Text style={[s.aboutLabel, { color: colors.textMuted }]}>{t.builtWith}</Text><Text style={[s.aboutValue, { color: colors.text }]}>Expo · React Native · Zustand</Text></View>
         <Divider />
-        {[t.privacyPolicy, t.termsOfUse, t.sendFeedback].map((item, i) => (
-          <View key={i}>
-            <TouchableOpacity style={s.aboutLinkRow} onPress={() => Alert.alert(item, t.notPublishedYet(item))} activeOpacity={0.75}>
-              <Text style={[s.aboutLink, { color: colors.text }]}>{item}</Text>
-              <Text style={[s.aboutChevron, { color: colors.border }]}>›</Text>
-            </TouchableOpacity>
-            {i < 2 && <Divider />}
-          </View>
-        ))}
+{[
+  {
+    label: t.privacyPolicy,
+    onPress: () => router.push({ pathname: '/legal' as any, params: { doc: 'privacy' } }),
+  },
+  {
+    label: t.termsOfUse,
+    onPress: () => router.push({ pathname: '/legal' as any, params: { doc: 'terms' } }),
+  },
+  {
+    label: t.sendFeedback,
+    onPress: () => Linking.openURL('mailto:liviu.dev.cozac@proton.me?subject=DiabEasy%20Feedback&body=App%20version%3A%202.0.0%0A%0A'),
+  },
+].map((item, i) => (
+        <View key={i}>
+          <TouchableOpacity style={s.aboutLinkRow} onPress={item.onPress} activeOpacity={0.75}>
+            <Text style={[s.aboutLink, { color: colors.text }]}>{item.label}</Text>
+            <Text style={[s.aboutChevron, { color: colors.border }]}>›</Text>
+          </TouchableOpacity>
+          {i < 2 && <Divider />}
+        </View>
+      ))}
         <Divider />
         <View style={s.disclaimerCard}>
           <Text style={[s.disclaimerText, { color: colors.textMuted }]}>{t.appDisclaimer}</Text>

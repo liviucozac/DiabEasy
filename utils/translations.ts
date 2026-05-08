@@ -3,7 +3,7 @@ export type Language = 'en' | 'ro' | 'it' | 'de' | 'fr' | 'nl';
 const en = {
   // ── Home ─────────────────────────────────────────────────────────────────────
   appDescription: 'Your simple and helpful companion for\ntracking ',
-  appDescriptionHighlight: 'type 1 diabetes',
+  appDescriptionHighlight: 'your diabetes',
   connectGlucometer: 'Connect Glucometer',
   connectGlucometerPremium: 'Connect Glucometer — Premium',
   compatibleDevices: 'Compatible devices',
@@ -348,7 +348,7 @@ const en = {
   sosEmergency: 'SOS & Emergency',
   needImmediateHelp: 'Need immediate help?',
   emergencyCallSub: 'If your condition is life-threatening or you cannot treat yourself, call emergency services now.',
-  callEmergency: (n: string) => `Call ${n} — Emergency Services`,
+  callEmergency: (n: string) => `Call emergency services - ${n}`,
   yourAddressIs: 'Your address is',
   caregiverEmergencySub: (name: string, addr: string) =>
     `If you notice high or low glycemia, check up on ${name} and call emergency services if they are unresponsive. Their address is: ${addr}`,
@@ -630,7 +630,7 @@ const en = {
       title: 'Emergency (SOS Tab)',
       body: 'In a crisis, every second counts.',
       bullets: [
-        'One-tap Call 112 button — always visible at the top',
+        'One-tap emergency call button — always visible at the top',
         'Save emergency contacts (family, doctor) for quick dialling',
         "Import contacts directly from your phone's contact list",
         'Hospital Finder: search or use your location to find nearby hospitals',
@@ -700,8 +700,8 @@ const en = {
   estimateOnlyConfirm: '⚠️ Estimate only. Always confirm with your healthcare provider before dosing.',
   drinkWaterAvoidEating: 'Drink plenty of water and avoid eating until levels improve.',
   emergencyServicesQuestion: '🚨 Do you need emergency services?',
-  hypoEmergencyBody: 'If you feel confused, cannot swallow, or someone cannot wake you — call 112 immediately.',
-  hyperEmergencyBody: 'If you feel nauseous, are vomiting, have fruity-smelling breath, or feel very unwell — call 112 immediately.',
+  hypoEmergencyBody: 'If you feel confused, cannot swallow, or someone cannot wake you — call emergency services immediately.',
+  hyperEmergencyBody: 'If you feel nauseous, are vomiting, have fruity-smelling breath, or feel very unwell — call emergency services immediately.',
   hypoSigns: [
     'Loss of consciousness or inability to swallow',
     'Seizures or severe uncontrolled shaking',
@@ -712,7 +712,7 @@ const en = {
     'Fruity or acetone-smelling breath',
     'Extreme confusion or drowsiness',
   ],
-  callEmergencyServices: 'Call 112 — Emergency Services',
+  callEmergencyServices: 'Call emergency services',
   imManaging: "I'm managing — close",
   neverIgnoreSigns: 'Never ignore the warning signs of a diabetic emergency. When in doubt, call.',
   lowBloodSugar: '🩸 Low Blood Sugar',
@@ -819,8 +819,8 @@ const en = {
 };
 
 const ro: typeof en = {
-  appDescription: 'Însoțitorul tău simplu și util pentru\ngestionarea ',
-  appDescriptionHighlight: 'diabetului de tip 1',
+  appDescription: 'Însoțitorul tău simplu și util pentru \n gestionarea ',
+  appDescriptionHighlight: 'diabetului tău',
   connectGlucometer: 'Conectează Glucometrul',
   connectGlucometerPremium: 'Conectează Glucometrul — Premium',
   compatibleDevices: 'Dispozitive compatibile',
@@ -1155,7 +1155,7 @@ const ro: typeof en = {
   sosEmergency: 'SOS & Urgențe',
   needImmediateHelp: 'Ai nevoie de ajutor imediat?',
   emergencyCallSub: 'Dacă starea ta este amenințătoare de viață sau nu te poți trata singur, sună la serviciile de urgență.',
-  callEmergency: (n: string) => `Sună la ${n} — Servicii de urgență`,
+  callEmergency: (n: string) => `Sună la serviciile de urgență - ${n}`,
   yourAddressIs: 'Adresa ta este',
   caregiverEmergencySub: (name: string, addr: string) =>
     `Dacă observi glicemie ridicată sau scăzută, verifică starea lui/ei ${name} și sună la serviciile de urgență dacă nu răspunde. Adresa lor este: ${addr}`,
@@ -1435,7 +1435,7 @@ const ro: typeof en = {
       title: 'Urgențe (Tab-ul SOS)',
       body: 'Într-o criză, fiecare secundă contează.',
       bullets: [
-        'Buton de apel 112 cu o singură atingere — mereu vizibil',
+        'Buton de apel urgențe cu o singură atingere — mereu vizibil',
         'Salvează contacte de urgență (familie, medic) pentru apelare rapidă',
         'Importă contacte direct din lista de contacte a telefonului',
         'Localizator de spitale: caută sau folosește locația ta pentru a găsi spitale din apropiere',
@@ -1503,8 +1503,8 @@ const ro: typeof en = {
   estimateOnlyConfirm: '⚠️ Estimare. Confirmați întotdeauna cu medicul înainte de a lua o doză.',
   drinkWaterAvoidEating: 'Bea multă apă și evită mâncarea până la normalizarea nivelurilor.',
   emergencyServicesQuestion: '🚨 Ai nevoie de servicii de urgență?',
-  hypoEmergencyBody: 'Dacă ești confuz, nu poți înghiți sau cineva nu te poate trezi — sună la 112 imediat.',
-  hyperEmergencyBody: 'Dacă ești greață, vărsături, respirație cu miros fructat sau te simți foarte rău — sună la 112 imediat.',
+  hypoEmergencyBody: 'Dacă ești confuz, nu poți înghiți sau cineva nu te poate trezi — sună imediat la serviciile de urgență.',
+  hyperEmergencyBody: 'Dacă ești greață, vărsături, respirație cu miros fructat sau te simți foarte rău — sună imediat la serviciile de urgență.',
   hypoSigns: [
     'Pierderea conștienței sau incapacitate de a înghiți',
     'Convulsii sau tremurături severe necontrolate',
@@ -1515,7 +1515,7 @@ const ro: typeof en = {
     'Respirație cu miros fructat sau de acetonă',
     'Confuzie extremă sau somnolență',
   ],
-  callEmergencyServices: 'Sună la 112 — Servicii de urgență',
+  callEmergencyServices: 'Sună la serviciile de urgență',
   imManaging: 'Mă descurc — închide',
   neverIgnoreSigns: 'Nu ignora niciodată semnele de avertizare ale unei urgențe diabetice. Când ești în dubiu, sună.',
   lowBloodSugar: '🩸 Glicemie scăzută',
@@ -1718,7 +1718,7 @@ const ro: typeof en = {
 
 const it: typeof en = {
   appDescription: 'Il tuo semplice e utile compagno per\nmonitorare ',
-  appDescriptionHighlight: 'il diabete di tipo 1',
+  appDescriptionHighlight: 'il tuo diabete',
   connectGlucometer: 'Collega Glucometro',
   connectGlucometerPremium: 'Collega Glucometro — Premium',
   compatibleDevices: 'Dispositivi compatibili',
@@ -2053,7 +2053,7 @@ const it: typeof en = {
   sosEmergency: 'SOS & Emergenza',
   needImmediateHelp: 'Hai bisogno di aiuto immediato?',
   emergencyCallSub: 'Se la tua condizione è pericolosa per la vita o non riesci a trattarti da solo, chiama i servizi di emergenza adesso.',
-  callEmergency: (n: string) => `Chiama il ${n} — Emergenza`,
+  callEmergency: (n: string) => `Chiama i servizi di emergenza - ${n}`,
   yourAddressIs: 'Il tuo indirizzo è',
   caregiverEmergencySub: (name: string, addr: string) =>
     `Se noti glicemia alta o bassa, controlla ${name} e chiama i servizi di emergenza se non risponde. Il suo indirizzo è: ${addr}`,
@@ -2333,7 +2333,7 @@ const it: typeof en = {
       title: 'Emergenza (Scheda SOS)',
       body: 'In una crisi, ogni secondo conta.',
       bullets: [
-        'Pulsante Chiama 112 con un solo tocco — sempre visibile in cima',
+        'Pulsante di chiamata d\'emergenza con un solo tocco — sempre visibile in cima',
         'Salva contatti di emergenza (familiari, medico) per chiamate rapide',
         'Importa contatti direttamente dalla rubrica del telefono',
         'Trova ospedale: cerca o usa la tua posizione per trovare ospedali vicini',
@@ -2401,8 +2401,8 @@ const it: typeof en = {
   estimateOnlyConfirm: '⚠️ Solo stima. Conferma sempre le dosi con il tuo medico prima di somministrare.',
   drinkWaterAvoidEating: 'Bevi molta acqua ed evita di mangiare fino al miglioramento dei livelli.',
   emergencyServicesQuestion: '🚨 Hai bisogno dei servizi di emergenza?',
-  hypoEmergencyBody: 'Se ti senti confuso, non riesci a deglutire o qualcuno non riesce a svegliarti — chiama il 112 immediatamente.',
-  hyperEmergencyBody: 'Se hai nausea, vomiti, hai l\'alito fruttato o ti senti molto male — chiama il 112 immediatamente.',
+  hypoEmergencyBody: 'Se ti senti confuso, non riesci a deglutire o qualcuno non riesce a svegliarti — chiama immediatamente i servizi di emergenza.',
+  hyperEmergencyBody: 'Se hai nausea, vomiti, hai l\'alito fruttato o ti senti molto male — chiama immediatamente i servizi di emergenza.',
   hypoSigns: [
     'Perdita di conoscenza o incapacità di deglutire',
     'Convulsioni o tremori severi incontrollabili',
@@ -2413,7 +2413,7 @@ const it: typeof en = {
     'Alito fruttato o che sa di acetone',
     'Confusione estrema o sonnolenza',
   ],
-  callEmergencyServices: 'Chiama il 112 — Emergenza',
+  callEmergencyServices: 'Chiama i servizi di emergenza',
   imManaging: 'Sto gestendo — chiudi',
   neverIgnoreSigns: 'Non ignorare mai i segnali di allarme di un\'emergenza diabetica. In caso di dubbio, chiama.',
   lowBloodSugar: '🩸 Glicemia bassa',
@@ -2517,7 +2517,7 @@ const it: typeof en = {
 const de: typeof en = {
   // ── Home ─────────────────────────────────────────────────────────────────────
   appDescription: 'Dein einfacher und hilfreicher Begleiter zur\nÜberwachung von ',
-  appDescriptionHighlight: 'Typ-1-Diabetes',
+  appDescriptionHighlight: 'deinen-Diabetes',
   connectGlucometer: 'Glukosemessgerät verbinden',
   connectGlucometerPremium: 'Glukosemessgerät verbinden — Premium',
   compatibleDevices: 'Kompatible Geräte',
@@ -2862,7 +2862,7 @@ const de: typeof en = {
   sosEmergency: 'SOS & Notfall',
   needImmediateHelp: 'Brauchst du sofortige Hilfe?',
   emergencyCallSub: 'Wenn dein Zustand lebensbedrohlich ist oder du dich nicht selbst behandeln kannst, rufe jetzt den Notfalldienst an.',
-  callEmergency: (n: string) => `${n} anrufen — Notfalldienst`,
+  callEmergency: (n: string) => `Notfalldienst anrufen - ${n}`,
   yourAddressIs: 'Deine Adresse ist',
   caregiverEmergencySub: (name: string, addr: string) =>
     `Wenn du eine hohe oder niedrige Glykämie bemerkst, sieh nach ${name} und rufe den Notfalldienst, wenn sie nicht reagieren. Ihre Adresse ist: ${addr}`,
@@ -3144,7 +3144,7 @@ const de: typeof en = {
       title: 'Notfall (SOS-Tab)',
       body: 'In einer Krise zählt jede Sekunde.',
       bullets: [
-        'Ein-Tipp-Anruf 112 — immer oben sichtbar',
+        'Notruf-Button — immer oben sichtbar',
         'Notfallkontakte speichern (Familie, Arzt) für schnelles Wählen',
         'Kontakte direkt aus der Kontaktliste deines Telefons importieren',
         'Krankenhausfinder: suchen oder Standort verwenden, um nahe gelegene Krankenhäuser zu finden',
@@ -3214,8 +3214,8 @@ const de: typeof en = {
   estimateOnlyConfirm: '⚠️ Nur Schätzung. Bestätige immer mit deinem Arzt vor der Dosierung.',
   drinkWaterAvoidEating: 'Viel Wasser trinken und auf Essen verzichten, bis sich die Werte verbessern.',
   emergencyServicesQuestion: '🚨 Brauchst du den Notfalldienst?',
-  hypoEmergencyBody: 'Wenn du verwirrt bist, nicht schlucken kannst oder jemand dich nicht wecken kann — sofort 112 anrufen.',
-  hyperEmergencyBody: 'Wenn du dich übelst, erbrichst, fruchtigen Atemgeruch hast oder dich sehr unwohl fühlst — sofort 112 anrufen.',
+  hypoEmergencyBody: 'Wenn du verwirrt bist, nicht schlucken kannst oder jemand dich nicht wecken kann — sofort den Notfalldienst anrufen.',
+  hyperEmergencyBody: 'Wenn du dich übelst, erbrichst, fruchtigen Atemgeruch hast oder dich sehr unwohl fühlst — sofort den Notfalldienst anrufen.',
   hypoSigns: [
     'Bewusstlosigkeit oder Unfähigkeit zu schlucken',
     'Krampfanfälle oder schweres unkontrolliertes Zittern',
@@ -3226,7 +3226,7 @@ const de: typeof en = {
     'Fruchtiger oder Aceton-Atemgeruch',
     'Extreme Verwirrung oder Schläfrigkeit',
   ],
-  callEmergencyServices: '112 anrufen — Notfalldienst',
+  callEmergencyServices: 'Notfalldienst anrufen',
   imManaging: 'Ich komme klar — schließen',
   neverIgnoreSigns: 'Ignoriere niemals die Warnsignale eines diabetischen Notfalls. Im Zweifel anrufen.',
   lowBloodSugar: '🩸 Niedriger Blutzucker',
@@ -3331,7 +3331,7 @@ const de: typeof en = {
 
 const fr: typeof en = {
   appDescription: 'Votre compagnon simple et utile pour\nsuivre le ',
-  appDescriptionHighlight: 'diabète de type 1',
+  appDescriptionHighlight: 'votre diabète',
   connectGlucometer: 'Connecter le glucomètre',
   connectGlucometerPremium: 'Connecter le glucomètre — Premium',
   compatibleDevices: 'Appareils compatibles',
@@ -3667,7 +3667,7 @@ const fr: typeof en = {
   sosEmergency: 'SOS & Urgence',
   needImmediateHelp: 'Besoin d\'aide immédiate ?',
   emergencyCallSub: 'Si votre état est engageant pour la vie ou si vous ne pouvez pas vous traiter vous-même, appelez les services d\'urgence maintenant.',
-  callEmergency: (n: string) => `Appeler le ${n} — Services d'urgence`,
+  callEmergency: (n: string) => `Appeler les services d'urgence - ${n}`,
   yourAddressIs: 'Votre adresse est',
   caregiverEmergencySub: (name: string, addr: string) =>
     `Si vous observez une glycémie élevée ou basse, vérifiez l'état de ${name} et appelez les urgences s'il/elle ne répond pas. Son adresse est : ${addr}`,
@@ -3947,7 +3947,7 @@ const fr: typeof en = {
       title: 'Urgence (Onglet SOS)',
       body: 'En cas de crise, chaque seconde compte.',
       bullets: [
-        'Bouton Appeler le 112 en un appui — toujours visible en haut',
+        'Bouton d\'appel d\'urgence en un appui — toujours visible en haut',
         'Enregistrez des contacts d\'urgence (famille, médecin) pour une composition rapide',
         'Importez des contacts directement depuis la liste de contacts de votre téléphone',
         'Localisateur d\'hôpital : recherchez ou utilisez votre position pour trouver les hôpitaux proches',
@@ -4015,8 +4015,8 @@ const fr: typeof en = {
   estimateOnlyConfirm: '⚠️ Estimation seulement. Confirmez toujours les doses avec votre médecin avant de vous administrer.',
   drinkWaterAvoidEating: 'Buvez beaucoup d\'eau et évitez de manger jusqu\'à l\'amélioration des niveaux.',
   emergencyServicesQuestion: '🚨 Avez-vous besoin des services d\'urgence ?',
-  hypoEmergencyBody: 'Si vous vous sentez confus(e), ne pouvez pas avaler, ou si quelqu\'un ne peut pas vous réveiller — appelez le 112 immédiatement.',
-  hyperEmergencyBody: 'Si vous avez des nausées, vomissez, avez une haleine fruitée, ou vous sentez très mal — appelez le 112 immédiatement.',
+  hypoEmergencyBody: 'Si vous vous sentez confus(e), ne pouvez pas avaler, ou si quelqu\'un ne peut pas vous réveiller — appelez immédiatement les services d\'urgence.',
+  hyperEmergencyBody: 'Si vous avez des nausées, vomissez, avez une haleine fruitée, ou vous sentez très mal — appelez immédiatement les services d\'urgence.',
   hypoSigns: [
     'Perte de conscience ou incapacité à avaler',
     'Convulsions ou tremblements sévères incontrôlables',
@@ -4027,7 +4027,7 @@ const fr: typeof en = {
     'Haleine fruitée ou odeur d\'acétone',
     'Confusion extrême ou somnolence',
   ],
-  callEmergencyServices: 'Appeler le 112 — Urgences',
+  callEmergencyServices: 'Appeler les services d\'urgence',
   imManaging: 'Je gère — fermer',
   neverIgnoreSigns: 'Ne jamais ignorer les signes d\'alerte d\'une urgence diabétique. En cas de doute, appelez.',
   lowBloodSugar: '🩸 Glycémie basse',
@@ -4130,7 +4130,7 @@ const fr: typeof en = {
 
 const nl: typeof en = {
   appDescription: 'Uw eenvoudige en handige metgezel voor\nhet bijhouden van ',
-  appDescriptionHighlight: 'type 1 diabetes',
+  appDescriptionHighlight: 'uw diabetes',
   connectGlucometer: 'Glucometer verbinden',
   connectGlucometerPremium: 'Glucometer verbinden — Premium',
   compatibleDevices: 'Compatibele apparaten',
@@ -4466,7 +4466,7 @@ const nl: typeof en = {
   sosEmergency: 'SOS & Noodgeval',
   needImmediateHelp: 'Heeft u onmiddellijke hulp nodig?',
   emergencyCallSub: 'Als uw toestand levensbedreigend is of u zichzelf niet kunt behandelen, bel dan nu de hulpdiensten.',
-  callEmergency: (n: string) => `Bel ${n} — Hulpdiensten`,
+  callEmergency: (n: string) => `Bel de hulpdiensten - ${n}`,
   yourAddressIs: 'Uw adres is',
   caregiverEmergencySub: (name: string, addr: string) =>
     `Als u hoge of lage glycemie opmerkt, controleer dan ${name} en bel de hulpdiensten als hij/zij niet reageert. Zijn/haar adres is: ${addr}`,
@@ -4658,7 +4658,7 @@ const nl: typeof en = {
       title: 'Welkom bij DiabEasy',
       body: 'Uw persoonlijke diabetesmetgezel — eenvoudig, snel en altijd bij u.',
       bullets: [
-        'Speciaal ontworpen voor het beheer van type 1 diabetes',
+        'Speciaal ontworpen voor het beheer van uw diabetes',
         'Volg glucose, voeding, insuline en noodgevallen op één plek',
         'Geen account vereist om te beginnen — alle gegevens blijven op uw apparaat',
         'Veeg door deze slides om te leren hoe elke functie werkt',
@@ -4746,7 +4746,7 @@ const nl: typeof en = {
       title: 'Noodgeval (SOS-tabblad)',
       body: 'In een crisis telt elke seconde.',
       bullets: [
-        'Knop Bel 112 met één tik — altijd zichtbaar bovenaan',
+        'Noodoproep-knop — altijd zichtbaar bovenaan',
         'Sla noodcontacten op (familie, arts) voor snel bellen',
         'Importeer contacten direct vanuit de contactenlijst van uw telefoon',
         'Ziekenhuiszoeker: zoek of gebruik uw locatie om nabijgelegen ziekenhuizen te vinden',
@@ -4814,8 +4814,8 @@ const nl: typeof en = {
   estimateOnlyConfirm: '⚠️ Slechts een schatting. Bevestig doses altijd met uw arts voor toediening.',
   drinkWaterAvoidEating: 'Drink veel water en vermijd eten totdat de niveaus verbeteren.',
   emergencyServicesQuestion: '🚨 Heeft u de hulpdiensten nodig?',
-  hypoEmergencyBody: 'Als u zich verward voelt, niet kunt slikken, of als iemand u niet wakker kan krijgen — bel 112 onmiddellijk.',
-  hyperEmergencyBody: 'Als u misselijk bent, braakt, fruitige adem heeft, of zich zeer onwel voelt — bel 112 onmiddellijk.',
+  hypoEmergencyBody: 'Als u zich verward voelt, niet kunt slikken, of als iemand u niet wakker kan krijgen — bel onmiddellijk de hulpdiensten.',
+  hyperEmergencyBody: 'Als u misselijk bent, braakt, fruitige adem heeft, of zich zeer onwel voelt — bel onmiddellijk de hulpdiensten.',
   hypoSigns: [
     'Bewustzijnsverlies of onvermogen om te slikken',
     'Stuipen of ernstig oncontroleerbaar schudden',
@@ -4826,7 +4826,7 @@ const nl: typeof en = {
     'Fruitige of acetonachtige adem',
     'Extreme verwarring of slaperigheid',
   ],
-  callEmergencyServices: 'Bel 112 — Hulpdiensten',
+  callEmergencyServices: 'Bel de hulpdiensten',
   imManaging: 'Ik red het — sluiten',
   neverIgnoreSigns: 'Negeer de waarschuwingssignalen van een diabetesnoodgeval nooit. Bel bij twijfel.',
   lowBloodSugar: '🩸 Lage bloedsuiker',

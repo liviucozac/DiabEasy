@@ -271,9 +271,18 @@ export const useGlucoseStore = create<GlucoseStore>()(
         ...persistedState,
         settings: { ...currentState.settings, ...(persistedState.settings ?? {}) },
         profile:  { ...currentState.profile,  ...(persistedState.profile  ?? {}) },
-        insulinEntries: (persistedState.insulinEntries ?? []).map((e: any) =>
-          e.timestamp ? e : { ...e, timestamp: new Date(0).toISOString() }
-        ),
+        insulinEntries: (persistedState.insulinEntries ?? []).map((e: any) => {
+          const withId = e.id ? e : { ...e, id: generateId() };
+          const withTimestamp = withId.timestamp ? withId : { ...withId, timestamp: new Date(0).toISOString() };
+          // Handle migration from old 'DD/MM/YYYY HH:mm' format to ISO
+          if (withTimestamp.timestamp && !withTimestamp.timestamp.includes('T')) {
+            const [datePart, timePart = '00:00'] = withTimestamp.timestamp.split(' ');
+            const [d, m, y] = datePart.split('/');
+            const [h, min]  = timePart.split(':');
+            return { ...withTimestamp, timestamp: new Date(+y, +m - 1, +d, +h, +min).toISOString() };
+          }
+          return withTimestamp;
+        }),
         history: (persistedState.history ?? []).map((e: any) => {
           const withId = e.id ? e : { ...e, id: generateId() };
           if (withId.timestamp && !withId.timestamp.includes('T')) {

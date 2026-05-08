@@ -424,10 +424,10 @@ function TabsLayout() {
         />
       ))}
       <Tabs.Screen name="onboarding" options={{ href: null }} />
+      <Tabs.Screen name="legal" options={{ href: null }} />
     </Tabs>
   );
 }
-
 // ─── Root content ─────────────────────────────────────────────────────────────
 
 function RootContent() {

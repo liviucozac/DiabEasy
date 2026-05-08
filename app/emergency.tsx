@@ -253,7 +253,7 @@ export default function EmergencyScreen() {
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%' }}>
             <Text style={s.callBtnIcon}>📞</Text>
-            <Text style={s.callBtnText}>Call Emergency Services</Text>
+            <Text style={s.callBtnText}>{t.callEmergency(emergencyNumber)}</Text>
           </View>
         </PressBtn>
         </Animated.View>

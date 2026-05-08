@@ -1,6 +1,7 @@
+import { useEffect, useState } from 'react';
 import { useSubscriptionStore } from '../store/subscriptionStore';
 
-export const TRIAL_DAYS       = 14;
+export const TRIAL_DAYS        = 7;
 export const FREE_HISTORY_DAYS = 15;
 
 export function useSubscription() {
@@ -10,10 +11,17 @@ export function useSubscription() {
     startTrial, markTrialPdfUsed,
   } = useSubscriptionStore();
 
-  const msElapsed   = trialStartDate ? Date.now() - new Date(trialStartDate).getTime() : 0;
+  // Tick every 30 seconds so the countdown stays live
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const msElapsed   = trialStartDate ? now - new Date(trialStartDate).getTime() : 0;
   const daysElapsed = Math.floor(msElapsed / 86_400_000);
-  const isTrialActive    = !!trialStartDate && daysElapsed < TRIAL_DAYS;
-  const daysLeftInTrial  = isTrialActive ? TRIAL_DAYS - daysElapsed : 0;
+  const isTrialActive   = !!trialStartDate && daysElapsed < TRIAL_DAYS;
+  const daysLeftInTrial = isTrialActive ? TRIAL_DAYS - daysElapsed : 0;
 
   const isPremium          = isPremiumPaid || isTrialActive;
   const canUseBle          = isPremium;
