@@ -17,7 +17,15 @@ export function TrialBanner() {
   if (isPremiumPaid) {
     return (
       <View style={[s.banner, { backgroundColor: colors.normalBg, borderColor: colors.normal }]}>
-        <Text style={[s.text, { color: colors.normal }]}>✅ Premium Account</Text>
+        // Premium user
+<Text style={[s.text, { color: colors.normal }]}>{t.premiumAccount}</Text>
+
+// Free user
+<Text style={[s.text, { color: colors.textMuted }]}>{t.tryPremiumFree}</Text>
+<Text style={s.btnText}>{t.tryFree}</Text>
+
+// Trial expired
+<Text style={[s.text, { color: colors.low }]}>{t.trialExpired}</Text>
       </View>
     );
   }

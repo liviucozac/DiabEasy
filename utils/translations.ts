@@ -686,6 +686,10 @@ const en = {
   // ── TrialBanner ───────────────────────────────────────────────────────────────
   trialDaysLeft: (n: number) => `${n} day${n !== 1 ? 's' : ''} left in your free trial`,
   upgrade: 'Upgrade',
+  tryPremiumFree: '🎁 Try Premium free for 7 days',
+  tryFree: 'Try Free',
+  trialExpired: '⚠️ Trial expired — upgrade to keep premium features',
+  premiumAccount: '✅ Premium Account',
 
   // ── GuidedFlowModal ───────────────────────────────────────────────────────────
   currentReading: 'Current Reading',
@@ -819,8 +823,8 @@ const en = {
 };
 
 const ro: typeof en = {
-  appDescription: 'Însoțitorul tău simplu și util pentru \n gestionarea ',
-  appDescriptionHighlight: 'diabetului tău',
+  appDescription: 'Însoțitorul tău simplu și util pentru\ngestionarea ',
+  appDescriptionHighlight: 'diabetului dumneavoastră',
   connectGlucometer: 'Conectează Glucometrul',
   connectGlucometerPremium: 'Conectează Glucometrul — Premium',
   compatibleDevices: 'Dispozitive compatibile',
@@ -1490,6 +1494,10 @@ const ro: typeof en = {
 
   trialDaysLeft: (n: number) => `${n} zi${n !== 1 ? 'le' : ''} rămase din perioada de probă`,
   upgrade: 'Upgrade',
+  tryPremiumFree: '🎁 Încearcă Premium gratuit 7 zile',
+  tryFree: 'Încearcă',
+  trialExpired: '⚠️ Perioada de probă a expirat — fă upgrade pentru funcții premium',
+  premiumAccount: '✅ Cont Premium',
 
   currentReading: 'Citire curentă',
   glycemiaTooLow: '⚠️ Glicemia ta este prea scăzută.',
@@ -1718,7 +1726,7 @@ const ro: typeof en = {
 
 const it: typeof en = {
   appDescription: 'Il tuo semplice e utile compagno per\nmonitorare ',
-  appDescriptionHighlight: 'il tuo diabete',
+  appDescriptionHighlight: 'il suo diabete',
   connectGlucometer: 'Collega Glucometro',
   connectGlucometerPremium: 'Collega Glucometro — Premium',
   compatibleDevices: 'Dispositivi compatibili',
@@ -2388,6 +2396,10 @@ const it: typeof en = {
 
   trialDaysLeft: (n: number) => `${n} giorno${n !== 1 ? 'i' : ''} rimasti nella prova gratuita`,
   upgrade: 'Aggiorna',
+  tryPremiumFree: '🎁 Prova Premium gratis per 7 giorni',
+  tryFree: 'Prova gratis',
+  trialExpired: '⚠️ Prova scaduta — aggiorna per mantenere le funzioni premium',
+  premiumAccount: '✅ Account Premium',
 
   currentReading: 'Lettura attuale',
   glycemiaTooLow: '⚠️ La tua glicemia è troppo bassa.',
@@ -2517,7 +2529,7 @@ const it: typeof en = {
 const de: typeof en = {
   // ── Home ─────────────────────────────────────────────────────────────────────
   appDescription: 'Dein einfacher und hilfreicher Begleiter zur\nÜberwachung von ',
-  appDescriptionHighlight: 'deinen-Diabetes',
+  appDescriptionHighlight: 'deine Diabetes',
   connectGlucometer: 'Glukosemessgerät verbinden',
   connectGlucometerPremium: 'Glukosemessgerät verbinden — Premium',
   compatibleDevices: 'Kompatible Geräte',
@@ -3200,6 +3212,10 @@ const de: typeof en = {
   // ── TrialBanner ───────────────────────────────────────────────────────────────
   trialDaysLeft: (n: number) => `Noch ${n} Tag${n !== 1 ? 'e' : ''} in deiner kostenlosen Testphase`,
   upgrade: 'Upgrade',
+  tryPremiumFree: '🎁 Premium 7 Tage kostenlos testen',
+  tryFree: 'Kostenlos testen',
+  trialExpired: '⚠️ Testphase abgelaufen — upgrade für Premium-Funktionen',
+  premiumAccount: '✅ Premium-Konto',
 
   // ── GuidedFlowModal ───────────────────────────────────────────────────────────
   currentReading: 'Aktuelle Messung',
@@ -3330,7 +3346,7 @@ const de: typeof en = {
 };
 
 const fr: typeof en = {
-  appDescription: 'Votre compagnon simple et utile pour\nsuivre le ',
+  appDescription: 'Votre compagnon simple et utile pour\nsuivre ',
   appDescriptionHighlight: 'votre diabète',
   connectGlucometer: 'Connecter le glucomètre',
   connectGlucometerPremium: 'Connecter le glucomètre — Premium',
@@ -4002,6 +4018,10 @@ const fr: typeof en = {
 
   trialDaysLeft: (n: number) => `${n} jour${n !== 1 ? 's' : ''} restant${n !== 1 ? 's' : ''} dans votre essai gratuit`,
   upgrade: 'Mettre à niveau',
+  tryPremiumFree: '🎁 Essayez Premium gratuitement 7 jours',
+  tryFree: 'Essai gratuit',
+  trialExpired: '⚠️ Essai expiré — passez à Premium pour garder les fonctions',
+  premiumAccount: '✅ Compte Premium',
 
   currentReading: 'Mesure actuelle',
   glycemiaTooLow: '⚠️ Votre glycémie est trop basse.',
@@ -4130,7 +4150,7 @@ const fr: typeof en = {
 
 const nl: typeof en = {
   appDescription: 'Uw eenvoudige en handige metgezel voor\nhet bijhouden van ',
-  appDescriptionHighlight: 'uw diabetes',
+  appDescriptionHighlight: 'Uw diabetes',
   connectGlucometer: 'Glucometer verbinden',
   connectGlucometerPremium: 'Glucometer verbinden — Premium',
   compatibleDevices: 'Compatibele apparaten',
@@ -4658,7 +4678,7 @@ const nl: typeof en = {
       title: 'Welkom bij DiabEasy',
       body: 'Uw persoonlijke diabetesmetgezel — eenvoudig, snel en altijd bij u.',
       bullets: [
-        'Speciaal ontworpen voor het beheer van uw diabetes',
+        'Speciaal ontworpen voor het beheer van type 1 diabetes',
         'Volg glucose, voeding, insuline en noodgevallen op één plek',
         'Geen account vereist om te beginnen — alle gegevens blijven op uw apparaat',
         'Veeg door deze slides om te leren hoe elke functie werkt',
@@ -4801,6 +4821,10 @@ const nl: typeof en = {
 
   trialDaysLeft: (n: number) => `Nog ${n} dag${n !== 1 ? 'en' : ''} in uw gratis proefperiode`,
   upgrade: 'Upgraden',
+  tryPremiumFree: '🎁 Probeer Premium gratis 7 dagen',
+  tryFree: 'Gratis proberen',
+  trialExpired: '⚠️ Proefperiode verlopen — upgrade voor premium functies',
+  premiumAccount: '✅ Premium account',
 
   currentReading: 'Huidige meting',
   glycemiaTooLow: '⚠️ Uw glycemie is te laag.',
