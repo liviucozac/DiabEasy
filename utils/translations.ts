@@ -1,6 +1,7 @@
 export type Language = 'en' | 'ro' | 'it' | 'de' | 'fr' | 'nl';
 
 const en = {
+  googleSignInHint: 'If you signed up with Google, use the "Continue with Google" button below.',
   // ── Home ─────────────────────────────────────────────────────────────────────
   appDescription: 'Your simple and helpful companion for\ntracking ',
   appDescriptionHighlight: 'your diabetes',
@@ -823,8 +824,9 @@ const en = {
 };
 
 const ro: typeof en = {
-  appDescription: 'Însoțitorul tău simplu și util pentru\ngestionarea ',
-  appDescriptionHighlight: 'diabetului dumneavoastră',
+  googleSignInHint: 'Dacă te-ai înregistrat cu Google, folosește butonul "Continuă cu Google" de mai jos.',
+  appDescription: 'Ajutorul tău simplu și util pentru\ngestionarea ',
+  appDescriptionHighlight: 'diabetului',
   connectGlucometer: 'Conectează Glucometrul',
   connectGlucometerPremium: 'Conectează Glucometrul — Premium',
   compatibleDevices: 'Dispozitive compatibile',
@@ -949,7 +951,7 @@ const ro: typeof en = {
   bloodGlucose: 'Glicemie',
   mealCarbs: 'Carbohidrați masă',
   notLoggedGoHome: 'Neînregistrat — mergi la tab-ul Acasă',
-  noMealGoFoodGuide: 'Nicio masă planificată — mergi la Ghid alimentar',
+  noMealGoFoodGuide: 'Nicio masă — vezi Ghid',
   glucoseLimits: 'Limite glicemie',
   glucoseLimitsHint: 'Valorile din afara acestor limite sunt marcate ca Scăzut sau Ridicat în toată aplicația.',
   lowThreshold: 'Limită inferioară (mg/dL)',
@@ -1725,8 +1727,9 @@ const ro: typeof en = {
 };
 
 const it: typeof en = {
+  googleSignInHint: 'Se ti sei registrato con Google, usa il pulsante "Continua con Google" qui sotto.',
   appDescription: 'Il tuo semplice e utile compagno per\nmonitorare ',
-  appDescriptionHighlight: 'il suo diabete',
+  appDescriptionHighlight: 'il diabete',
   connectGlucometer: 'Collega Glucometro',
   connectGlucometerPremium: 'Collega Glucometro — Premium',
   compatibleDevices: 'Dispositivi compatibili',
@@ -1851,7 +1854,7 @@ const it: typeof en = {
   bloodGlucose: 'Glicemia',
   mealCarbs: 'Carboidrati del pasto',
   notLoggedGoHome: 'Non registrato — vai alla scheda Home',
-  noMealGoFoodGuide: 'Nessun pasto pianificato — vai alla Guida alimentare',
+  noMealGoFoodGuide: 'Nessun pasto — vai a Guida',
   glucoseLimits: 'Limiti glicemici',
   glucoseLimitsHint: 'Le letture fuori da questi limiti vengono contrassegnate come Basso o Alto in tutta l\'app.',
   lowThreshold: 'Soglia bassa (mg/dL)',
@@ -2528,6 +2531,7 @@ const it: typeof en = {
 
 const de: typeof en = {
   // ── Home ─────────────────────────────────────────────────────────────────────
+  googleSignInHint: 'Wenn du dich mit Google registriert hast, verwende die Schaltfläche "Mit Google fortfahren" unten.',
   appDescription: 'Dein einfacher und hilfreicher Begleiter zur\nÜberwachung von ',
   appDescriptionHighlight: 'deine Diabetes',
   connectGlucometer: 'Glukosemessgerät verbinden',
@@ -2659,7 +2663,7 @@ const de: typeof en = {
   bloodGlucose: 'Blutzucker',
   mealCarbs: 'Mahlzeiten-KH',
   notLoggedGoHome: 'Nicht erfasst — zum Start-Tab',
-  noMealGoFoodGuide: 'Keine Mahlzeit geplant — zum Ernährungs-Tab',
+  noMealGoFoodGuide: 'Kein Essen — zur Ernährung',
   glucoseLimits: 'Blutzuckergrenzwerte',
   glucoseLimitsHint: 'Werte außerhalb dieser Grenzen werden in der gesamten App als Niedrig oder Hoch markiert.',
   lowThreshold: 'Unterer Grenzwert (mg/dL)',
@@ -3346,6 +3350,7 @@ const de: typeof en = {
 };
 
 const fr: typeof en = {
+  googleSignInHint: 'Si vous vous êtes inscrit avec Google, utilisez le bouton "Continuer avec Google" ci-dessous.',
   appDescription: 'Votre compagnon simple et utile pour\nsuivre ',
   appDescriptionHighlight: 'votre diabète',
   connectGlucometer: 'Connecter le glucomètre',
@@ -3473,7 +3478,7 @@ const fr: typeof en = {
   bloodGlucose: 'Glycémie',
   mealCarbs: 'Glucides du repas',
   notLoggedGoHome: 'Non enregistré — aller à Accueil',
-  noMealGoFoodGuide: 'Aucun repas prévu — aller au Guide alimentaire',
+  noMealGoFoodGuide: 'Aucun repas — voir Guide',
   glucoseLimits: 'Limites de glycémie',
   glucoseLimitsHint: 'Les valeurs hors de ces limites sont signalées Bas ou Élevé dans toute l\'application.',
   lowThreshold: 'Seuil bas (mg/dL)',
@@ -4149,6 +4154,7 @@ const fr: typeof en = {
 };
 
 const nl: typeof en = {
+  googleSignInHint: 'Als u zich heeft aangemeld met Google, gebruik dan de knop "Doorgaan met Google" hieronder.',
   appDescription: 'Uw eenvoudige en handige metgezel voor\nhet bijhouden van ',
   appDescriptionHighlight: 'Uw diabetes',
   connectGlucometer: 'Glucometer verbinden',
@@ -4276,7 +4282,7 @@ const nl: typeof en = {
   bloodGlucose: 'Bloedsuiker',
   mealCarbs: 'Koolhydraten maaltijd',
   notLoggedGoHome: 'Niet geregistreerd — ga naar Start',
-  noMealGoFoodGuide: 'Geen maaltijd gepland — ga naar Voedselgids',
+  noMealGoFoodGuide: 'Geen maaltijd — zie Gids',
   glucoseLimits: 'Glucosegrenzen',
   glucoseLimitsHint: 'Waarden buiten deze grenzen worden in de hele app als Laag of Hoog gemarkeerd.',
   lowThreshold: 'Ondergrens (mg/dL)',

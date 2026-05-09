@@ -1,12 +1,6 @@
 import auth from '@react-native-firebase/auth';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
-// Get this from Firebase Console → Authentication → Sign-in providers →
-// Google → Web SDK configuration → Web client ID
-const WEB_CLIENT_ID = '150645699717-s1emc44hle6kkkqopjqsrs7cef7chkjl.apps.googleusercontent.com';
-
-GoogleSignin.configure({ webClientId: WEB_CLIENT_ID });
-
 export const signUp = async (email: string, password: string) => {
   const result = await auth().createUserWithEmailAndPassword(email, password);
   return result.user;

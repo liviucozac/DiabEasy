@@ -35,6 +35,10 @@ GoogleSignin.configure({
   webClientId: '150645699717-s1emc44hle6kkkqopjqsrs7cef7chkjl.apps.googleusercontent.com',
 });
 
+// ─── Module-level flag to suppress onAuthStateChanged during Google cleanup ───
+
+let suppressNextAuthChange = false;
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -56,15 +60,15 @@ function AuthGateScreen() {
   const t = useTranslation();
   const { setPremiumPaid } = useSubscriptionStore();
 
-  const [mode, setMode]                         = useState<'login' | 'signup'>('login');
-  const [email, setEmail]                       = useState('');
-  const [password, setPassword]                 = useState('');
-  const [showPassword, setShowPassword]         = useState(false);
+  const [mode, setMode]                               = useState<'login' | 'signup'>('login');
+  const [email, setEmail]                             = useState('');
+  const [password, setPassword]                       = useState('');
+  const [showPassword, setShowPassword]               = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [loading, setLoading]                   = useState(false);
-  const [error, setError]                       = useState('');
-  const [success, setSuccess]                   = useState('');
-  const [confirmPassword, setConfirmPassword]   = useState('');
+  const [loading, setLoading]                         = useState(false);
+  const [error, setError]                             = useState('');
+  const [success, setSuccess]                         = useState('');
+  const [confirmPassword, setConfirmPassword]         = useState('');
 
   // ─── Email / Password Auth ────────────────────────────────────────────────
 
@@ -81,6 +85,8 @@ function AuthGateScreen() {
       checkFirebasePremium().then(ok => { if (ok) setPremiumPaid(true); }).catch(() => {});
       setEmail(''); setPassword(''); setConfirmPassword('');
     } catch (e: any) {
+      console.log('AUTH ERROR CODE:', e.code);
+      console.log('AUTH ERROR MSG:', e.message);
       if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found') {
         setError('Wrong email and/or password. Please try again.');
       } else if (e.code === 'auth/too-many-requests') {
@@ -90,8 +96,6 @@ function AuthGateScreen() {
       } else {
         setError(e.message ?? t.authenticationFailed);
       }
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -114,11 +118,25 @@ function AuthGateScreen() {
     setLoading(true); setError('');
     try {
       await GoogleSignin.hasPlayServices();
+      await GoogleSignin.signOut();
       const userInfo = await GoogleSignin.signIn();
       const googleCredential = auth.GoogleAuthProvider.credential(userInfo.data?.idToken ?? '');
-      await auth().signInWithCredential(googleCredential);
+      const result = await auth().signInWithCredential(googleCredential);
+
+      if (mode === 'login' && result.additionalUserInfo?.isNewUser) {
+        // Block onAuthStateChanged from reacting during cleanup
+        suppressNextAuthChange = true;
+        await auth().currentUser?.delete();
+        await GoogleSignin.signOut();
+        suppressNextAuthChange = false;
+        setError('No account found with this Google account. Please sign up first.');
+        setLoading(false);
+        return;
+      }
+
       checkFirebasePremium().then(ok => { if (ok) setPremiumPaid(true); }).catch(() => {});
     } catch (e: any) {
+      suppressNextAuthChange = false;
       if (e.code !== statusCodes.SIGN_IN_CANCELLED) {
         setError('Google sign-in failed. Please try again.');
       }
@@ -223,6 +241,19 @@ function AuthGateScreen() {
           </TouchableOpacity>
         )}
 
+        {/* Google hint */}
+        {mode === 'login' && (
+          <View style={{
+            backgroundColor: colors.bgCard, borderWidth: 1.5,
+            borderColor: colors.border, borderRadius: 8,
+            padding: 12, marginTop: 12,
+          }}>
+            <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 20, textAlign: 'center' }}>
+              {t.googleSignInHint}
+            </Text>
+          </View>
+        )}
+
         {/* Divider */}
         <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 16, gap: 10 }}>
           <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
@@ -244,7 +275,6 @@ function AuthGateScreen() {
             opacity: loading ? 0.6 : 1,
           }}
         >
-          {/* Google G */}
           <View style={{ width: 22, height: 22, alignItems: 'center', justifyContent: 'center' }}>
             <Text style={{ fontSize: 16, fontWeight: '900', color: '#4285F4' }}>G</Text>
           </View>
@@ -571,6 +601,11 @@ function RootContent() {
   useEffect(() => {
     const { loadFromFirestore, clearLocalData } = useGlucoseStore.getState();
     const unsub = onAuthStateChanged(async (u: any) => {
+      // Skip this auth change if we're in the middle of Google cleanup
+      if (suppressNextAuthChange) {
+        suppressNextAuthChange = false;
+        return;
+      }
       setUser(u);
       setAuthChecked(true);
       if (u) setRoleChosen(false);

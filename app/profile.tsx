@@ -23,6 +23,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import { useSubscription } from '../hooks/useSubscription';
 import { UpgradeModal } from '../components/UpgradeModal';
 import { router } from 'expo-router';
+import auth from '@react-native-firebase/auth';
 
 const RED = '#EC5557';
 
@@ -774,9 +775,96 @@ function ProfileTab() {
           )}
         </SectionCard>
       )}
+{/* ── Delete Account ── */}
+      {user && !caregiverSession && (
+        <SectionCard>
+          <SectionTitle text="Account Deletion" />
+          <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 18, marginBottom: 12 }}>
+            Permanently deletes your account, glucose history, insulin log, meals and profile. This cannot be undone.
+          </Text>
+          <TouchableOpacity
+            onPress={() => {
+              Alert.alert(
+                'Delete Account',
+                'This will permanently delete your account and all your data. This cannot be undone.',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Delete Everything',
+                    style: 'destructive',
+                    onPress: async () => {
+                      try {
+                        const uid = user.uid;
+                        const db = firestore();
+
+                        // Re-authenticate Google user (Firebase security requirement)
+                        const isGoogleUser = user.providerData?.some(
+                          (p: any) => p.providerId === 'google.com'
+                        );
+                        if (isGoogleUser) {
+                          const { GoogleSignin } = await import('@react-native-google-signin/google-signin');
+                          await GoogleSignin.hasPlayServices();
+                          const userInfo = await GoogleSignin.signIn();
+                          const credential = auth.GoogleAuthProvider.credential(userInfo.data?.idToken ?? '');
+                          await user.reauthenticateWithCredential(credential);
+                        }
+
+                        // Delete Firestore data
+                        await db.collection('users').doc(uid).delete();
+                        const collections = ['inviteCodes', 'caregiverData'];
+                        for (const col of collections) {
+                          const snap = await db.collection(col).where('uid', '==', uid).get();
+                          const b = db.batch();
+                          snap.docs.forEach(doc => b.delete(doc.ref));
+                          await b.commit();
+                        }
+
+                        // Clear local state immediately
+                        useGlucoseStore.getState().clearLocalData();
+                        useSubscriptionStore.getState().setPremiumPaid(false);
+
+                        // Delete Firebase Auth account first, then sign out
+                        const currentUser = auth().currentUser;
+                        if (currentUser) {
+                          await currentUser.delete();
+                        }
+
+                      } catch (e: any) {
+                        Alert.alert(
+                          'Error',
+                          e.code === 'auth/requires-recent-login'
+                            ? 'Please sign out and sign back in, then try again.'
+                            : e.message ?? 'Could not delete account.'
+                        );
+                      }
+                    },
+                  },
+                ]
+              );
+            }}
+            activeOpacity={0.75}
+            style={{
+              borderWidth: 1.5,
+              borderColor: '#e53935',
+              borderRadius: 8,
+              paddingVertical: 11,
+              alignItems: 'center',
+              backgroundColor: 'transparent',
+            }}
+          >
+            <Text style={{ fontSize: 14, fontWeight: '700', color: '#e53935' }}>
+              🗑️ Delete My Account
+            </Text>
+          </TouchableOpacity>
+        </SectionCard>
+      )}
     </ScrollView>
   );
 }
+
+
+
+
 
 // ─── Settings Tab ─────────────────────────────────────────────────────────────
 
@@ -1055,8 +1143,6 @@ function SettingsTab() {
       <SectionCard>
         <SectionTitle text={t.about} />
         <View style={s.aboutRow}><Text style={[s.aboutLabel, { color: colors.textMuted }]}>{t.appVersion}</Text><Text style={[s.aboutValue, { color: colors.text }]}>2.0.0</Text></View>
-        <Divider />
-        <View style={s.aboutRow}><Text style={[s.aboutLabel, { color: colors.textMuted }]}>{t.builtWith}</Text><Text style={[s.aboutValue, { color: colors.text }]}>Expo · React Native · Zustand</Text></View>
         <Divider />
         {[
           { label: t.privacyPolicy, onPress: () => router.push({ pathname: '/legal' as any, params: { doc: 'privacy' } }) },
