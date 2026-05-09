@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView,
-  TextInput, StyleSheet, Platform, Alert, Switch, Modal, Linking
+  TextInput, StyleSheet, Platform, Alert, Switch, Modal, Linking,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useGlucoseStore, DiabetesType, ThemeType, InsulinAnalogType, SecurityMethod, LockTimeout } from '../store/glucoseStore';
 import { INSULIN_ANALOGS, getAnalogByType } from '../utils/insulinUtils';
@@ -22,8 +23,6 @@ import { useTranslation } from '../hooks/useTranslation';
 import { useSubscription } from '../hooks/useSubscription';
 import { UpgradeModal } from '../components/UpgradeModal';
 import { router } from 'expo-router';
-
-
 
 const RED = '#EC5557';
 
@@ -118,7 +117,6 @@ function PinSetupSection({ hasPin, onSave, secNewPin, setSecNewPin, secConfirmPi
     );
   }
 
-  // Step 1 — verify current PIN
   if (hasPin && !verified) {
     return (
       <View style={{ gap: 8, marginTop: 10 }}>
@@ -145,7 +143,6 @@ function PinSetupSection({ hasPin, onSave, secNewPin, setSecNewPin, secConfirmPi
     );
   }
 
-  // Step 2 — set new PIN
   return (
     <View style={{ gap: 8, marginTop: 10 }}>
       <FieldLabel text={t.newPin} />
@@ -250,8 +247,8 @@ function PasswordSetupSection({ hasPassword, onSave, secNewPass, setSecNewPass, 
 function AccountSection({ user }: { user: any }) {
   const { colors } = useTheme();
   const t = useTranslation();
-  const [mode, setMode]     = useState<'login' | 'signup'>('login');
-  const [email, setEmail]   = useState('');
+  const [mode, setMode]         = useState<'login' | 'signup'>('login');
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
@@ -438,29 +435,53 @@ function CaregiverCodeSection({ patientName, patientAddress }: { patientName: st
   };
 
   const ActiveCodeCard = ({ type }: { type: CaregiverCodeType }) => {
-    const code = activeCodes[type];
-    if (!code) return null;
-    const isPermanent = type === 'permanent';
-    const expiryLabel = !isPermanent && tempExpiresAt
-      ? t.expiresOn(tempExpiresAt.toLocaleDateString(), tempExpiresAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
-      : null;
-    return (
-      <View style={[cg.codeCard, { borderColor: isPermanent ? colors.red : colors.normal, backgroundColor: colors.inputBg }]}>
-        <View style={cg.codeCardHeader}>
-          <Text style={[cg.codeCardLabel, { color: colors.textMuted }]}>{isPermanent ? t.codeTypePermanent : t.codeType24h}</Text>
-          <TouchableOpacity onPress={() => handleRevoke(type)} disabled={revoking === type} activeOpacity={0.75} style={[cg.revokeBtn, { borderColor: '#e53935' }]}>
-            <Text style={{ fontSize: 12, fontWeight: '700', color: revoking === type ? colors.textMuted : '#e53935' }}>
+  const code = activeCodes[type];
+  const [copied, setCopied] = useState(false);
+  if (!code) return null;
+  const isPermanent = type === 'permanent';
+  const expiryLabel = !isPermanent && tempExpiresAt
+    ? t.expiresOn(tempExpiresAt.toLocaleDateString(), tempExpiresAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
+    : null;
+
+  const handleCopy = async () => {
+    await Clipboard.setStringAsync(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <View style={[cg.codeCard, { borderColor: isPermanent ? colors.red : colors.normal, backgroundColor: colors.inputBg }]}>
+      <View style={cg.codeCardHeader}>
+        <Text style={[cg.codeCardLabel, { color: colors.textMuted }]}>{isPermanent ? t.codeTypePermanent : t.codeType24h}</Text>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <TouchableOpacity
+            onPress={handleCopy}
+            activeOpacity={0.75}
+            style={[cg.revokeBtn, { borderColor: isPermanent ? colors.red : colors.normal }]}
+          >
+            <Text style={{ fontSize: 12, fontWeight: '700', color: isPermanent ? colors.red : colors.normal }}>
+              {copied ? '✓ Copied' : '📋 Copy'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => handleRevoke(type)}
+            disabled={revoking === type}
+            activeOpacity={0.75}
+            style={[cg.revokeBtn, { borderColor: isPermanent ? '#e53935' : colors.normal }]}
+          >
+            <Text style={{ fontSize: 12, fontWeight: '700', color: revoking === type ? colors.textMuted : isPermanent ? '#e53935' : colors.normal }}>
               {revoking === type ? t.revoking : t.revoke}
             </Text>
           </TouchableOpacity>
         </View>
-        <Text style={[cg.codeDigits, { color: isPermanent ? colors.red : colors.normal }]}>{code}</Text>
-        <Text style={[cg.codeHint, { color: colors.textFaint }]}>
-          {isPermanent ? t.activeUntilRevoked : expiryLabel ?? t.activeFor24h}
-        </Text>
       </View>
-    );
-  };
+      <Text style={[cg.codeDigits, { color: isPermanent ? colors.red : colors.normal }]}>{code}</Text>
+      <Text style={[cg.codeHint, { color: colors.textFaint }]}>
+        {isPermanent ? t.activeUntilRevoked : expiryLabel ?? t.activeFor24h}
+      </Text>
+    </View>
+  );
+};
 
   return (
     <SectionCard>
@@ -594,7 +615,6 @@ function ProfileTab() {
             </TouchableOpacity>
           </View>
 
-          {/* ── Full Name ── */}
           <FieldLabel text={t.fullName} />
           {isEditing ? (
             <StyledInput value={name} onChangeText={setName} placeholder={t.fullNamePlaceholder} />
@@ -604,7 +624,6 @@ function ProfileTab() {
             </View>
           )}
 
-          {/* ── Date of Birth ── */}
           <FieldLabel text={t.dateOfBirth} />
           {isEditing ? (
             <>
@@ -652,7 +671,6 @@ function ProfileTab() {
 
           {!caregiverSession && (
             <>
-              {/* ── Diabetes Type ── */}
               <FieldLabel text={t.diabetesType} />
               {isEditing ? (
                 <View style={s.pillRow}>
@@ -673,7 +691,6 @@ function ProfileTab() {
                 </View>
               )}
 
-              {/* ── Diagnosis Date ── */}
               <FieldLabel text={t.diagnosisDate} />
               {isEditing ? (
                 <>
@@ -717,7 +734,6 @@ function ProfileTab() {
                 </View>
               )}
 
-              {/* ── Doctor Name ── */}
               <FieldLabel text={t.doctorName} />
               {isEditing ? (
                 <StyledInput value={doctorName} onChangeText={setDoctorName} placeholder={t.doctorNamePlaceholder} />
@@ -727,7 +743,6 @@ function ProfileTab() {
                 </View>
               )}
 
-              {/* ── Clinic / Hospital ── */}
               <FieldLabel text={t.clinicHospital} />
               {isEditing ? (
                 <StyledInput value={clinicName} onChangeText={setClinicName} placeholder={t.clinicPlaceholder} />
@@ -737,7 +752,6 @@ function ProfileTab() {
                 </View>
               )}
 
-              {/* ── Address ── */}
               <FieldLabel text={t.address} />
               {isEditing ? (
                 <StyledInput value={address} onChangeText={setAddress} placeholder={t.addressPlaceholder} />
@@ -1044,28 +1058,19 @@ function SettingsTab() {
         <Divider />
         <View style={s.aboutRow}><Text style={[s.aboutLabel, { color: colors.textMuted }]}>{t.builtWith}</Text><Text style={[s.aboutValue, { color: colors.text }]}>Expo · React Native · Zustand</Text></View>
         <Divider />
-{[
-  {
-    label: t.privacyPolicy,
-    onPress: () => router.push({ pathname: '/legal' as any, params: { doc: 'privacy' } }),
-  },
-  {
-    label: t.termsOfUse,
-    onPress: () => router.push({ pathname: '/legal' as any, params: { doc: 'terms' } }),
-  },
-  {
-    label: t.sendFeedback,
-    onPress: () => Linking.openURL('mailto:liviu.dev.cozac@proton.me?subject=DiabEasy%20Feedback&body=App%20version%3A%202.0.0%0A%0A'),
-  },
-].map((item, i) => (
-        <View key={i}>
-          <TouchableOpacity style={s.aboutLinkRow} onPress={item.onPress} activeOpacity={0.75}>
-            <Text style={[s.aboutLink, { color: colors.text }]}>{item.label}</Text>
-            <Text style={[s.aboutChevron, { color: colors.border }]}>›</Text>
-          </TouchableOpacity>
-          {i < 2 && <Divider />}
-        </View>
-      ))}
+        {[
+          { label: t.privacyPolicy, onPress: () => router.push({ pathname: '/legal' as any, params: { doc: 'privacy' } }) },
+          { label: t.termsOfUse,   onPress: () => router.push({ pathname: '/legal' as any, params: { doc: 'terms' } }) },
+          { label: t.sendFeedback, onPress: () => Linking.openURL('mailto:liviu.dev.cozac@proton.me?subject=DiabEasy%20Feedback&body=App%20version%3A%202.0.0%0A%0A') },
+        ].map((item, i) => (
+          <View key={i}>
+            <TouchableOpacity style={s.aboutLinkRow} onPress={item.onPress} activeOpacity={0.75}>
+              <Text style={[s.aboutLink, { color: colors.text }]}>{item.label}</Text>
+              <Text style={[s.aboutChevron, { color: colors.border }]}>›</Text>
+            </TouchableOpacity>
+            {i < 2 && <Divider />}
+          </View>
+        ))}
         <Divider />
         <View style={s.disclaimerCard}>
           <Text style={[s.disclaimerText, { color: colors.textMuted }]}>{t.appDisclaimer}</Text>
@@ -1124,11 +1129,11 @@ const s = StyleSheet.create({
   lockedValue:  { fontSize: 14, fontWeight: '600', flex: 1 },
   editBtn:      { fontSize: 13, fontWeight: '700', paddingLeft: 12 },
 
-  authBtn:        { borderRadius: 8, paddingVertical: 12, alignItems: 'center', marginTop: 12 },
-  authBtnText:    { fontSize: 15, color: '#fff', fontWeight: '700', backgroundColor: 'transparent' },
-  secMsg:         { fontSize: 13, textAlign: 'center', marginTop: 8, fontWeight: '600' },
-  forgotLink:     { fontSize: 13, textDecorationLine: 'underline' },
-  changePwLink:   { alignItems: 'center', marginTop: 10 },
+  authBtn:         { borderRadius: 8, paddingVertical: 12, alignItems: 'center', marginTop: 12 },
+  authBtnText:     { fontSize: 15, color: '#fff', fontWeight: '700', backgroundColor: 'transparent' },
+  secMsg:          { fontSize: 13, textAlign: 'center', marginTop: 8, fontWeight: '600' },
+  forgotLink:      { fontSize: 13, textDecorationLine: 'underline' },
+  changePwLink:    { alignItems: 'center', marginTop: 10 },
   changePwLinkText:{ fontSize: 13, textDecorationLine: 'underline' },
 
   datePickerBtn:    { justifyContent: 'center', paddingHorizontal: 14 },
@@ -1145,9 +1150,9 @@ const s = StyleSheet.create({
   signOutBtn:     { borderRadius: 8, paddingVertical: 10, alignItems: 'center', borderWidth: 1.5, marginTop: 4, backgroundColor: 'transparent' },
   signOutBtnText: { fontSize: 14, fontWeight: '700', backgroundColor: 'transparent' },
 
-  pillRow:       { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
-  pill:          { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 6, borderWidth: 1.5, backgroundColor: 'transparent' },
-  pillText:      { fontSize: 13, fontWeight: '600', backgroundColor: 'transparent' },
+  pillRow:  { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
+  pill:     { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 6, borderWidth: 1.5, backgroundColor: 'transparent' },
+  pillText: { fontSize: 13, fontWeight: '600', backgroundColor: 'transparent' },
 
   settingRow:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4 },
   settingLabel:   { fontSize: 14, fontWeight: '600' },
