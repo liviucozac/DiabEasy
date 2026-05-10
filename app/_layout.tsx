@@ -69,12 +69,25 @@ function AuthGateScreen() {
   const [error, setError]                             = useState('');
   const [success, setSuccess]                         = useState('');
   const [confirmPassword, setConfirmPassword]         = useState('');
+  const validatePassword = (pwd: string): string | null => {
+    const errors: string[] = [];
+    if (pwd.length < 8) errors.push('at least 8 characters');
+    if (!/[A-Z]/.test(pwd)) errors.push('one uppercase letter');
+    if (!/[0-9]/.test(pwd)) errors.push('one number');
+    if (!/[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?]/.test(pwd)) errors.push('one special character (!@#$%...)');
+    if (errors.length === 0) return null;
+    return `Password must contain: ${errors.join(', ')}.`;
+  };
 
   // ─── Email / Password Auth ────────────────────────────────────────────────
 
   const handleAuth = async () => {
     if (!email.trim() || !password.trim()) { setError(t.pleaseEnterEmailAndPassword); return; }
-    if (mode === 'signup' && password !== confirmPassword) { setError(t.passwordsDoNotMatch); return; }
+    if (mode === 'signup') {
+      if (password !== confirmPassword) { setError(t.passwordsDoNotMatch); return; }
+      const pwError = validatePassword(password);
+      if (pwError) { setError(pwError); return; }
+    }
     setLoading(true); setError(''); setSuccess('');
     try {
       if (mode === 'login') {
@@ -85,8 +98,6 @@ function AuthGateScreen() {
       checkFirebasePremium().then(ok => { if (ok) setPremiumPaid(true); }).catch(() => {});
       setEmail(''); setPassword(''); setConfirmPassword('');
     } catch (e: any) {
-      console.log('AUTH ERROR CODE:', e.code);
-      console.log('AUTH ERROR MSG:', e.message);
       if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found') {
         setError('Wrong email and/or password. Please try again.');
       } else if (e.code === 'auth/too-many-requests') {
@@ -96,6 +107,8 @@ function AuthGateScreen() {
       } else {
         setError(e.message ?? t.authenticationFailed);
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -552,6 +565,7 @@ function TabsLayout() {
 // ─── Root content ─────────────────────────────────────────────────────────────
 
 function RootContent() {
+  const { colors } = useTheme();  // ← add this line
   const {
     hasSeenOnboarding, reminders, settings,
     caregiverSession, setCaregiverSession,
@@ -637,11 +651,9 @@ function RootContent() {
     });
     return unsub;
   }, []);
-
-  if (!authChecked) return null;
-  if (!user)        return <AuthGateScreen />;
-  if (isLocked)     return <LockScreen onUnlock={() => setIsLocked(false)} />;
-
+if (!authChecked) return null;
+if (!user)        return <AuthGateScreen />;
+if (isLocked)     return <LockScreen onUnlock={() => setIsLocked(false)} />;
   if (!roleChosen) {
     return (
       <RoleSelectionScreen
