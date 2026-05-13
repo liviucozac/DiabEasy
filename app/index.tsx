@@ -155,7 +155,7 @@ function HyperPopup({ visible, glucoseValue, unit, onClose }: {
 
   const glucoseMgDl = unit === 'mmol/L' ? glucoseValue * 18.0182 : glucoseValue;
   const correctionDose = insulinParamsSet
-    ? Math.max(0, Math.round((glucoseMgDl - targetGlucose) / isf * 10) / 10)
+    ? Math.max(0, Math.ceil((glucoseMgDl - targetGlucose) / isf))
     : null;
 
   return (

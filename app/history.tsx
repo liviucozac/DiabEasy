@@ -32,7 +32,7 @@ function LineChart({ data, colors }: { data: HistoryEntry[]; colors: any }) {
   const { settings } = useGlucoseStore();
   const W = Dimensions.get('window').width - 64;
   const H = 160;
-  const PAD = { top: 16, bottom: 32, left: 44, right: 16 };
+  const PAD = { top: 16, bottom: 46, left: 44, right: 16 };
   const chartW = W - PAD.left - PAD.right;
   const chartH = H - PAD.top - PAD.bottom;
 
@@ -81,11 +81,13 @@ function LineChart({ data, colors }: { data: HistoryEntry[]; colors: any }) {
       {xLabelIndices.map((idx) => {
         const p = pts[idx];
         const ld = new Date(data[idx].timestamp);
-        const label = `${String(ld.getDate()).padStart(2,'0')}/${String(ld.getMonth()+1).padStart(2,'0')}`;
+        const dateLabel = `${String(ld.getDate()).padStart(2,'0')}/${String(ld.getMonth()+1).padStart(2,'0')}`;
+        const timeLabel = `${String(ld.getHours()).padStart(2,'0')}:${String(ld.getMinutes()).padStart(2,'0')}`;
         return (
-          <SvgText key={idx} x={p.x} y={H - 6} fontSize={9} fill={colors.textMuted} textAnchor="middle">
-            {label}
-          </SvgText>
+          <G key={idx}>
+            <SvgText x={p.x} y={H - 24} fontSize={9} fill={colors.textMuted} textAnchor="middle">{dateLabel}</SvgText>
+            <SvgText x={p.x} y={H - 11} fontSize={9} fill={colors.textMuted} textAnchor="middle">{timeLabel}</SvgText>
+          </G>
         );
       })}
     </Svg>
@@ -163,9 +165,9 @@ function PieChart({ normal, high, low, colors }: { normal: number; high: number;
   const cx = W / 2, cy = 90, R = 70;
 
   const segments = [
-    { value: normal, color: colors.normal, label: 'Normal' },
-    { value: high,   color: colors.high,   label: 'High' },
-    { value: low,    color: colors.low,    label: 'Low' },
+    { value: normal, color: colors.normal, label: t.statusNormal },
+    { value: high,   color: colors.high,   label: t.statusHigh },
+    { value: low,    color: colors.low,    label: t.statusLow },
   ].filter(s => s.value > 0);
 
   let currentAngle = -Math.PI / 2;

@@ -246,11 +246,40 @@ export const redeemCaregiverCode = async (
   if (data.codeType === 'temporary' && data.expiresAt) {
     if (data.expiresAt.toDate() < new Date()) throw new Error('expired');
   }
+  let patientName: string = data.patientName ?? '';
+  if (data.patientUid) {
+    try {
+      const userDoc = await db.collection('users').doc(data.patientUid).get();
+      const liveProfileName = userDoc.data()?.profile?.name;
+      if (liveProfileName) patientName = liveProfileName;
+    } catch {
+      // fall back to stored name
+    }
+  }
+
   return {
     code: code.trim(),
-    patientName: data.patientName,
+    patientName,
     isPremium: data.isPremium ?? false,
   };
+};
+
+// ── Refresh patient name for an existing caregiver session ───────────────────
+export const fetchCaregiverPatientName = async (code: string): Promise<string | null> => {
+  try {
+    const db = firestore();
+    const doc = await db.collection('caregiverData').doc(code.trim()).get();
+    if (!doc.exists()) return null;
+    const data = doc.data()!;
+    if (data.patientUid) {
+      const userDoc = await db.collection('users').doc(data.patientUid).get();
+      const liveProfileName = userDoc.data()?.profile?.name;
+      if (liveProfileName) return liveProfileName;
+    }
+    return data.patientName ?? null;
+  } catch {
+    return null;
+  }
 };
 
 // ── Caregiver data readers ────────────────────────────────────────────────────

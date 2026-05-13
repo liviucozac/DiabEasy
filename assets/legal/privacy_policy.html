@@ -183,11 +183,10 @@
 
   <h3>2.2 Data Collected Automatically</h3>
   <ul>
-    <li><strong>Device identifiers:</strong> anonymous installation ID used by Firebase to associate your data with your account.</li>
-    <li><strong>App usage events:</strong> feature interactions (e.g., "PDF exported", "glucometer connected") collected via Firebase Analytics. These are anonymised and aggregated; they do not include the content of your health data.</li>
-    <li><strong>Crash reports:</strong> stack traces and device model/OS version sent to Firebase Crashlytics when the app crashes, to allow us to fix bugs.</li>
+    <li><strong>Device identifiers:</strong> anonymous installation ID used by Firebase Auth to associate your account session with your device.</li>
     <li><strong>Subscription status:</strong> whether you are on the free tier, trial, or a paid subscription, managed via RevenueCat.</li>
   </ul>
+  <p>DiabEasy does <strong>not</strong> use Firebase Analytics or Firebase Crashlytics. No usage events, crash reports, or behavioural telemetry are collected or transmitted to any analytics service.</p>
 
   <h3>2.3 Data We Do NOT Collect</h3>
   <ul>
@@ -205,8 +204,6 @@
     <tr><td>Storing health data you enter</td><td>Art. 9(2)(a) — explicit consent; Art. 9(2)(h) — health management purposes</td></tr>
     <tr><td>Cloud sync and backup of your data</td><td>Art. 6(1)(b) — performance of a contract</td></tr>
     <tr><td>Processing subscription payments</td><td>Art. 6(1)(b) — performance of a contract</td></tr>
-    <tr><td>Crash reporting and app stability</td><td>Art. 6(1)(f) — legitimate interest (maintaining a reliable service)</td></tr>
-    <tr><td>Anonymised usage analytics</td><td>Art. 6(1)(f) — legitimate interest (improving the app)</td></tr>
     <tr><td>Responding to your support requests</td><td>Art. 6(1)(b) — performance of a contract</td></tr>
   </table>
   <p>Where we rely on consent (especially for health data), you may withdraw your consent at any time by deleting your account. Withdrawal does not affect the lawfulness of processing carried out before withdrawal.</p>
@@ -232,9 +229,9 @@
   <table>
     <tr><th>Service</th><th>Purpose</th><th>Data Shared</th><th>Privacy Policy</th></tr>
     <tr>
-      <td><strong>Google Firebase</strong> (Auth, Firestore, Crashlytics, Analytics)</td>
-      <td>Authentication, database, crash reporting, anonymised analytics</td>
-      <td>Account info, health data (encrypted at rest), crash logs, anonymised events</td>
+      <td><strong>Google Firebase</strong> (Auth, Firestore)</td>
+      <td>Authentication and database storage</td>
+      <td>Account info (email, hashed password, UID), health data (encrypted at rest)</td>
       <td><a href="https://firebase.google.com/support/privacy">firebase.google.com/support/privacy</a></td>
     </tr>
     <tr>
@@ -260,8 +257,6 @@
     <tr><td>Account and profile information</td><td>Until you delete your account</td></tr>
     <tr><td>Blood glucose readings and insulin logs</td><td>Until you delete individual entries or your account</td></tr>
     <tr><td>PDF reports</td><td>Generated on demand; not stored server-side after download</td></tr>
-    <tr><td>Crash reports (Crashlytics)</td><td>90 days (Firebase default)</td></tr>
-    <tr><td>Anonymised analytics events</td><td>14 months (Firebase default)</td></tr>
     <tr><td>Subscription records</td><td>7 years (Romanian accounting law requirement for financial records)</td></tr>
     <tr><td>Feedback emails</td><td>Until resolved, then deleted within 12 months</td></tr>
   </table>
@@ -302,8 +297,7 @@
 
   <!-- 10 -->
   <h2>10. Cookies and Tracking</h2>
-  <p>DiabEasy is a mobile application and does not use cookies. We do not embed web tracking pixels or third-party advertising SDKs.</p>
-  <p>Firebase Analytics uses an anonymous installation identifier (not linked to your identity) to aggregate usage statistics. You can opt out of analytics collection at any time in Profile → Settings → Analytics.</p>
+  <p>DiabEasy is a mobile application and does not use cookies. We do not embed web tracking pixels, third-party advertising SDKs, or analytics services. No usage events or crash telemetry are collected.</p>
 
   <!-- 11 -->
   <h2>11. Changes to This Privacy Policy</h2>

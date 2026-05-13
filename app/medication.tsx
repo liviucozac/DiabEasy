@@ -12,7 +12,6 @@ import type { InsulinAnalogType, LongActingInsulinType } from '../store/glucoseS
 import { useTheme } from '../context/AppContext';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { PressBtn } from '../components/PressBtn';
-import { ParamTrainingModal } from '../components/ParamTrainingModal';
 import { useTranslation } from '../hooks/useTranslation';
 
 const RED = '#EC5557';
@@ -122,7 +121,6 @@ function CalculatorTab() {
   const { glucoseValue, unit, totalCarbs, settings, insulinEntries, setSettings } = useGlucoseStore();
   const { colors } = useTheme();
   const t = useTranslation();
-  const [showTraining, setShowTraining] = useState(false);
   const [limitLowInput,  setLimitLowInput]  = useState(String(settings.glucoseLow));
   const [limitHighInput, setLimitHighInput] = useState(String(settings.glucoseHigh));
 
@@ -147,7 +145,7 @@ function CalculatorTab() {
       meal:       Math.round(meal),
       correction: Math.round(correction),
       iob:        Math.round(iob * 10) / 10,
-      total:      Math.round(total),
+      total:      Math.ceil(total),
     };
   }, [now, currentMgDl, targetMgDl, totalCarbs, ISF, CARB_RATIO, insulinEntries, settings.insulinAnalogType, settings.dia]);
 
@@ -190,33 +188,7 @@ function CalculatorTab() {
           </View>
         </View>
         <Text style={[s.limitHint, { color: colors.textFaint }]}>{t.glucoseLimitsFooter(settings.glucoseLow, settings.glucoseHigh)}</Text>
-      </SectionCard>
-
-      <SectionCard>
-        <SectionTitle text={t.yourParameters} />
-        <Text style={[s.paramHint, { color: colors.textMuted }]}>{t.yourParametersHint}</Text>
-        <View style={s.paramGrid}>
-          <View style={s.paramReadItem}>
-            <Text style={[s.paramReadValue, { color: colors.text }]}>{settings.targetGlucose}</Text>
-            <Text style={[s.paramReadLabel, { color: colors.textMuted }]}>{t.targetLabel}</Text>
-          </View>
-          <View style={[s.paramReadItem, s.paramReadBorder]}>
-            <Text style={[s.paramReadValue, { color: colors.text }]}>{settings.isf}</Text>
-            <Text style={[s.paramReadLabel, { color: colors.textMuted }]}>{t.isfLabel}</Text>
-          </View>
-          <View style={[s.paramReadItem, s.paramReadBorder]}>
-            <Text style={[s.paramReadValue, { color: colors.text }]}>1:{settings.carbRatio}</Text>
-            <Text style={[s.paramReadLabel, { color: colors.textMuted }]}>{t.carbRatioLabel}</Text>
-          </View>
-          <View style={[s.paramReadItem, s.paramReadBorder]}>
-            <Text style={[s.paramReadValue, { color: colors.text }]}>{settings.dia}h</Text>
-            <Text style={[s.paramReadLabel, { color: colors.textMuted }]}>{getAnalogByType(settings.insulinAnalogType).label}{'\n'}DIA</Text>
-          </View>
-        </View>
-        <TouchableOpacity style={[s.trainingBtn, { borderColor: RED }]} onPress={() => setShowTraining(true)} activeOpacity={0.75}>
-          <Text style={[s.trainingBtnText, { color: RED }]}>{t.whatDoParamsMean}</Text>
-        </TouchableOpacity>
-        <ParamTrainingModal visible={showTraining} onClose={() => setShowTraining(false)} />
+        <Text style={[s.paramHint, { color: colors.textMuted, marginTop: 6 }]}>{t.yourParametersHint}</Text>
       </SectionCard>
 
       <SectionCard>
@@ -244,10 +216,9 @@ function CalculatorTab() {
           <Text style={[s.emptyTitle, { color: colors.text }]}>{t.noGlucoseReading}</Text>
           <Text style={[s.emptyText, { color: colors.textMuted }]}>{t.noGlucoseReadingText}</Text>
         </View>
-      ) : currentMgDl !== null && targetMgDl > currentMgDl ? (
-        <View style={[s.warningBanner, { borderColor: '#2e7d32', backgroundColor: colors.normalBg, marginBottom: 10 }]}> 
-          <Text style={[s.warningText, { color: colors.normal }]}>{t.targetBelowCurrent(settings.targetGlucose, glucoseValue!, unit)}</Text>
-          <Text style={[s.warningText, { color: colors.normal, marginTop: 6, fontWeight: '400' }]}>{t.noInsulinNeeded}</Text>
+      ) : currentMgDl !== null && currentMgDl < 75 ? (
+        <View style={[s.warningBanner, { borderColor: '#e53935', backgroundColor: colors.lowBg, marginBottom: 10 }]}>
+          <Text style={[s.warningText, { color: colors.low }]}>{t.glucoseLowCheckAgain}</Text>
         </View>
       ) : (
         <SectionCard>
@@ -284,22 +255,11 @@ function CalculatorTab() {
               <Text style={[s.warningText, { color: colors.normal }]}>{t.iobActive(result.iob)}</Text>
             </View>
           )}
-          {currentMgDl !== null && currentMgDl < 75 && (
-            <View style={[s.warningBanner, { borderColor: '#e53935', backgroundColor: colors.lowBg }]}> 
-              <Text style={[s.warningText, { color: colors.low }]}>{t.bloodSugarLowNoInsulin}</Text>
+          {currentMgDl !== null && currentMgDl > settings.glucoseHigh && (
+            <View style={[s.warningBanner, { borderColor: '#ef6c00', backgroundColor: colors.highBg }]}>
+              <Text style={[s.warningText, { color: colors.high }]}>{t.glucoseHighConsiderInsulin}</Text>
             </View>
           )}
-          {currentMgDl !== null && currentMgDl > settings.targetGlucose && (() => {
-            const rawDose = Math.max(0, Math.round(calcCorrectionDose(currentMgDl, settings.targetGlucose, settings.isf)));
-            if (rawDose === 0) return null;
-            return (
-              <View style={[s.warningBanner, { borderColor: '#ef6c00', backgroundColor: colors.highBg }]}> 
-                <Text style={[s.warningText, { color: colors.high }]}>
-                  {t.highCorrectionDose(rawDose, getAnalogByType(settings.insulinAnalogType).label, currentMgDl > 250)}
-                </Text>
-              </View>
-            );
-          })()}
           <Text style={s.disclaimer}>{t.estimateOnly}</Text>
         </SectionCard>
       )}
@@ -338,6 +298,7 @@ function LogTab() {
   const [timeDate,       setTimeDate]       = useState(new Date());
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [logSaved,       setLogSaved]       = useState(false);
 
   // ── Filters ──────────────────────────────────────────────────────────────
   const [filterFrom,     setFilterFrom]     = useState('');
@@ -354,7 +315,7 @@ function LogTab() {
     if (mgDl > 150) {
       const correction = calcCorrectionDose(mgDl, settings.targetGlucose, settings.isf);
       const iob        = calculateIOB(insulinEntries, settings.insulinAnalogType, settings.dia);
-      const net        = Math.max(0, correction - iob);
+      const net = Math.ceil(Math.max(0, correction - iob));
       const analog     = getAnalogByType(settings.insulinAnalogType).label;
       return { kind: 'high' as const, mgDl, net, iob, analog };
     }
@@ -371,6 +332,8 @@ function LogTab() {
     });
     setUnits(0);
     setTimeDate(new Date());
+    setLogSaved(true);
+    setTimeout(() => setLogSaved(false), 2000);
   };
 
   const handleClear = () => {
@@ -495,6 +458,11 @@ function LogTab() {
           <PressBtn style={[s.addEntryBtn, { backgroundColor: colors.red }, s.primaryBtnShadow]} onPress={handleAdd}>
             <Text style={s.addEntryBtnText}>{t.addToLog}</Text>
           </PressBtn>
+          {logSaved && (
+            <Text style={{ textAlign: 'center', color: colors.normal, fontWeight: '700', fontSize: 13, marginTop: 8 }}>
+              {t.savedCheck}
+            </Text>
+          )}
         </SectionCard>
       )}
 
@@ -855,7 +823,7 @@ export default function MedicationScreen() {
   const { colors } = useTheme();
   const t = useTranslation();
   const { caregiverSession, setCaregiverSession } = useGlucoseStore();
-  const [activeTab, setActiveTab] = useState<ActiveTab>('calculator');
+  const [activeTab, setActiveTab] = useState<ActiveTab>('log');
   const [caregiverInsulin, setCaregiverInsulin] = useState<InsulinEntry[]>([]);
 
   // ── Fetch caregiver insulin log using code ────────────────────────────────
@@ -865,8 +833,8 @@ export default function MedicationScreen() {
   }, [caregiverSession?.code]);
 
   const TABS: { key: ActiveTab; label: string }[] = [
-    { key: 'calculator', label: t.calculatorTab },
     { key: 'log',        label: t.insulinLogTab },
+    { key: 'calculator', label: t.calculatorTab },
     { key: 'reminders',  label: t.remindersTab },
   ];
 
@@ -912,9 +880,13 @@ export default function MedicationScreen() {
   return (
     <View style={[s.root, { backgroundColor: colors.bg }]}> 
       <Text style={[s.title, { color: colors.text }]}>{t.medication}</Text>
+      <Text style={{ fontSize: 12, color: colors.textMuted, textAlign: 'center', marginBottom: 10, paddingHorizontal: 16, lineHeight: 18 }}>
+        {t.medicationDesc}
+      </Text>
       <View style={[s.tabBar, { borderColor: colors.red }, s.tabBarShadow]}>
         {TABS.map((tab) => {
           const active = activeTab === tab.key;
+          const desc = tab.key === 'log' ? t.insulinLogDesc : tab.key === 'calculator' ? t.calculatorDesc : t.remindersDesc;
           return (
             <TouchableOpacity key={tab.key}
               style={[s.tabBtn, { backgroundColor: active ? colors.red : colors.bg }]}
@@ -924,6 +896,14 @@ export default function MedicationScreen() {
           );
         })}
       </View>
+      {(() => {
+        const desc = activeTab === 'log' ? t.insulinLogDesc : activeTab === 'calculator' ? t.calculatorDesc : t.remindersDesc;
+        return (
+          <Text style={{ fontSize: 11, color: colors.textMuted, textAlign: 'center', marginBottom: 8, paddingHorizontal: 16, lineHeight: 17 }}>
+            {desc}
+          </Text>
+        );
+      })()}
       <View style={[s.content, { backgroundColor: colors.bg }]}> 
         {activeTab === 'calculator' && <CalculatorTab />}
         {activeTab === 'log'        && <LogTab />}

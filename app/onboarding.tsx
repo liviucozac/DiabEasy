@@ -13,6 +13,7 @@ import { useTranslation } from '../hooks/useTranslation';
 const { width } = Dimensions.get('window');
 
 const SLIDE_ICONS = ['👋', '🩸', '📊', '🥗', '📈', '💉', '📋', '📅', '🚨', '⚙️'];
+const CAREGIVER_SLIDE_ICONS = ['👨‍⚕️', '🔑', '👁️'];
 
 // ─── Recommended insulin parameters by diabetes type ─────────────────────────
 
@@ -69,6 +70,26 @@ function FastingGridMock({ colors }: { colors: ColorScheme }) {
           </View>
         ))}
       </View>
+    </View>
+  );
+}
+
+function BleButtonMock({ colors }: { colors: ColorScheme }) {
+  return (
+    <View style={[mk.previewWrap, { borderColor: colors.border, backgroundColor: colors.bgCard }]}>
+      <Text style={[mk.previewLabel, { color: colors.textFaint }]}>Home tab — Bluetooth button</Text>
+      <View style={{
+        flexDirection: 'row', alignItems: 'center', gap: 10,
+        borderWidth: 1.5, borderColor: colors.red, borderRadius: 10,
+        paddingVertical: 10, paddingHorizontal: 16,
+        backgroundColor: colors.bgCard, alignSelf: 'center',
+      }}>
+        <Text style={{ fontSize: 20 }}>🔵</Text>
+        <Text style={{ fontSize: 13, fontWeight: '700', color: colors.red }}>Connect Bluetooth glucometer</Text>
+      </View>
+      <Text style={{ fontSize: 11, color: colors.textMuted, textAlign: 'center', marginTop: 6, lineHeight: 16 }}>
+        Tap this button → scan for your device → pair once → readings sync automatically.
+      </Text>
     </View>
   );
 }
@@ -277,9 +298,10 @@ type ExtraRender = (colors: ColorScheme, isDark: boolean) => React.ReactNode;
 
 const BULLET_EXTRAS: Record<number, Record<number, ExtraRender>> = {
   1: {
-    0: (c)       => <UnitToggleMock  colors={c} />,
-    1: (c)       => <FastingGridMock colors={c} />,
-    3: (c)       => <ColorResultMock colors={c} />,
+    0: (c)       => <BleButtonMock   colors={c} />,
+    1: (c)       => <UnitToggleMock  colors={c} />,
+    2: (c)       => <FastingGridMock colors={c} />,
+    4: (c)       => <ColorResultMock colors={c} />,
   },
   2: {
     2: (c, dark) => <StatsMock       colors={c} isDark={dark} />,
@@ -559,6 +581,61 @@ function SecuritySetupSlide({
   );
 }
 
+// ─── Role select slide ────────────────────────────────────────────────────────
+
+function RoleSelectSlide({
+  colors,
+  pageNum,
+  total,
+  onPatient,
+  onCaregiver,
+}: {
+  colors: ColorScheme;
+  pageNum: number;
+  total: number;
+  onPatient: () => void;
+  onCaregiver: () => void;
+}) {
+  const t = useTranslation();
+  return (
+    <ScrollView style={{ width }} contentContainerStyle={styles.slide} showsVerticalScrollIndicator={false}>
+      <Text style={styles.slideIcon}>🧭</Text>
+      <Text style={[styles.slideTitle, { color: colors.text }]}>{t.roleSelectTitle}</Text>
+      <Text style={[styles.slideBody, { color: colors.textMuted }]}>{t.roleSelectBody}</Text>
+
+      <View style={{ width: '100%', gap: 12 }}>
+        <TouchableOpacity
+          style={[rs.roleBtn, { borderColor: colors.red, backgroundColor: colors.bgCard }]}
+          onPress={onPatient}
+          activeOpacity={0.8}
+        >
+          <Text style={rs.roleIcon}>🩸</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={[rs.roleLabel, { color: colors.text }]}>{t.iAmPatient}</Text>
+            <Text style={[rs.roleDesc,  { color: colors.textMuted }]}>{t.iAmPatientDesc}</Text>
+          </View>
+          <Text style={[rs.roleArrow, { color: colors.red }]}>›</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[rs.roleBtn, { borderColor: colors.border, backgroundColor: colors.bgCard }]}
+          onPress={onCaregiver}
+          activeOpacity={0.8}
+        >
+          <Text style={rs.roleIcon}>👨‍⚕️</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={[rs.roleLabel, { color: colors.text }]}>{t.iAmCaregiver}</Text>
+            <Text style={[rs.roleDesc,  { color: colors.textMuted }]}>{t.iAmCaregiverDesc}</Text>
+          </View>
+          <Text style={[rs.roleArrow, { color: colors.textMuted }]}>›</Text>
+        </TouchableOpacity>
+      </View>
+
+      <Text style={[styles.pageCount, { color: colors.textFaint }]}>{pageNum} / {total}</Text>
+    </ScrollView>
+  );
+}
+
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function OnboardingScreen() {
@@ -568,7 +645,19 @@ export default function OnboardingScreen() {
   const [page, setPage] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
 
-  const TOTAL = t.slides.length + 2;
+  // Physical page layout:
+  //   0              → Welcome (t.slides[0])
+  //   1              → RoleSelectSlide
+  //   2 .. CG_END    → Caregiver slides (t.caregiverSlides)
+  //   PATIENT_START  → t.slides[1..9] (patient slides)
+  //   PARAM_IDX      → ParamSetupSlide
+  //   SECURITY_IDX   → SecuritySetupSlide
+  const CG_COUNT      = t.caregiverSlides.length;           // 3
+  const PATIENT_START = 2 + CG_COUNT;                       // 5
+  const LAST_CG_PAGE  = 1 + CG_COUNT;                       // 4
+  const PARAM_IDX     = PATIENT_START + t.slides.length - 1; // 14
+  const SECURITY_IDX  = PARAM_IDX + 1;                      // 15
+  const TOTAL         = SECURITY_IDX + 1;                   // 16
 
   const goTo = (idx: number) => {
     scrollRef.current?.scrollTo({ x: idx * width, animated: true });
@@ -579,7 +668,7 @@ export default function OnboardingScreen() {
 
   const handleParamConfirm = (isf: number, carbRatio: number, target: number) => {
     setSettings({ isf, carbRatio, targetGlucose: target, insulinParamsSet: true });
-    goTo(t.slides.length + 1);
+    goTo(SECURITY_IDX);
   };
 
   const handleSecurityConfirm = (method: SecurityMethod, hash: string) => {
@@ -587,9 +676,38 @@ export default function OnboardingScreen() {
     finish();
   };
 
-  const isParamStep    = page === t.slides.length;
-  const isSecurityStep = page === t.slides.length + 1;
+  const isRoleSelectSlide = page === 1;
+  const isLastCGSlide     = page === LAST_CG_PAGE;
+  const isParamStep       = page === PARAM_IDX;
+  const isSecurityStep    = page === SECURITY_IDX;
   const rec = RECOMMENDED[profile.diabetesType] ?? RECOMMENDED[''];
+
+  const renderSlide = (slide: typeof t.slides[0], i: number, physicalPage: number) => (
+    <ScrollView
+      key={i}
+      style={{ width }}
+      contentContainerStyle={styles.slide}
+      showsVerticalScrollIndicator={false}
+    >
+      <Text style={styles.slideIcon}>{SLIDE_ICONS[i] ?? '📱'}</Text>
+      <Text style={[styles.slideTitle, { color: colors.text }]}>{slide.title}</Text>
+      <Text style={[styles.slideBody,  { color: colors.textMuted }]}>{slide.body}</Text>
+
+      <View style={[styles.bulletCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+        {slide.bullets.map((b, j) => (
+          <React.Fragment key={j}>
+            <View style={styles.bulletRow}>
+              <Text style={[styles.bulletDot, { color: colors.red }]}>•</Text>
+              <Text style={[styles.bulletText, { color: colors.text }]}>{b}</Text>
+            </View>
+            {BULLET_EXTRAS[i]?.[j]?.(colors, isDark)}
+          </React.Fragment>
+        ))}
+      </View>
+
+      <Text style={[styles.pageCount, { color: colors.textFaint }]}>{physicalPage + 1} / {TOTAL}</Text>
+    </ScrollView>
+  );
 
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
@@ -605,32 +723,45 @@ export default function OnboardingScreen() {
           setPage(Math.round(e.nativeEvent.contentOffset.x / width));
         }}
       >
-        {t.slides.map((slide, i) => (
+        {/* Welcome slide */}
+        {renderSlide(t.slides[0], 0, 0)}
+
+        {/* Role select slide */}
+        <RoleSelectSlide
+          colors={colors}
+          pageNum={2}
+          total={TOTAL}
+          onPatient={() => goTo(PATIENT_START)}
+          onCaregiver={() => goTo(2)}
+        />
+
+        {/* Caregiver slides */}
+        {t.caregiverSlides.map((slide, ci) => (
           <ScrollView
-            key={i}
+            key={`cg${ci}`}
             style={{ width }}
             contentContainerStyle={styles.slide}
             showsVerticalScrollIndicator={false}
           >
-            <Text style={styles.slideIcon}>{SLIDE_ICONS[i] ?? '📱'}</Text>
+            <Text style={styles.slideIcon}>{CAREGIVER_SLIDE_ICONS[ci] ?? '📱'}</Text>
             <Text style={[styles.slideTitle, { color: colors.text }]}>{slide.title}</Text>
             <Text style={[styles.slideBody,  { color: colors.textMuted }]}>{slide.body}</Text>
-
             <View style={[styles.bulletCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
               {slide.bullets.map((b, j) => (
-                <React.Fragment key={j}>
-                  <View style={styles.bulletRow}>
-                    <Text style={[styles.bulletDot, { color: colors.red }]}>•</Text>
-                    <Text style={[styles.bulletText, { color: colors.text }]}>{b}</Text>
-                  </View>
-                  {BULLET_EXTRAS[i]?.[j]?.(colors, isDark)}
-                </React.Fragment>
+                <View key={j} style={styles.bulletRow}>
+                  <Text style={[styles.bulletDot, { color: colors.red }]}>•</Text>
+                  <Text style={[styles.bulletText, { color: colors.text }]}>{b}</Text>
+                </View>
               ))}
             </View>
-
-            <Text style={[styles.pageCount, { color: colors.textFaint }]}>{i + 1} / {TOTAL}</Text>
+            <Text style={[styles.pageCount, { color: colors.textFaint }]}>{2 + ci + 1} / {TOTAL}</Text>
           </ScrollView>
         ))}
+
+        {/* Patient slides (t.slides[1..9]) */}
+        {t.slides.slice(1).map((slide, sliceIdx) =>
+          renderSlide(slide, sliceIdx + 1, PATIENT_START + sliceIdx)
+        )}
 
         <ParamSetupSlide
           colors={colors}
@@ -671,13 +802,19 @@ export default function OnboardingScreen() {
             {(isParamStep || isSecurityStep) ? t.onboardingSkipSetup : t.onboardingSkip}
           </Text>
         </TouchableOpacity>
-        {!isParamStep && !isSecurityStep && (
+        {!isParamStep && !isSecurityStep && !isRoleSelectSlide && (
           <TouchableOpacity
             style={[styles.nextBtn, { backgroundColor: colors.red }]}
-            onPress={() => page === t.slides.length - 1 ? goTo(t.slides.length) : goTo(page + 1)}
+            onPress={() => {
+              if (isLastCGSlide) finish();
+              else if (page === PARAM_IDX - 1) goTo(PARAM_IDX);
+              else goTo(page + 1);
+            }}
             activeOpacity={0.8}
           >
-            <Text style={styles.nextBtnText}>{t.onboardingNext}</Text>
+            <Text style={styles.nextBtnText}>
+              {isLastCGSlide ? t.confirmAndGetStarted : t.onboardingNext}
+            </Text>
           </TouchableOpacity>
         )}
       </View>
@@ -708,6 +845,16 @@ const styles = StyleSheet.create({
   skipText:   { fontSize: 15 },
   nextBtn:    { paddingHorizontal: 28, paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
   nextBtnText:{ fontSize: 16, fontWeight: '700', color: '#fff' },
+});
+
+// ─── Role select slide styles ─────────────────────────────────────────────────
+
+const rs = StyleSheet.create({
+  roleBtn:   { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 12, borderWidth: 1.5, padding: 16, width: '100%' },
+  roleIcon:  { fontSize: 28 },
+  roleLabel: { fontSize: 15, fontWeight: '700', marginBottom: 2 },
+  roleDesc:  { fontSize: 12 },
+  roleArrow: { fontSize: 26, fontWeight: '300' },
 });
 
 // ─── Mock preview wrapper ─────────────────────────────────────────────────────

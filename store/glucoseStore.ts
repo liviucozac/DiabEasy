@@ -93,6 +93,7 @@ export interface AppSettings {
   securityHash: string;
   lockTimeout: LockTimeout;
   hasSeenSecuritySetup: boolean;
+  hasConsented: boolean;
 }
 
 interface GlucoseStore {
@@ -159,6 +160,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   glucoseLow: 70, glucoseHigh: 175,
   securityMethod: 'none', securityHash: '', lockTimeout: '1min',
   hasSeenSecuritySetup: false,
+  hasConsented: false,
 };
 
 export const useGlucoseStore = create<GlucoseStore>()(
@@ -169,7 +171,7 @@ export const useGlucoseStore = create<GlucoseStore>()(
 
       glucoseValue: null,
       unit: 'mg/dL',
-      setGlucoseValue: (value, unit) => set({ glucoseValue: value, unit }),
+      setGlucoseValue: (value, unit) => set({ glucoseValue: value, unit, totalCarbs: 0 }),
 
       totalCarbs: 0,
       setTotalCarbs: (carbs) => set({ totalCarbs: carbs }),

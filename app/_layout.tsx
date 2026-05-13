@@ -16,28 +16,18 @@ import {
   cancelAllReminderNotifications,
 } from '../utils/notificationUtils';
 import { LockScreen } from '../components/LockScreen';
+import { ConsentModal } from '../components/ConsentModal';
 import {
   onAuthStateChanged, signIn, signUp, sendPasswordReset,
 } from '../utils/firebaseAuth';
 import {
   fetchGlucoseHistory, fetchInsulinLog, fetchUserData,
-  checkFirebasePremium, redeemCaregiverCode,
+  checkFirebasePremium, redeemCaregiverCode, fetchCaregiverPatientName,
 } from '../utils/firestoreSync';
 import { useSubscriptionStore } from '../store/subscriptionStore';
 import { router } from 'expo-router';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
-import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
-
-// ─── Configure Google Sign-In ─────────────────────────────────────────────────
-
-GoogleSignin.configure({
-  webClientId: '150645699717-s1emc44hle6kkkqopjqsrs7cef7chkjl.apps.googleusercontent.com',
-});
-
-// ─── Module-level flag to suppress onAuthStateChanged during Google cleanup ───
-
-let suppressNextAuthChange = false;
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -69,6 +59,7 @@ function AuthGateScreen() {
   const [error, setError]                             = useState('');
   const [success, setSuccess]                         = useState('');
   const [confirmPassword, setConfirmPassword]         = useState('');
+
   const validatePassword = (pwd: string): string | null => {
     const errors: string[] = [];
     if (pwd.length < 8) errors.push('at least 8 characters');
@@ -104,6 +95,8 @@ function AuthGateScreen() {
         setError('Too many failed attempts. Please try again later.');
       } else if (e.code === 'auth/invalid-email') {
         setError('Please enter a valid email address.');
+      } else if (e.code === 'auth/email-already-in-use') {
+        setError('An account with this email already exists.');
       } else {
         setError(e.message ?? t.authenticationFailed);
       }
@@ -120,39 +113,6 @@ function AuthGateScreen() {
       setSuccess(t.resetEmailSent);
     } catch (e: any) {
       setError(e.message ?? t.couldNotSendReset);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ─── Google Sign-In ───────────────────────────────────────────────────────
-
-  const handleGoogleSignIn = async () => {
-    setLoading(true); setError('');
-    try {
-      await GoogleSignin.hasPlayServices();
-      await GoogleSignin.signOut();
-      const userInfo = await GoogleSignin.signIn();
-      const googleCredential = auth.GoogleAuthProvider.credential(userInfo.data?.idToken ?? '');
-      const result = await auth().signInWithCredential(googleCredential);
-
-      if (mode === 'login' && result.additionalUserInfo?.isNewUser) {
-        // Block onAuthStateChanged from reacting during cleanup
-        suppressNextAuthChange = true;
-        await auth().currentUser?.delete();
-        await GoogleSignin.signOut();
-        suppressNextAuthChange = false;
-        setError('No account found with this Google account. Please sign up first.');
-        setLoading(false);
-        return;
-      }
-
-      checkFirebasePremium().then(ok => { if (ok) setPremiumPaid(true); }).catch(() => {});
-    } catch (e: any) {
-      suppressNextAuthChange = false;
-      if (e.code !== statusCodes.SIGN_IN_CANCELLED) {
-        setError('Google sign-in failed. Please try again.');
-      }
     } finally {
       setLoading(false);
     }
@@ -253,48 +213,6 @@ function AuthGateScreen() {
             <Text style={{ fontSize: 13, color: colors.textMuted, textDecorationLine: 'underline' }}>{t.forgotPassword}</Text>
           </TouchableOpacity>
         )}
-
-        {/* Google hint */}
-        {mode === 'login' && (
-          <View style={{
-            backgroundColor: colors.bgCard, borderWidth: 1.5,
-            borderColor: colors.border, borderRadius: 8,
-            padding: 12, marginTop: 12,
-          }}>
-            <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 20, textAlign: 'center' }}>
-              {t.googleSignInHint}
-            </Text>
-          </View>
-        )}
-
-        {/* Divider */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 16, gap: 10 }}>
-          <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
-          <Text style={{ fontSize: 12, color: colors.textMuted }}>or</Text>
-          <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
-        </View>
-
-        {/* Google Sign-In button */}
-        <TouchableOpacity
-          onPress={handleGoogleSignIn}
-          disabled={loading}
-          activeOpacity={0.8}
-          style={{
-            flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-            gap: 10, borderWidth: 1.5, borderRadius: 8, paddingVertical: 12,
-            borderColor: colors.border, backgroundColor: colors.bgCard,
-            shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
-            opacity: loading ? 0.6 : 1,
-          }}
-        >
-          <View style={{ width: 22, height: 22, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ fontSize: 16, fontWeight: '900', color: '#4285F4' }}>G</Text>
-          </View>
-          <Text style={{ fontSize: 15, fontWeight: '600', color: colors.text }}>
-            Continue with Google
-          </Text>
-        </TouchableOpacity>
 
       </ScrollView>
     </KeyboardAvoidingView>
@@ -565,7 +483,7 @@ function TabsLayout() {
 // ─── Root content ─────────────────────────────────────────────────────────────
 
 function RootContent() {
-  const { colors } = useTheme();  // ← add this line
+  const { colors } = useTheme();
   const {
     hasSeenOnboarding, reminders, settings,
     caregiverSession, setCaregiverSession,
@@ -584,6 +502,15 @@ function RootContent() {
       if (granted && settings.notificationsEnabled) rescheduleAllReminders(reminders, settings);
     });
   }, []);
+
+  useEffect(() => {
+    if (!caregiverSession) return;
+    fetchCaregiverPatientName(caregiverSession.code).then((name) => {
+      if (name && name !== caregiverSession.patientName) {
+        setCaregiverSession({ ...caregiverSession, patientName: name });
+      }
+    });
+  }, [caregiverSession?.code]);
 
   useEffect(() => {
     if (!settings.notificationsEnabled) cancelAllReminderNotifications();
@@ -615,11 +542,6 @@ function RootContent() {
   useEffect(() => {
     const { loadFromFirestore, clearLocalData } = useGlucoseStore.getState();
     const unsub = onAuthStateChanged(async (u: any) => {
-      // Skip this auth change if we're in the middle of Google cleanup
-      if (suppressNextAuthChange) {
-        suppressNextAuthChange = false;
-        return;
-      }
       setUser(u);
       setAuthChecked(true);
       if (u) setRoleChosen(false);
@@ -651,9 +573,10 @@ function RootContent() {
     });
     return unsub;
   }, []);
-if (!authChecked) return null;
-if (!user)        return <AuthGateScreen />;
-if (isLocked)     return <LockScreen onUnlock={() => setIsLocked(false)} />;
+
+  if (!authChecked) return null;
+  if (!user)        return <AuthGateScreen />;
+  if (isLocked)     return <LockScreen onUnlock={() => setIsLocked(false)} />;
   if (!roleChosen) {
     return (
       <RoleSelectionScreen
@@ -677,7 +600,12 @@ if (isLocked)     return <LockScreen onUnlock={() => setIsLocked(false)} />;
   }
 
   if (!hasSeenOnboarding && !caregiverSession) return <OnboardingScreen />;
-  return <TabsLayout />;
+  return (
+    <>
+      <TabsLayout />
+      <ConsentModal />
+    </>
+  );
 }
 
 // ─── Root ─────────────────────────────────────────────────────────────────────

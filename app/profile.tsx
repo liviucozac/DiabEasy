@@ -13,18 +13,20 @@ import { ParamTrainingModal } from '../components/ParamTrainingModal';
 import { hashValue, biometricsAvailable } from '../utils/securityUtils';
 import { signIn, signUp, signOut, onAuthStateChanged, sendPasswordReset, changePassword } from '../utils/firebaseAuth';
 import firestore from '@react-native-firebase/firestore';
-import {
-  checkFirebasePremium, generateCaregiverCode,
-  revokeCaregiverCode, fetchActiveCaregiverCodes,
-  CaregiverCodeType, ActiveCaregiverCodes,
-} from '../utils/firestoreSync';
+
 import { useSubscriptionStore } from '../store/subscriptionStore';
 import { useTranslation } from '../hooks/useTranslation';
 import { useSubscription } from '../hooks/useSubscription';
 import { UpgradeModal } from '../components/UpgradeModal';
 import { router } from 'expo-router';
 import auth from '@react-native-firebase/auth';
-
+import { File, Paths } from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import {
+  syncProfile, checkFirebasePremium, generateCaregiverCode,
+  revokeCaregiverCode, fetchActiveCaregiverCodes,
+  CaregiverCodeType, ActiveCaregiverCodes,
+} from '../utils/firestoreSync';
 const RED = '#EC5557';
 
 type ActiveTab = 'profile' | 'settings';
@@ -200,7 +202,7 @@ function PasswordSetupSection({ hasPassword, onSave, secNewPass, setSecNewPass, 
         style={{ marginTop: 10, borderRadius: 8, paddingVertical: 10, alignItems: 'center', borderWidth: 1.5, borderColor: colors.red, backgroundColor: 'transparent' }}
         onPress={() => setChanging(true)} activeOpacity={0.75}
       >
-        <Text style={{ fontSize: 14, fontWeight: '700', color: colors.red }}>🔑 {t.changePassword ?? 'Change Password'}</Text>
+        <Text style={{ fontSize: 14, fontWeight: '700', color: colors.red }}>🔑 {t.changePassword}</Text>
       </TouchableOpacity>
     );
   }
@@ -322,7 +324,7 @@ function AccountSection({ user }: { user: any }) {
         {!showChangePw ? (
           <>
             <TouchableOpacity onPress={() => { setShowChangePw(true); setPwError(''); setPwSuccess(''); }} activeOpacity={0.7} style={s.changePwLink}>
-              <Text style={{ fontSize: 14, fontWeight: '700', color: colors.red }}>🔑 Change Password</Text>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: colors.red }}>🔑 {t.changePassword}</Text>
             </TouchableOpacity>
             <PressBtn style={[s.signOutBtn, { borderColor: colors.red }]} onPress={handleSignOut} activeOpacity={0.75}>
               <Text style={[s.signOutBtnText, { color: colors.red }]}>{t.signOut}</Text>
@@ -414,9 +416,10 @@ function CaregiverCodeSection({ patientName, patientAddress }: { patientName: st
   }, []);
 
   const handleGenerate = async () => {
+    if (!patientName.trim()) { setGenError(t.nameRequiredForCode); return; }
     setGenerating(true); setGenError('');
     try {
-      const code = await generateCaregiverCode(patientName || 'Patient', patientAddress ?? '', selectedType, history, insulinEntries, savedMeals);
+      const code = await generateCaregiverCode(patientName, patientAddress ?? '', selectedType, history, insulinEntries, savedMeals);
       setCaregiverSyncEnabled(true);
       setActiveCodes(prev => ({ ...prev, [selectedType]: code }));
       if (selectedType === 'temporary') setTempExpiresAt(new Date(Date.now() + 24 * 60 * 60 * 1000));
@@ -461,7 +464,7 @@ function CaregiverCodeSection({ patientName, patientAddress }: { patientName: st
             style={[cg.revokeBtn, { borderColor: isPermanent ? colors.red : colors.normal }]}
           >
             <Text style={{ fontSize: 12, fontWeight: '700', color: isPermanent ? colors.red : colors.normal }}>
-              {copied ? '✓ Copied' : '📋 Copy'}
+              {copied ? t.copied : t.copy}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -569,20 +572,23 @@ function ProfileTab() {
   const [isEditing, setIsEditing] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const handleSave = () => {
-    setProfile({
-      ...(name          ? { name }          : {}),
-      ...(dob           ? { age: dob }      : {}),
-      ...(doctorName    ? { doctorName }    : {}),
-      ...(clinicName    ? { clinicName }    : {}),
-      ...(address       ? { address }       : {}),
-      ...(diagnosisDate ? { diagnosisDate } : {}),
-      ...(diabetesType  ? { diabetesType }  : {}),
-    });
-    setIsEditing(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+const handleSave = () => {
+  const updatedProfile = {
+    ...profile,
+    ...(name          ? { name }          : {}),
+    ...(dob           ? { age: dob }      : {}),
+    ...(doctorName    ? { doctorName }    : {}),
+    ...(clinicName    ? { clinicName }    : {}),
+    ...(address       ? { address }       : {}),
+    ...(diagnosisDate ? { diagnosisDate } : {}),
+    ...(diabetesType  ? { diabetesType }  : {}),
   };
+  setProfile(updatedProfile);
+  syncProfile(updatedProfile).catch(() => {});
+  setIsEditing(false);
+  setSaved(true);
+  setTimeout(() => setSaved(false), 2000);
+};
 
   const DIABETES_TYPES: DiabetesType[] = ['Type 1', 'Type 2', 'LADA', 'Other'];
 
@@ -778,19 +784,19 @@ function ProfileTab() {
 {/* ── Delete Account ── */}
       {user && !caregiverSession && (
         <SectionCard>
-          <SectionTitle text="Account Deletion" />
+          <SectionTitle text={t.accountDeletion} />
           <Text style={{ fontSize: 12, color: colors.textMuted, lineHeight: 18, marginBottom: 12 }}>
-            Permanently deletes your account, glucose history, insulin log, meals and profile. This cannot be undone.
+            {t.accountDeletionDesc}
           </Text>
           <TouchableOpacity
             onPress={() => {
               Alert.alert(
-                'Delete Account',
-                'This will permanently delete your account and all your data. This cannot be undone.',
+                t.deleteAccountAlertTitle,
+                t.deleteAccountAlertMsg,
                 [
-                  { text: 'Cancel', style: 'cancel' },
+                  { text: t.cancel, style: 'cancel' },
                   {
-                    text: 'Delete Everything',
+                    text: t.yesDeleteEverything,
                     style: 'destructive',
                     onPress: async () => {
                       try {
@@ -833,8 +839,8 @@ function ProfileTab() {
                         Alert.alert(
                           'Error',
                           e.code === 'auth/requires-recent-login'
-                            ? 'Please sign out and sign back in, then try again.'
-                            : e.message ?? 'Could not delete account.'
+                            ? t.requiresRecentLogin
+                            : e.message ?? t.couldNotDeleteAccount
                         );
                       }
                     },
@@ -853,7 +859,7 @@ function ProfileTab() {
             }}
           >
             <Text style={{ fontSize: 14, fontWeight: '700', color: '#e53935' }}>
-              🗑️ Delete My Account
+              {t.deleteMyAccount}
             </Text>
           </TouchableOpacity>
         </SectionCard>
@@ -865,6 +871,67 @@ function ProfileTab() {
 
 
 
+
+// ─── Legal & Privacy Section ──────────────────────────────────────────────────
+
+function LegalPrivacySection() {
+  const { colors } = useTheme();
+  const t = useTranslation();
+  const { history, insulinEntries, savedMeals, profile, settings } = useGlucoseStore();
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        profile,
+        settings: { ...settings, securityHash: '[redacted]' },
+        glucoseHistory: history,
+        insulinLog: insulinEntries,
+        savedMeals,
+      };
+      const json = JSON.stringify(payload, null, 2);
+      const file = new File(Paths.cache, 'diab_easy_export.json');
+      file.write(json);
+      await Sharing.shareAsync(file.uri, { mimeType: 'application/json', dialogTitle: t.exportMyData });
+    } catch {
+      Alert.alert(t.exportDataFailed);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+    const LEGAL_LINKS = [
+      { label: t.privacyPolicy, onPress: () => Linking.openURL('https://liviucozac.github.io/DiabEasy/privacy_policy.html') },
+      { label: t.termsOfUse,   onPress: () => Linking.openURL('https://liviucozac.github.io/DiabEasy/terms_of_use.html') },
+      { label: t.gdprRequest,  onPress: () => Linking.openURL('mailto:liviu.dev.cozac@proton.me?subject=GDPR%20Data%20Request&body=User%20UID%3A%20') },
+    ];
+
+  return (
+    <SectionCard>
+      <SectionTitle text={t.legalPrivacy} />
+
+      {LEGAL_LINKS.map((item, i) => (
+        <View key={i}>
+          <TouchableOpacity style={s.aboutLinkRow} onPress={item.onPress} activeOpacity={0.75}>
+            <Text style={[s.aboutLink, { color: colors.text }]}>{item.label}</Text>
+            <Text style={[s.aboutChevron, { color: colors.border }]}>›</Text>
+          </TouchableOpacity>
+          <Divider />
+        </View>
+      ))}
+
+      <TouchableOpacity style={s.aboutLinkRow} onPress={handleExport} activeOpacity={0.75} disabled={exporting}>
+        <View style={{ flex: 1 }}>
+          <Text style={[s.aboutLink, { color: colors.text }]}>{exporting ? t.exportPreparing : t.exportMyData}</Text>
+          <Text style={[{ fontSize: 11, color: colors.textFaint, marginTop: 1 }]}>{t.exportMyDataDesc}</Text>
+        </View>
+        <Text style={[s.aboutChevron, { color: colors.border }]}>›</Text>
+      </TouchableOpacity>
+    </SectionCard>
+  );
+}
 
 // ─── Settings Tab ─────────────────────────────────────────────────────────────
 
@@ -1140,23 +1207,16 @@ function SettingsTab() {
         </SectionCard>
       )}
 
+      <LegalPrivacySection />
+
       <SectionCard>
         <SectionTitle text={t.about} />
         <View style={s.aboutRow}><Text style={[s.aboutLabel, { color: colors.textMuted }]}>{t.appVersion}</Text><Text style={[s.aboutValue, { color: colors.text }]}>2.0.0</Text></View>
         <Divider />
-        {[
-          { label: t.privacyPolicy, onPress: () => router.push({ pathname: '/legal' as any, params: { doc: 'privacy' } }) },
-          { label: t.termsOfUse,   onPress: () => router.push({ pathname: '/legal' as any, params: { doc: 'terms' } }) },
-          { label: t.sendFeedback, onPress: () => Linking.openURL('mailto:liviu.dev.cozac@proton.me?subject=DiabEasy%20Feedback&body=App%20version%3A%202.0.0%0A%0A') },
-        ].map((item, i) => (
-          <View key={i}>
-            <TouchableOpacity style={s.aboutLinkRow} onPress={item.onPress} activeOpacity={0.75}>
-              <Text style={[s.aboutLink, { color: colors.text }]}>{item.label}</Text>
-              <Text style={[s.aboutChevron, { color: colors.border }]}>›</Text>
-            </TouchableOpacity>
-            {i < 2 && <Divider />}
-          </View>
-        ))}
+        <TouchableOpacity style={s.aboutLinkRow} onPress={() => Linking.openURL('mailto:liviu.dev.cozac@proton.me?subject=DiabEasy%20Feedback&body=App%20version%3A%202.0.0%0A%0A')} activeOpacity={0.75}>
+          <Text style={[s.aboutLink, { color: colors.text }]}>{t.sendFeedback}</Text>
+          <Text style={[s.aboutChevron, { color: colors.border }]}>›</Text>
+        </TouchableOpacity>
         <Divider />
         <View style={s.disclaimerCard}>
           <Text style={[s.disclaimerText, { color: colors.textMuted }]}>{t.appDisclaimer}</Text>

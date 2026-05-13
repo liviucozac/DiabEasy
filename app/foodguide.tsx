@@ -389,7 +389,7 @@ export default function FoodGuideScreen() {
 
           {glucoseValue !== null && (() => {
             const mgdl = unit === 'mmol/L' ? glucoseValue! * 18.0182 : glucoseValue!;
-            if (mgdl <= settings.targetGlucose) return null;
+            if (mgdl <= settings.glucoseHigh) return null;
             const mmolEq  = (mgdl / 18).toFixed(1);
             const rawDose = calcCorrectionDose(mgdl, settings.targetGlucose, settings.isf);
             const dose    = rawDose > 0 ? Math.round(rawDose) : null;
