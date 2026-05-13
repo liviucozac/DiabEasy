@@ -877,15 +877,54 @@ const handleSave = () => {
 function LegalPrivacySection() {
   const { colors } = useTheme();
   const t = useTranslation();
-  const { history, insulinEntries, savedMeals, profile, settings } = useGlucoseStore();
-  const [exporting, setExporting] = useState(false);
+
+  const LEGAL_LINKS = [
+    { label: t.privacyPolicy, onPress: () => Linking.openURL('https://liviucozac.github.io/DiabEasy/privacy_policy.html') },
+    { label: t.termsOfUse,   onPress: () => Linking.openURL('https://liviucozac.github.io/DiabEasy/terms_of_use.html') },
+    { label: t.gdprRequest,  onPress: () => Linking.openURL('mailto:liviu.dev.cozac@proton.me?subject=GDPR%20Data%20Request&body=User%20UID%3A%20') },
+  ];
+
+  return (
+    <SectionCard>
+      <SectionTitle text={t.legalPrivacy} />
+      {LEGAL_LINKS.map((item, i) => (
+        <View key={i}>
+          <TouchableOpacity style={s.aboutLinkRow} onPress={item.onPress} activeOpacity={0.75}>
+            <Text style={[s.aboutLink, { color: colors.text }]}>{item.label}</Text>
+            <Text style={[s.aboutChevron, { color: colors.border }]}>›</Text>
+          </TouchableOpacity>
+          {i < LEGAL_LINKS.length - 1 && <Divider />}
+        </View>
+      ))}
+    </SectionCard>
+  );
+}
+
+// ─── Settings Tab ─────────────────────────────────────────────────────────────
+
+function SettingsTab() {
+  const { settings, setSettings, clearHistory, clearInsulinLog, caregiverSession, history, insulinEntries, savedMeals, profile: exportProfile } = useGlucoseStore();
+  const { colors } = useTheme();
+  const t = useTranslation();
+  const [showTraining,   setShowTraining]   = useState(false);
+  const [isfFocused,     setIsfFocused]     = useState(false);
+  const [ratioFocused,   setRatioFocused]   = useState(false);
+  const [targetFocused,  setTargetFocused]  = useState(false);
+  const [diaFocused,     setDiaFocused]     = useState(false);
+  const [secNewPin,      setSecNewPin]      = useState('');
+  const [secConfirmPin,  setSecConfirmPin]  = useState('');
+  const [secNewPass,     setSecNewPass]     = useState('');
+  const [secConfirmPass, setSecConfirmPass] = useState('');
+  const [secError,       setSecError]       = useState('');
+  const [secSuccess,     setSecSuccess]     = useState('');
+  const [exporting,      setExporting]      = useState(false);
 
   const handleExport = async () => {
     setExporting(true);
     try {
       const payload = {
         exportedAt: new Date().toISOString(),
-        profile,
+        profile: exportProfile,
         settings: { ...settings, securityHash: '[redacted]' },
         glucoseHistory: history,
         insulinLog: insulinEntries,
@@ -901,55 +940,6 @@ function LegalPrivacySection() {
       setExporting(false);
     }
   };
-
-    const LEGAL_LINKS = [
-      { label: t.privacyPolicy, onPress: () => Linking.openURL('https://liviucozac.github.io/DiabEasy/privacy_policy.html') },
-      { label: t.termsOfUse,   onPress: () => Linking.openURL('https://liviucozac.github.io/DiabEasy/terms_of_use.html') },
-      { label: t.gdprRequest,  onPress: () => Linking.openURL('mailto:liviu.dev.cozac@proton.me?subject=GDPR%20Data%20Request&body=User%20UID%3A%20') },
-    ];
-
-  return (
-    <SectionCard>
-      <SectionTitle text={t.legalPrivacy} />
-
-      {LEGAL_LINKS.map((item, i) => (
-        <View key={i}>
-          <TouchableOpacity style={s.aboutLinkRow} onPress={item.onPress} activeOpacity={0.75}>
-            <Text style={[s.aboutLink, { color: colors.text }]}>{item.label}</Text>
-            <Text style={[s.aboutChevron, { color: colors.border }]}>›</Text>
-          </TouchableOpacity>
-          <Divider />
-        </View>
-      ))}
-
-      <TouchableOpacity style={s.aboutLinkRow} onPress={handleExport} activeOpacity={0.75} disabled={exporting}>
-        <View style={{ flex: 1 }}>
-          <Text style={[s.aboutLink, { color: colors.text }]}>{exporting ? t.exportPreparing : t.exportMyData}</Text>
-          <Text style={[{ fontSize: 11, color: colors.textFaint, marginTop: 1 }]}>{t.exportMyDataDesc}</Text>
-        </View>
-        <Text style={[s.aboutChevron, { color: colors.border }]}>›</Text>
-      </TouchableOpacity>
-    </SectionCard>
-  );
-}
-
-// ─── Settings Tab ─────────────────────────────────────────────────────────────
-
-function SettingsTab() {
-  const { settings, setSettings, clearHistory, clearInsulinLog, caregiverSession } = useGlucoseStore();
-  const { colors } = useTheme();
-  const t = useTranslation();
-  const [showTraining,   setShowTraining]   = useState(false);
-  const [isfFocused,     setIsfFocused]     = useState(false);
-  const [ratioFocused,   setRatioFocused]   = useState(false);
-  const [targetFocused,  setTargetFocused]  = useState(false);
-  const [diaFocused,     setDiaFocused]     = useState(false);
-  const [secNewPin,      setSecNewPin]      = useState('');
-  const [secConfirmPin,  setSecConfirmPin]  = useState('');
-  const [secNewPass,     setSecNewPass]     = useState('');
-  const [secConfirmPass, setSecConfirmPass] = useState('');
-  const [secError,       setSecError]       = useState('');
-  const [secSuccess,     setSecSuccess]     = useState('');
 
   const LOCK_TIMEOUT_OPTIONS: { label: string; value: LockTimeout }[] = [
     { label: t.lockImmediate, value: 'immediate' },
@@ -1200,6 +1190,14 @@ function SettingsTab() {
       {!caregiverSession && (
         <SectionCard>
           <SectionTitle text={t.data} />
+          <TouchableOpacity style={s.aboutLinkRow} onPress={handleExport} activeOpacity={0.75} disabled={exporting}>
+            <View style={{ flex: 1 }}>
+              <Text style={[s.aboutLink, { color: colors.text }]}>{exporting ? t.exportPreparing : t.exportMyData}</Text>
+              <Text style={[{ fontSize: 11, color: colors.textFaint, marginTop: 1 }]}>{t.exportMyDataDesc}</Text>
+            </View>
+            <Text style={[s.aboutChevron, { color: colors.border }]}>›</Text>
+          </TouchableOpacity>
+          <Divider />
           <PressBtn style={[s.dangerBtn]} onPress={handleClearData} activeOpacity={0.75}>
             <Text style={s.dangerBtnText}>{t.clearAllData}</Text>
           </PressBtn>
