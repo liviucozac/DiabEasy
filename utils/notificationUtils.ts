@@ -55,7 +55,7 @@ export async function scheduleReminder(
   } else {
     const [yr, mo, dy] = days.split('-').map(Number);
     const fireDate = new Date(yr, mo - 1, dy, hour, minute, 0, 0);
-    if (fireDate <= new Date()) return; // past date — skip scheduling
+    if (fireDate <= new Date()) throw new Error('past-date');
     trigger = {
       type: Notifications.SchedulableTriggerInputTypes.DATE,
       date: fireDate,

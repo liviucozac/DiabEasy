@@ -263,7 +263,12 @@ export default function HomeScreen() {
     const raw = inputValue.trim();
     if (!raw) return;
     const value = parseFloat(raw);
-    if (isNaN(value) || value <= 0) return;
+    if (!Number.isFinite(value) || value <= 0) return;
+    const maxVal = unit === 'mmol/L' ? 44.4 : 800;
+    if (value > maxVal) {
+      Alert.alert(t.invalidGlucoseTitle, t.glucoseOutOfRange(unit));
+      return;
+    }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     Animated.sequence([
@@ -374,17 +379,37 @@ export default function HomeScreen() {
           </Text>
 
           <View style={styles.unitToggleRow}>
-            <TouchableOpacity onPress={() => { setUnit('mg/dL'); setSettings({ glucoseUnit: 'mg/dL' }); }} activeOpacity={0.8}>
+            <TouchableOpacity onPress={() => {
+              if (unit !== 'mg/dL') {
+                const v = parseFloat(inputValue);
+                if (Number.isFinite(v) && v > 0) setInputValue(String(Math.round(v * 18.0182)));
+              }
+              setUnit('mg/dL'); setSettings({ glucoseUnit: 'mg/dL' });
+            }} activeOpacity={0.8}>
               <Text style={[styles.unitLabel, { color: unit === 'mg/dL' ? colors.red : colors.textMuted }]}>mg/dL</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.sliderTrack, { backgroundColor: colors.border }]}
-              onPress={() => { const u = unit === 'mg/dL' ? 'mmol/L' : 'mg/dL'; setUnit(u); setSettings({ glucoseUnit: u }); }}
+              onPress={() => {
+                const next = unit === 'mg/dL' ? 'mmol/L' : 'mg/dL';
+                const v = parseFloat(inputValue);
+                if (Number.isFinite(v) && v > 0) {
+                  if (unit === 'mg/dL') setInputValue((v / 18.0182).toFixed(1));
+                  else setInputValue(String(Math.round(v * 18.0182)));
+                }
+                setUnit(next); setSettings({ glucoseUnit: next });
+              }}
               activeOpacity={0.8}
             >
               <View style={[styles.sliderKnob, { backgroundColor: colors.text }, unit === 'mmol/L' && styles.sliderKnobRight]} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => { setUnit('mmol/L'); setSettings({ glucoseUnit: 'mmol/L' }); }} activeOpacity={0.8}>
+            <TouchableOpacity onPress={() => {
+              if (unit !== 'mmol/L') {
+                const v = parseFloat(inputValue);
+                if (Number.isFinite(v) && v > 0) setInputValue((v / 18.0182).toFixed(1));
+              }
+              setUnit('mmol/L'); setSettings({ glucoseUnit: 'mmol/L' });
+            }} activeOpacity={0.8}>
               <Text style={[styles.unitLabel, { color: unit === 'mmol/L' ? colors.red : colors.textMuted }]}>mmol/L</Text>
             </TouchableOpacity>
           </View>

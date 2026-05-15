@@ -470,12 +470,13 @@ useEffect(() => {
     const veryHigh  = mgdlValues.filter(v => v > 250).length;
     const tirPct    = n > 0 ? ((target5 / total5) * 100).toFixed(0) : null;
 
+    const L = t.pdfLabels;
     const tirBands = [
-      { label: 'Very Low',  pct: +((veryLow  / total5) * 100).toFixed(0), color: '#b71c1c' },
-      { label: 'Low',       pct: +((low5     / total5) * 100).toFixed(0), color: '#e53935' },
-      { label: 'Target',    pct: +((target5  / total5) * 100).toFixed(0), color: '#2e7d32' },
-      { label: 'High',      pct: +((high5    / total5) * 100).toFixed(0), color: '#ef6c00' },
-      { label: 'Very High', pct: +((veryHigh / total5) * 100).toFixed(0), color: '#bf360c' },
+      { label: L.veryLow, pct: +((veryLow  / total5) * 100).toFixed(0), color: '#b71c1c' },
+      { label: L.low,     pct: +((low5     / total5) * 100).toFixed(0), color: '#e53935' },
+      { label: L.timeInRange, pct: +((target5  / total5) * 100).toFixed(0), color: '#2e7d32' },
+      { label: L.high,    pct: +((high5    / total5) * 100).toFixed(0), color: '#ef6c00' },
+      { label: L.veryHigh, pct: +((veryHigh / total5) * 100).toFixed(0), color: '#bf360c' },
     ];
 
     const svgTIRBar = (() => {
@@ -497,9 +498,10 @@ useEffect(() => {
       return `<svg width="${W}" height="${svgH}" xmlns="http://www.w3.org/2000/svg">${segments}${legend}</svg>`;
     })();
 
-    const CONTEXTS = ['Fasting', 'Pre-meal', 'Post-meal', 'Bedtime', 'Post-exercise', 'Random'];
-    const contextRows = CONTEXTS.map((ctx, i) => {
-      const entries = pdfData.filter(e => e.fasting === ctx);
+    const CONTEXT_KEYS = ['Fasting', 'Pre-meal', 'Post-meal', 'Bedtime', 'Post-exercise', 'Random'];
+    const CONTEXT_LABELS = [L.fasting, L.preMeal, L.postMeal, L.bedtime, L.postExercise, L.random];
+    const contextRows = CONTEXT_KEYS.map((key, i) => {
+      const entries = pdfData.filter(e => e.fasting === key);
       if (entries.length === 0) return '';
       const vals   = entries.map(e => toMgdL(e.value, e.unit));
       const avg    = (vals.reduce((s, v) => s + v, 0) / vals.length).toFixed(0);
@@ -508,7 +510,7 @@ useEffect(() => {
       const inRng  = vals.filter(v => v >= 70 && v <= 180).length;
       const tir    = ((inRng / vals.length) * 100).toFixed(0);
       const bg     = i % 2 === 0 ? '#ffffff' : '#f9f9f9';
-      return `<tr style="background:${bg}"><td style="font-weight:600">${ctx}</td><td>${entries.length}</td><td style="font-weight:700;color:#ec5557">${avg}</td><td>${min}</td><td>${max}</td><td style="color:#2e7d32;font-weight:700">${tir}%</td></tr>`;
+      return `<tr style="background:${bg}"><td style="font-weight:600">${CONTEXT_LABELS[i]}</td><td>${entries.length}</td><td style="font-weight:700;color:#ec5557">${avg}</td><td>${min}</td><td>${max}</td><td style="color:#2e7d32;font-weight:700">${tir}%</td></tr>`;
     }).filter(Boolean).join('');
 
     const chartEntries = [...pdfData].reverse();
@@ -547,9 +549,9 @@ useEffect(() => {
       const cx = 100, cy = 100, R = 75;
       const W = 420, H = cy * 2 + 20;
       const segs = [
-        { value: pdfPieNormal, color: '#2e7d32', label: 'Normal' },
-        { value: pdfPieHigh,   color: '#ef6c00', label: 'High'   },
-        { value: pdfPieLow,    color: '#e53935', label: 'Low'    },
+        { value: pdfPieNormal, color: '#2e7d32', label: L.normal },
+        { value: pdfPieHigh,   color: '#ef6c00', label: L.high   },
+        { value: pdfPieLow,    color: '#e53935', label: L.low    },
       ].filter(s => s.value > 0);
       let angle = -Math.PI / 2;
       const paths = segs.map(seg => {
@@ -620,47 +622,49 @@ useEffect(() => {
       td{padding:3px 6px;border-bottom:1px solid #f0f0f0}
       .ctx-th{background:#f5f5f5;color:#555;font-size:8.5px}
       .pg{page-break-before:always}
-      .footer{margin-top:14px;font-size:7.5px;color:#ccc;text-align:center;border-top:1px solid #eee;padding-top:6px}
+      .disclaimer-block{margin-top:18px;border:1.5px solid #e53935;border-radius:8px;padding:10px 14px;background:#fff8f8;font-size:8.5px;color:#555;line-height:1.5}
+      .footer{margin-top:10px;font-size:7.5px;color:#ccc;text-align:center;border-top:1px solid #eee;padding-top:6px}
     `;
 
     const html = `<html><head><meta charset="utf-8"/><style>${css}</style></head><body>
       <div class="hdr">
-        <div><div class="hdr-title">DiabEasy</div><div class="hdr-sub">Glucose Management Report${basic ? ' · Basic (7-day)' : ''}</div></div>
-        <div class="hdr-right">Generated: ${genDate} at ${genTime}<br/>Period: ${dateFrom} — ${dateTo}<br/>${n} readings &nbsp;|&nbsp; ${totalInsulin}u insulin</div>
+        <div><div class="hdr-title">DiabEasy</div><div class="hdr-sub">${L.reportTitle}${basic ? ' · ' + L.basic7day : ''}</div></div>
+        <div class="hdr-right">${L.generated}: ${genDate} at ${genTime}<br/>${L.period}: ${dateFrom} — ${dateTo}<br/>${n} ${L.readings} &nbsp;|&nbsp; ${totalInsulin}u ${L.insulinLogged}</div>
       </div>
       <div class="patient">
-        <div class="patient-header"><span class="patient-header-text">Patient Information</span></div>
+        <div class="patient-header"><span class="patient-header-text">${L.patientInfo}</span></div>
         <div class="patient-body">
           ${[
-            { label: 'Full Name',         value: profile?.name,          placeholder: 'Not provided — update in Profile' },
-            { label: 'Age',               value: profile?.age,           placeholder: 'Not provided' },
-            { label: 'Diabetes Type',     value: profile?.diabetesType,  placeholder: 'Not specified' },
-            { label: 'Diagnosis Date',    value: profile?.diagnosisDate, placeholder: 'Not provided' },
-            { label: 'Physician',         value: profile?.doctorName,    placeholder: 'Not provided — update in Profile' },
-            { label: 'Clinic / Hospital', value: profile?.clinicName,    placeholder: 'Not provided' },
+            { label: L.fullName,      value: profile?.name,          placeholder: L.notProviderUpdateProfile },
+            { label: L.age,           value: profile?.age,           placeholder: L.notProvided },
+            { label: L.diabetesType,  value: profile?.diabetesType,  placeholder: L.notSpecified },
+            { label: L.diagnosisDate, value: profile?.diagnosisDate, placeholder: L.notProvided },
+            { label: L.physician,     value: profile?.doctorName,    placeholder: L.notProviderUpdateProfile },
+            { label: L.clinicHospital, value: profile?.clinicName,   placeholder: L.notProvided },
           ].map(f => `<div class="pf"><div class="pf-label">${f.label}</div>${f.value ? `<div class="pf-value">${f.value}</div>` : `<div class="pf-empty">${f.placeholder}</div>`}</div>`).join('')}
         </div>
       </div>
       <div class="metrics">
-        <div class="mc"><div class="mv" style="color:#ec5557">${avgMgdL !== null ? avgMgdL.toFixed(1) : '—'}</div><div class="ml">Avg Glucose (mg/dL)</div><div class="mr">Target: ${settings.targetGlucose} mg/dL</div></div>
-        <div class="mc"><div class="mv" style="color:#1565c0">${eHbA1c ?? '—'}%</div><div class="ml">Est. HbA1c (ADAG)</div><div class="mr">Target: &lt;7.0%</div></div>
-        <div class="mc"><div class="mv" style="color:#2e7d32">${tirPct ?? '—'}%</div><div class="ml">Time in Range</div><div class="mr">Target: &gt;70%</div></div>
-        <div class="mc"><div class="mv" style="color:#555">${stdDev ?? '—'}</div><div class="ml">Std Deviation (mg/dL)</div><div class="mr">Target: &lt;${(settings.targetGlucose * 0.36).toFixed(0)}</div></div>
-        <div class="mc"><div class="mv" style="color:#555">${cvPercent ?? '—'}%</div><div class="ml">Variability (CV%)</div><div class="mr"><span class="badge ${cvStable ? 'stable' : 'unstable'}">${cvPercent !== null ? (cvStable ? 'Stable ≤36%' : 'Unstable >36%') : '—'}</span></div></div>
-        <div class="mc"><div class="mv" style="color:#555">${n}</div><div class="ml">Total Readings</div><div class="mr">${totalInsulin}u insulin logged</div></div>
+        <div class="mc"><div class="mv" style="color:#ec5557">${avgMgdL !== null ? avgMgdL.toFixed(1) : '—'}</div><div class="ml">${L.avgGlucose}</div><div class="mr">${L.target}: ${settings.targetGlucose} mg/dL</div></div>
+        <div class="mc"><div class="mv" style="color:#1565c0">${eHbA1c ?? '—'}%</div><div class="ml">${L.estHba1c}</div><div class="mr">${L.target}: &lt;7.0%</div></div>
+        <div class="mc"><div class="mv" style="color:#2e7d32">${tirPct ?? '—'}%</div><div class="ml">${L.timeInRange}</div><div class="mr">${L.target}: &gt;70%</div></div>
+        <div class="mc"><div class="mv" style="color:#555">${stdDev ?? '—'}</div><div class="ml">${L.stdDev}</div><div class="mr">${L.target}: &lt;${(settings.targetGlucose * 0.36).toFixed(0)}</div></div>
+        <div class="mc"><div class="mv" style="color:#555">${cvPercent ?? '—'}%</div><div class="ml">${L.variability}</div><div class="mr"><span class="badge ${cvStable ? 'stable' : 'unstable'}">${cvPercent !== null ? (cvStable ? L.stable : L.unstable) : '—'}</span></div></div>
+        <div class="mc"><div class="mv" style="color:#555">${n}</div><div class="ml">${L.totalReadings}</div><div class="mr">${totalInsulin}u ${L.insulinLogged}</div></div>
       </div>
       ${!basic ? `
-      <div class="sec">Time in Range</div>${svgTIRBar || '<p style="color:#aaa;font-size:10px">No data</p>'}
-      ${contextRows ? `<div class="sec">Readings by Context</div><table><thead><tr class="ctx-th"><th class="ctx-th">Context</th><th class="ctx-th">Readings</th><th class="ctx-th">Avg (mg/dL)</th><th class="ctx-th">Min</th><th class="ctx-th">Max</th><th class="ctx-th">In Range</th></tr></thead><tbody>${contextRows}</tbody></table>` : ''}
-      ${svgLineChart ? `<div class="sec">Glucose Trend</div>${svgLineChart}` : ''}
-      ${svgPieChart ? `<div class="sec">Readings Breakdown</div>${svgPieChart}` : ''}
-      ` : `<div style="border:1.5px dashed #ec5557;border-radius:8px;padding:10px 14px;margin:14px 0;text-align:center;color:#ec5557;font-size:10px;font-weight:700">📊 Charts &amp; analytics available in Premium</div>`}
+      <div class="sec">${L.timeInRange}</div>${svgTIRBar || `<p style="color:#aaa;font-size:10px">${L.noData}</p>`}
+      ${contextRows ? `<div class="sec">${L.readingsByContext}</div><table><thead><tr class="ctx-th"><th class="ctx-th">${L.context}</th><th class="ctx-th">${L.readings}</th><th class="ctx-th">${L.avg}</th><th class="ctx-th">${L.min}</th><th class="ctx-th">${L.max}</th><th class="ctx-th">${L.inRange}</th></tr></thead><tbody>${contextRows}</tbody></table>` : ''}
+      ${svgLineChart ? `<div class="sec">${L.glucoseTrend}</div>${svgLineChart}` : ''}
+      ${svgPieChart ? `<div class="sec">${L.readingsBreakdown}</div>${svgPieChart}` : ''}
+      ` : `<div style="border:1.5px dashed #ec5557;border-radius:8px;padding:10px 14px;margin:14px 0;text-align:center;color:#ec5557;font-size:10px;font-weight:700">📊 ${L.chartsInPremium}</div>`}
       <div class="pg"></div>
-      <div class="sec">Glucose Log</div>
-      <table><thead><tr><th>Date</th><th>Time</th><th>Glucose</th><th>Status</th><th>Context</th><th>Notes</th></tr></thead>
-      <tbody>${glucoseRows || '<tr><td colspan="6" style="text-align:center;color:#aaa;padding:10px;font-style:italic">No glucose data</td></tr>'}</tbody></table>
-      ${insulinRows ? `<div class="sec" style="margin-top:14px">Insulin Log</div><table><thead><tr><th>Date</th><th>Time</th><th>Type</th><th>Units</th></tr></thead><tbody>${insulinRows}</tbody></table>` : ''}
-      <div class="footer">DiabEasy is a personal management aid, not a medical device. &nbsp;|&nbsp; Generated ${genDate} at ${genTime}</div>
+      <div class="sec">${L.glucoseLog}</div>
+      <table><thead><tr><th>${L.date}</th><th>${L.time}</th><th>${L.glucose}</th><th>${L.status}</th><th>${L.context}</th><th>${L.notes}</th></tr></thead>
+      <tbody>${glucoseRows || `<tr><td colspan="6" style="text-align:center;color:#aaa;padding:10px;font-style:italic">${L.noGlucoseData}</td></tr>`}</tbody></table>
+      ${insulinRows ? `<div class="sec" style="margin-top:14px">${L.insulinLog}</div><table><thead><tr><th>${L.date}</th><th>${L.time}</th><th>${L.type}</th><th>${L.units}</th></tr></thead><tbody>${insulinRows}</tbody></table>` : ''}
+      <div class="disclaimer-block">${L.disclaimer}</div>
+      <div class="footer">${L.generated}: ${genDate} at ${genTime}</div>
     </body></html>`;
 
     try {
@@ -728,7 +732,13 @@ useEffect(() => {
           style={[styles.filterActionBtn, { borderColor: colors.red, backgroundColor: 'transparent' }]} activeOpacity={0.7}>
           <Text style={[styles.filterActionBtnText, { color: colors.red }]}>{t.clearFilters}</Text>
         </PressBtn>
-        <PressBtn onPress={() => setFiltersApplied(true)}
+        <PressBtn onPress={() => {
+          if (filterDateFrom && filterDateTo && filterDateFrom > filterDateTo) {
+            setFilterDateFrom(filterDateTo);
+            setFilterDateTo(filterDateFrom);
+          }
+          setFiltersApplied(true);
+        }}
           style={[styles.filterActionBtn, { borderColor: colors.red, backgroundColor: 'transparent' }]} activeOpacity={0.7}>
           <Text style={[styles.filterActionBtnText, { color: colors.red }]}>{t.applyFilters}</Text>
         </PressBtn>
@@ -753,7 +763,7 @@ useEffect(() => {
           </PressBtn>
             {caregiverSession ? (
               <Text style={[styles.upgradeLinkText, { color: colors.textMuted, textAlign: 'center', marginBottom: 12 }]}>
-                {profile.name || caregiverSession.patientName} needs to upgrade to Premium for full reports.
+                {t.caregiverNeedsUpgrade(profile.name || caregiverSession.patientName)}
               </Text>
             ) : (
               <TouchableOpacity onPress={() => setShowUpgrade(true)} activeOpacity={0.75} style={styles.upgradeLink}>

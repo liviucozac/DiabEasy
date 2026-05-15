@@ -123,6 +123,7 @@ function CalculatorTab() {
   const t = useTranslation();
   const [limitLowInput,  setLimitLowInput]  = useState(String(settings.glucoseLow));
   const [limitHighInput, setLimitHighInput] = useState(String(settings.glucoseHigh));
+  const [limitsEditing, setLimitsEditing] = useState(false);
 
   const ISF        = settings.isf;
   const CARB_RATIO = settings.carbRatio;
@@ -137,7 +138,7 @@ function CalculatorTab() {
 
   const result = useMemo(() => {
     if (currentMgDl === null) return null;
-    const meal       = totalCarbs / CARB_RATIO;
+    const meal       = CARB_RATIO > 0 ? totalCarbs / CARB_RATIO : 0;
     const correction = calcCorrectionDose(currentMgDl, targetMgDl, ISF);
     const iob        = calculateIOB(insulinEntries, settings.insulinAnalogType, settings.dia);
     const total      = Math.max(meal + correction - iob, 0);
@@ -161,29 +162,58 @@ function CalculatorTab() {
         <SectionTitle text={t.currentValues} />
         <InfoRow label={t.bloodGlucose} value={glucoseValue !== null ? `${glucoseValue} ${unit}` : t.notLoggedGoHome} valueColor={glucoseValue !== null ? glucoseColor : '#aaa'} />
         <View style={s.divider} />
-        <InfoRow label={t.mealCarbs} value={totalCarbs > 0 ? `${totalCarbs} g` : t.noMealGoFoodGuide} valueColor={totalCarbs > 0 ? '#222' : '#aaa'} />
+        <InfoRow label={t.mealCarbs} value={totalCarbs > 0 ? `${totalCarbs} g` : t.noMealGoFoodGuide} valueColor={colors.textMuted} />
       </SectionCard>
 
       <SectionCard>
-        <SectionTitle text={t.glucoseLimits} />
+        <View style={s.limitsHeader}>
+          <SectionTitle text={t.glucoseLimits} />
+          {limitsEditing ? (
+            <TouchableOpacity
+              onPress={() => {
+                const lo = parseFloat(limitLowInput);
+                const hi = parseFloat(limitHighInput);
+                if (!isNaN(lo) && lo > 0 && !isNaN(hi) && hi > lo) {
+                  setSettings({ glucoseLow: lo, glucoseHigh: hi });
+                } else {
+                  setLimitLowInput(String(settings.glucoseLow));
+                  setLimitHighInput(String(settings.glucoseHigh));
+                }
+                setLimitsEditing(false);
+              }}
+              style={[s.editSaveBtn, { backgroundColor: colors.normal }]}
+              activeOpacity={0.75}
+            >
+              <Text style={s.editSaveBtnText}>{t.save}</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              onPress={() => setLimitsEditing(true)}
+              style={[s.editSaveBtn, { backgroundColor: colors.bgCard, borderColor: colors.border, borderWidth: 1 }]}
+              activeOpacity={0.75}
+            >
+              <Text style={[s.editSaveBtnText, { color: colors.text }]}>{t.edit}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
         <Text style={[s.paramHint, { color: colors.textMuted }]}>{t.glucoseLimitsHint}</Text>
         <View style={s.limitsRow}>
           <View style={s.limitField}>
             <Text style={[s.limitLabel, { color: colors.textMuted }]}>{t.lowThreshold}</Text>
             <TextInput
-              style={[s.limitInput, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]}
+              style={[s.limitInput, { borderColor: colors.normal, borderWidth: limitsEditing ? 2 : 1, color: colors.text, backgroundColor: colors.inputBg }]}
               value={limitLowInput} onChangeText={setLimitLowInput}
               keyboardType="numeric" returnKeyType="done"
-              onBlur={() => { const n = parseFloat(limitLowInput); if (!isNaN(n) && n > 0 && n < settings.glucoseHigh) setSettings({ glucoseLow: n }); else setLimitLowInput(String(settings.glucoseLow)); }}
+              editable={limitsEditing}
             />
           </View>
           <View style={s.limitField}>
             <Text style={[s.limitLabel, { color: colors.textMuted }]}>{t.highThreshold}</Text>
             <TextInput
-              style={[s.limitInput, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]}
+              style={[s.limitInput, { borderColor: colors.high, borderWidth: limitsEditing ? 2 : 1, color: colors.text, backgroundColor: colors.inputBg }]}
               value={limitHighInput} onChangeText={setLimitHighInput}
               keyboardType="numeric" returnKeyType="done"
-              onBlur={() => { const n = parseFloat(limitHighInput); if (!isNaN(n) && n > settings.glucoseLow) setSettings({ glucoseHigh: n }); else setLimitHighInput(String(settings.glucoseHigh)); }}
+              editable={limitsEditing}
             />
           </View>
         </View>
@@ -218,7 +248,7 @@ function CalculatorTab() {
         </View>
       ) : currentMgDl !== null && currentMgDl < 75 ? (
         <View style={[s.warningBanner, { borderColor: '#e53935', backgroundColor: colors.lowBg, marginBottom: 10 }]}>
-          <Text style={[s.warningText, { color: colors.low }]}>{t.glucoseLowCheckAgain}</Text>
+          <Text style={[s.warningText, { color: colors.low }]}>{t.bloodSugarTooLow}</Text>
         </View>
       ) : (
         <SectionCard>
@@ -306,16 +336,16 @@ function LogTab() {
   const [showFromPicker, setShowFromPicker] = useState(false);
   const [showToPicker,   setShowToPicker]   = useState(false);
 
-  const formatTime = (d: Date) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+  const formatTime = (d: Date) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   const glucoseWarning = (() => {
     if (glucoseValue === null) return null;
     const mgDl = toMgDl(glucoseValue, unit ?? 'mg/dL');
     if (mgDl < 75) return { kind: 'low' as const, mgDl };
-    if (mgDl > 150) {
+    if (mgDl > settings.glucoseHigh) {
       const correction = calcCorrectionDose(mgDl, settings.targetGlucose, settings.isf);
       const iob        = calculateIOB(insulinEntries, settings.insulinAnalogType, settings.dia);
-      const net = Math.ceil(Math.max(0, correction - iob));
+      const net = Math.round(Math.max(0, correction - iob));
       const analog     = getAnalogByType(settings.insulinAnalogType).label;
       return { kind: 'high' as const, mgDl, net, iob, analog };
     }
@@ -380,7 +410,7 @@ function LogTab() {
       )}
 
       {/* ── New Entry Form ── */}
-      {!caregiverSession && (
+      {!caregiverSession && glucoseWarning?.kind !== 'low' && (
         <SectionCard>
           <SectionTitle text={t.newEntry} />
 
@@ -585,7 +615,7 @@ function ReminderForm({
   const [labelFocus,     setLabelFocus]     = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const formatTime = (d: Date) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+  const formatTime = (d: Date) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   return (
     <SectionCard>
@@ -659,6 +689,9 @@ function ReminderForm({
           <Text style={s.stepperBtnText}>+</Text>
         </PressBtn>
       </View>
+      {rUnits > 20 && (
+        <Text style={[s.paramHint, { color: colors.low, marginTop: 4 }]}>{t.highInsulinUnitWarning}</Text>
+      )}
       <View style={s.formBtnRow}>
         <View style={{ flex: 1 }}>
           <PressBtn style={[s.cancelFormBtn, s.outlineBtnShadow, { backgroundColor: colors.bgCard }]} onPress={onCancel} activeOpacity={0.75}>
@@ -707,13 +740,17 @@ function RemindersTab() {
   const [editType,     setEditType]     = useState<InsulinType>('Rapid-acting');
   const [editUnits,    setEditUnits]    = useState(1);
 
-  const formatTime = (d: Date) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+  const formatTime = (d: Date) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   const handleAdd = () => {
     if (!addLabel.trim()) { Alert.alert(t.missingInfo, t.pleaseFillLabel); return; }
     const newReminder = { id: generateId(), label: addLabel.trim(), time: formatTime(addTimeDate), days: addDays, type: addType, units: addUnits, active: true };
     addReminder(newReminder);
-    if (settings.notificationsEnabled) scheduleReminder(newReminder, settings);
+    if (settings.notificationsEnabled) {
+      scheduleReminder(newReminder, settings).catch((e) => {
+        if (e?.message === 'past-date') Alert.alert(t.reminderNotScheduled, t.reminderDatePassed);
+      });
+    }
     setAddLabel(''); setAddTimeDate(new Date()); setAddDays('everyday'); setAddType('Rapid-acting'); setAddUnits(1);
     setShowAddForm(false);
   };
@@ -734,7 +771,11 @@ function RemindersTab() {
     if (settings.notificationsEnabled) {
       cancelReminder(editingId!);
       const existing = reminders.find(r => r.id === editingId);
-      if (existing?.active) scheduleReminder({ ...existing, ...updated }, settings);
+      if (existing?.active) {
+        scheduleReminder({ ...existing, ...updated }, settings).catch((e) => {
+          if (e?.message === 'past-date') Alert.alert(t.reminderNotScheduled, t.reminderDatePassed);
+        });
+      }
     }
     setEditingId(null);
   };
@@ -777,8 +818,11 @@ function RemindersTab() {
                     const nowActive = !r.active;
                     updateReminder(r.id, { active: nowActive });
                     if (settings.notificationsEnabled) {
-                      if (nowActive) scheduleReminder({ ...r, active: true }, settings);
-                      else cancelReminder(r.id);
+                      if (nowActive) {
+                        scheduleReminder({ ...r, active: true }, settings).catch((e) => {
+                          if (e?.message === 'past-date') Alert.alert(t.reminderNotScheduled, t.reminderDatePassed);
+                        });
+                      } else cancelReminder(r.id);
                     }
                   }} activeOpacity={0.75}>
                   <Text style={[s.toggleBtnText, r.active && { color: colors.red }]}>{r.active ? t.on : t.off}</Text>
@@ -1046,6 +1090,9 @@ const s = StyleSheet.create({
 
   trainingBtn:     { marginTop: 14, borderWidth: 1.5, borderRadius: 8, paddingVertical: 9, alignItems: 'center' },
   trainingBtnText: { fontSize: 13, fontWeight: '600' },
+  limitsHeader:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 },
+  editSaveBtn:     { borderRadius: 8, paddingHorizontal: 14, paddingVertical: 6 },
+  editSaveBtnText: { fontSize: 13, fontWeight: '700', color: '#fff' },
   limitsRow:       { flexDirection: 'row', gap: 12, marginTop: 4 },
   limitField:      { flex: 1 },
   limitLabel:      { fontSize: 11, marginBottom: 4 },

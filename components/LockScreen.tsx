@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { useTheme } from '../context/AppContext';
 import { useGlucoseStore } from '../store/glucoseStore';
+import { useTranslation } from '../hooks/useTranslation';
 import { checkHash, tryBiometrics } from '../utils/securityUtils';
 
 interface LockScreenProps {
@@ -63,8 +64,9 @@ function PinPad({ onComplete }: { onComplete: (pin: string) => void }) {
 // ─── Lock Screen ──────────────────────────────────────────────────────────────
 
 export function LockScreen({ onUnlock }: LockScreenProps) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const { settings } = useGlucoseStore();
+  const t = useTranslation();
   const [error, setError]           = useState('');
   const [mode, setMode]             = useState<'primary' | 'pin' | 'password'>(
     settings.securityMethod === 'biometrics' ? 'primary' : settings.securityMethod === 'pin' ? 'pin' : 'password'
@@ -118,7 +120,7 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
     if (result.reason === 'not_available' || result.reason === 'not_enrolled') {
       setMode('pin');
     } else {
-      setError('Biometric failed. Use PIN or password below.');
+      setError(t.lockBiometricFailed);
     }
   };
 
@@ -129,7 +131,7 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
     } else {
       Vibration.vibrate(300);
       recordFailure();
-      if (!isLockedOut()) setError('Incorrect PIN. Try again.');
+      if (!isLockedOut()) setError(t.lockIncorrectPin);
     }
   };
 
@@ -142,11 +144,17 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
       Vibration.vibrate(300);
       setPasswordInput('');
       recordFailure();
-      if (!isLockedOut()) setError('Incorrect password. Try again.');
+      if (!isLockedOut()) setError(t.lockIncorrectPassword);
     }
   };
 
   const call112 = () => Linking.openURL(`tel:${settings.emergencyNumber || '112'}`);
+
+  const subtitle =
+    mode === 'primary' && settings.securityMethod === 'biometrics'
+      ? t.lockAuthenticateToContinue
+      : mode === 'pin' ? t.lockEnterPin
+      : t.lockEnterPassword;
 
   return (
     <View style={[lk.root, { backgroundColor: colors.bg }]}>
@@ -154,21 +162,14 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
       {/* Header */}
       <View style={lk.header}>
         <Text style={[lk.appName, { color: colors.red }]}>DiabEasy</Text>
-        <Text style={[lk.subtitle, { color: colors.textMuted }]}>
-          {mode === 'primary' && settings.securityMethod === 'biometrics'
-            ? 'Authenticate to continue'
-            : mode === 'pin' ? 'Enter your PIN'
-            : 'Enter your password'}
-        </Text>
+        <Text style={[lk.subtitle, { color: colors.textMuted }]}>{subtitle}</Text>
       </View>
 
       {/* Error / lockout countdown */}
       {(!!error || countdown > 0) && (
         <View style={[lk.errorBanner, { backgroundColor: '#fdecea', borderColor: '#e53935' }]}>
           <Text style={lk.errorText}>
-            {countdown > 0
-              ? `Too many attempts. Try again in ${countdown}s.`
-              : error}
+            {countdown > 0 ? t.lockTooManyAttempts(countdown) : error}
           </Text>
         </View>
       )}
@@ -181,18 +182,18 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
             style={[lk.bioBtn, { backgroundColor: colors.red }]}
             onPress={triggerBiometrics}
             activeOpacity={0.8}
-            accessibilityLabel="Authenticate with biometrics"
+            accessibilityLabel={t.lockUseBiometrics}
             accessibilityRole="button"
           >
-            <Text style={lk.bioBtnText}>Use Face ID / Fingerprint</Text>
+            <Text style={lk.bioBtnText}>{t.lockUseBiometrics}</Text>
           </TouchableOpacity>
           <View style={lk.fallbackRow}>
-            <TouchableOpacity onPress={() => { setError(''); setMode('pin'); }} activeOpacity={0.7} accessibilityLabel="Use PIN instead" accessibilityRole="button">
-              <Text style={[lk.fallbackLink, { color: colors.red }]}>Use PIN</Text>
+            <TouchableOpacity onPress={() => { setError(''); setMode('pin'); }} activeOpacity={0.7} accessibilityLabel={t.lockUsePinFallback} accessibilityRole="button">
+              <Text style={[lk.fallbackLink, { color: colors.red }]}>{t.lockUsePinFallback}</Text>
             </TouchableOpacity>
             <Text style={[lk.fallbackSep, { color: colors.textFaint }]}>·</Text>
-            <TouchableOpacity onPress={() => { setError(''); setMode('password'); }} activeOpacity={0.7} accessibilityLabel="Use password instead" accessibilityRole="button">
-              <Text style={[lk.fallbackLink, { color: colors.red }]}>Use password</Text>
+            <TouchableOpacity onPress={() => { setError(''); setMode('password'); }} activeOpacity={0.7} accessibilityLabel={t.lockUsePasswordFallback} accessibilityRole="button">
+              <Text style={[lk.fallbackLink, { color: colors.red }]}>{t.lockUsePasswordFallback}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -203,8 +204,8 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
         <>
           <PinPad onComplete={handlePin} />
           {settings.securityMethod === 'biometrics' && (
-            <TouchableOpacity onPress={() => { setError(''); setMode('primary'); }} activeOpacity={0.7} style={lk.switchLink} accessibilityLabel="Use biometrics instead" accessibilityRole="button">
-              <Text style={[lk.fallbackLink, { color: colors.red }]}>← Use biometrics</Text>
+            <TouchableOpacity onPress={() => { setError(''); setMode('primary'); }} activeOpacity={0.7} style={lk.switchLink} accessibilityLabel={t.lockUseBiometricsFallback} accessibilityRole="button">
+              <Text style={[lk.fallbackLink, { color: colors.red }]}>{t.lockUseBiometricsFallback}</Text>
             </TouchableOpacity>
           )}
         </>
@@ -215,7 +216,7 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
         <View style={lk.passwordWrap}>
           <TextInput
             style={[lk.passwordInput, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]}
-            placeholder="Enter password"
+            placeholder={t.lockPasswordPlaceholder}
             placeholderTextColor={colors.placeholder}
             secureTextEntry
             value={passwordInput}
@@ -223,20 +224,20 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
             autoFocus
             returnKeyType="done"
             onSubmitEditing={handlePassword}
-            accessibilityLabel="Password"
+            accessibilityLabel={t.lockPasswordPlaceholder}
           />
           <TouchableOpacity
             style={[lk.unlockBtn, { backgroundColor: colors.red }]}
             onPress={handlePassword}
             activeOpacity={0.8}
-            accessibilityLabel="Unlock"
+            accessibilityLabel={t.lockUnlockBtn}
             accessibilityRole="button"
           >
-            <Text style={lk.unlockBtnText}>Unlock</Text>
+            <Text style={lk.unlockBtnText}>{t.lockUnlockBtn}</Text>
           </TouchableOpacity>
           {settings.securityMethod === 'biometrics' && (
-            <TouchableOpacity onPress={() => { setError(''); setMode('primary'); }} activeOpacity={0.7} style={lk.switchLink} accessibilityLabel="Use biometrics instead" accessibilityRole="button">
-              <Text style={[lk.fallbackLink, { color: colors.red }]}>← Use biometrics</Text>
+            <TouchableOpacity onPress={() => { setError(''); setMode('primary'); }} activeOpacity={0.7} style={lk.switchLink} accessibilityLabel={t.lockUseBiometricsFallback} accessibilityRole="button">
+              <Text style={[lk.fallbackLink, { color: colors.red }]}>{t.lockUseBiometricsFallback}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -248,12 +249,12 @@ export function LockScreen({ onUnlock }: LockScreenProps) {
           style={[lk.sosBtn, { backgroundColor: colors.red }]}
           onPress={call112}
           activeOpacity={0.75}
-          accessibilityLabel={`Call ${settings.emergencyNumber || '112'} — emergency services`}
+          accessibilityLabel={t.lockCallEmergency(settings.emergencyNumber || '112')}
           accessibilityRole="button"
         >
-          <Text style={lk.sosBtnText}>📞 Call {settings.emergencyNumber || '112'}</Text>
+          <Text style={lk.sosBtnText}>{t.lockCallEmergency(settings.emergencyNumber || '112')}</Text>
         </TouchableOpacity>
-        <Text style={[lk.sosHint, { color: colors.textFaint }]}>Emergency — no unlock needed</Text>
+        <Text style={[lk.sosHint, { color: colors.textFaint }]}>{t.lockEmergencyHint}</Text>
       </View>
 
     </View>

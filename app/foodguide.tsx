@@ -184,8 +184,9 @@ function formatNow(): string {
   const now = new Date();
   const dd  = String(now.getDate()).padStart(2, '0');
   const mm  = String(now.getMonth() + 1).padStart(2, '0');
-  const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  return `${dd}/${mm}/${now.getFullYear()} ${time}`;
+  const hh  = String(now.getHours()).padStart(2, '0');
+  const min = String(now.getMinutes()).padStart(2, '0');
+  return `${dd}/${mm}/${now.getFullYear()} ${hh}:${min}`;
 }
 
 function calcTotals(items: MealItem[]): NutrientTotals {
@@ -428,6 +429,20 @@ export default function FoodGuideScreen() {
           <TouchableOpacity style={s.skipMealBtn} onPress={() => router.push('/medication')} activeOpacity={0.75}>
             <Text style={s.skipMealBtnText}>{t.notEatingGoMeds}</Text>
           </TouchableOpacity>
+
+          {foodAction === 'lower' && effectiveGlucose !== null && (() => {
+            const mgdl = unit === 'mmol/L' ? effectiveGlucose * 18.0182 : effectiveGlucose;
+            if (mgdl >= settings.glucoseLow) return null;
+            const mmolEq = (mgdl / 18).toFixed(1);
+            return (
+              <View style={[s.highWarningCard, { backgroundColor: colors.lowBg, borderColor: colors.low }]}>
+                <Text style={[s.highWarningTitle, { color: colors.low }]}>{t.lowGlucoseLowerWarning}</Text>
+                <Text style={[s.highWarningBody, { color: colors.text }]}>
+                  {t.lowGlucoseLowerWarningBody(Math.round(mgdl), mmolEq)}
+                </Text>
+              </View>
+            );
+          })()}
 
           {foodAction === '' && (
             <View style={[s.howItWorksCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>

@@ -10,6 +10,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import OnboardingScreen from './onboarding';
 import { useRef, useEffect, useState } from 'react';
 import * as Notifications from 'expo-notifications';
+import { getLocales } from 'expo-localization';
 import {
   registerForNotifications,
   rescheduleAllReminders,
@@ -485,10 +486,18 @@ function TabsLayout() {
 function RootContent() {
   const { colors } = useTheme();
   const {
-    hasSeenOnboarding, reminders, settings,
+    hasSeenOnboarding, reminders, settings, setSettings,
     caregiverSession, setCaregiverSession,
     ownPremiumBeforeCaregiver, setOwnPremiumBeforeCaregiver,
   } = useGlucoseStore();
+
+  useEffect(() => {
+    if (settings.languageDetected) return;
+    const SUPPORTED = ['en', 'ro', 'it', 'de', 'fr', 'nl'];
+    const code = getLocales()[0]?.languageCode ?? 'en';
+    const lang = SUPPORTED.includes(code) ? code : 'en';
+    setSettings({ language: lang, languageDetected: true });
+  }, []);
   const permGranted    = useRef(false);
   const [isLocked,     setIsLocked]     = useState(false);
   const [user,         setUser]         = useState<any>(null);

@@ -17,6 +17,8 @@ import { useSubscriptionStore } from './subscriptionStore';
 let _caregiverSyncEnabled = false;
 const isSyncEnabled = () => useSubscriptionStore.getState().isPremiumPaid || _caregiverSyncEnabled;
 
+let _lastEntryKey = '';
+
 export interface GlucoseEntry {
   id: string;
   value: number;
@@ -54,6 +56,13 @@ export interface SavedMeal {
   estimatedGlycemia: number | null;
   currentGlucose: number | null;
   unit: string;
+}
+
+export interface EmergencyContact {
+  id: string;
+  name: string;
+  phone: string;
+  relation: string;
 }
 
 // isPremium reflects the patient's premium status when in caregiver mode
@@ -94,6 +103,7 @@ export interface AppSettings {
   lockTimeout: LockTimeout;
   hasSeenSecuritySetup: boolean;
   hasConsented: boolean;
+  languageDetected: boolean;
 }
 
 interface GlucoseStore {
@@ -120,6 +130,9 @@ interface GlucoseStore {
   savedMeals: SavedMeal[];
   addSavedMeal: (meal: SavedMeal) => void;
   removeSavedMeal: (id: string) => void;
+
+  sosContacts: EmergencyContact[];
+  setSosContacts: (contacts: EmergencyContact[]) => void;
 
   caregiverSession: CaregiverSession | null;
   setCaregiverSession: (session: CaregiverSession | null) => void;
@@ -161,6 +174,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   securityMethod: 'none', securityHash: '', lockTimeout: '1min',
   hasSeenSecuritySetup: false,
   hasConsented: false,
+  languageDetected: false,
 };
 
 export const useGlucoseStore = create<GlucoseStore>()(
@@ -179,6 +193,9 @@ export const useGlucoseStore = create<GlucoseStore>()(
       history: [],
       addEntry: (entry) =>
         set((state) => {
+          const key = `${entry.value}:${entry.unit}:${entry.timestamp}`;
+          if (key === _lastEntryKey) return state;
+          _lastEntryKey = key;
           const newEntry = { ...entry, id: generateId() };
           if (isSyncEnabled()) {
             syncGlucoseEntry(newEntry).catch(() => {});
@@ -220,6 +237,9 @@ export const useGlucoseStore = create<GlucoseStore>()(
           if (isSyncEnabled()) deleteSavedMeal(id).catch(() => {});
           return { savedMeals: state.savedMeals.filter((m) => m.id !== id) };
         }),
+
+      sosContacts: [],
+      setSosContacts: (contacts) => set({ sosContacts: contacts }),
 
       caregiverSession: null,
       setCaregiverSession: (session) => set({ caregiverSession: session }),

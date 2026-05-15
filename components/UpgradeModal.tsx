@@ -71,10 +71,10 @@ export function UpgradeModal({ visible, onClose }: Props) {
                   style={[s.trialBtn, { backgroundColor: colors.normal }, s.btnShadow]}
                   onPress={handleTrial}
                 >
-                  <Text style={s.primaryBtnText}>🎁 Try Premium for 7 days — Free</Text>
+                  <Text style={s.primaryBtnText}>{t.trialFreeBtn}</Text>
                 </PressBtn>
                 <Text style={[s.btnNote, { color: colors.textMuted }]}>
-                  No payment required. Explore all premium features.
+                  {t.trialFreeNote}
                 </Text>
                 <View style={[s.divider, { backgroundColor: colors.border }]} />
               </>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  View, Text, TouchableOpacity, ScrollView,
+  View, Text, TouchableOpacity, ScrollView, Modal,
   TextInput, StyleSheet, Linking, Alert, Platform, Animated,
 } from 'react-native';
 import * as Location from 'expo-location';
@@ -10,10 +10,6 @@ import { useTheme } from '../context/AppContext';
 import { PressBtn } from '../components/PressBtn';
 import { useTranslation } from '../hooks/useTranslation';
 import { useGlucoseStore } from '../store/glucoseStore';
-
-interface EmergencyContact {
-  id: string; name: string; phone: string; relation: string;
-}
 
 function SectionCard({ children }: { children: React.ReactNode }) {
   const { colors, isDark } = useTheme();
@@ -64,7 +60,7 @@ const HYPER_ICONS = ['🥤','🚽','😴','👁️','🤕','🏜️','🤢','�
 export default function EmergencyScreen() {
   const { colors } = useTheme();
   const t = useTranslation();
-  const { caregiverSession, setCaregiverSession } = useGlucoseStore();
+  const { caregiverSession, setCaregiverSession, sosContacts, setSosContacts } = useGlucoseStore();
 
   const [emergencyNumber,  setEmergencyNumber]  = useState(() => getLocaleEmergencyNumber());
   const [locationAddress,  setLocationAddress]  = useState('');
@@ -102,10 +98,8 @@ export default function EmergencyScreen() {
     ).start();
   }, [pulseAnim]);
 
-  const [contacts,      setContacts]      = useState<EmergencyContact[]>([
-    { id: '1', name: 'Mom',         phone: '+40700000001', relation: 'Parent' },
-    { id: '2', name: 'Dr. Ionescu', phone: '+40700000002', relation: 'Doctor' },
-  ]);
+  const contacts    = sosContacts;
+  const setContacts = setSosContacts;
   const [showAddForm,   setShowAddForm]   = useState(false);
   const [newName,       setNewName]       = useState('');
   const [newPhone,      setNewPhone]      = useState('');
@@ -166,7 +160,7 @@ export default function EmergencyScreen() {
     Alert.alert(t.deleteContact, t.deleteContactConfirm, [
       { text: t.cancel, style: 'cancel' },
       { text: t.deleteBtn, style: 'destructive', onPress: () =>
-          setContacts((prev) => prev.filter((c) => c.id !== id)) },
+          setContacts(contacts.filter((c) => c.id !== id)) },
     ]);
   };
 
@@ -175,8 +169,8 @@ export default function EmergencyScreen() {
       Alert.alert(t.missingInfo, t.missingContactInfo);
       return;
     }
-    setContacts((prev) => [
-      ...prev,
+    setContacts([
+      ...contacts,
       { id: Date.now().toString(), name: newName.trim(), phone: newPhone.trim(), relation: newRelation.trim() },
     ]);
     setNewName(''); setNewPhone(''); setNewRelation('');
@@ -203,40 +197,42 @@ export default function EmergencyScreen() {
       <Text style={[s.title, { color: colors.text }]}>{t.sosEmergency}</Text>
 
       {/* ── Phone Contacts Picker Modal ── */}
-      {showContactPicker && (
-        <View style={[s.pickerOverlay, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-          <View style={s.pickerHeader}>
-            <Text style={[s.pickerTitle, { color: colors.text }]}>{t.chooseContact}</Text>
-            <TouchableOpacity onPress={() => setShowContactPicker(false)} activeOpacity={0.7}>
-              <Text style={[s.pickerClose, { color: colors.red }]}>✕ {t.close}</Text>
-            </TouchableOpacity>
+      <Modal visible={showContactPicker} transparent animationType="slide" onRequestClose={() => setShowContactPicker(false)}>
+        <View style={s.pickerModalOverlay}>
+          <View style={[s.pickerSheet, { backgroundColor: colors.bgCard }]}>
+            <View style={s.pickerHeader}>
+              <Text style={[s.pickerTitle, { color: colors.text }]}>{t.chooseContact}</Text>
+              <TouchableOpacity onPress={() => setShowContactPicker(false)} activeOpacity={0.7}>
+                <Text style={[s.pickerClose, { color: colors.red }]}>✕ {t.close}</Text>
+              </TouchableOpacity>
+            </View>
+            <TextInput
+              style={[s.pickerSearch, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]}
+              placeholder={t.searchContacts} placeholderTextColor="#aaa"
+              value={contactSearch} onChangeText={setContactSearch}
+            />
+            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+              {filteredPhoneContacts.length === 0 ? (
+                <Text style={[s.pickerEmpty, { color: colors.textMuted }]}>{t.noContactsFound}</Text>
+              ) : (
+                filteredPhoneContacts.map((c, i) => (
+                  <TouchableOpacity
+                    key={c.name ?? String(i)}
+                    style={[s.pickerRow, { borderBottomColor: colors.border }]}
+                    onPress={() => pickContact(c)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[s.pickerName, { color: colors.text }]}>{c.name}</Text>
+                    <Text style={[s.pickerPhone, { color: colors.textMuted }]}>
+                      {c.phoneNumbers?.[0]?.number ?? ''}
+                    </Text>
+                  </TouchableOpacity>
+                ))
+              )}
+            </ScrollView>
           </View>
-          <TextInput
-            style={[s.pickerSearch, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]}
-            placeholder={t.searchContacts} placeholderTextColor="#aaa"
-            value={contactSearch} onChangeText={setContactSearch}
-          />
-          <ScrollView style={{ maxHeight: 320 }} keyboardShouldPersistTaps="handled">
-            {filteredPhoneContacts.length === 0 ? (
-              <Text style={[s.pickerEmpty, { color: colors.textMuted }]}>{t.noContactsFound}</Text>
-            ) : (
-              filteredPhoneContacts.map((c, i) => (
-                <TouchableOpacity
-                  key={c.name ?? String(i)}
-                  style={[s.pickerRow, { borderBottomColor: colors.border }]}
-                  onPress={() => pickContact(c)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[s.pickerName, { color: colors.text }]}>{c.name}</Text>
-                  <Text style={[s.pickerPhone, { color: colors.textMuted }]}>
-                    {c.phoneNumbers?.[0]?.number ?? ''}
-                  </Text>
-                </TouchableOpacity>
-              ))
-            )}
-          </ScrollView>
         </View>
-      )}
+      </Modal>
 
       {/* ── 1. EMERGENCY CALL ── */}
       <View style={[s.emergencyCallCard, { backgroundColor: colors.lowBg, borderColor: colors.red }]}>
@@ -531,7 +527,9 @@ const s = StyleSheet.create({
   dosRowBorder:{ borderTopWidth: 1, borderTopColor: '#f5f5f5' },
   dosText:     { fontSize: 13, lineHeight: 19, fontWeight: '600' },
 
-  pickerOverlay: { borderRadius: 12, borderWidth: 1, padding: 16, marginBottom: 12 },
+  pickerOverlay:      { borderRadius: 12, borderWidth: 1, padding: 16, marginBottom: 12 },
+  pickerModalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
+  pickerSheet:        { borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '80%' },
   pickerHeader:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   pickerTitle:   { fontSize: 14, fontWeight: '700' },
   pickerClose:   { fontSize: 13, fontWeight: '600' },

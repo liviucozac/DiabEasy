@@ -21,6 +21,7 @@ import { UpgradeModal } from '../components/UpgradeModal';
 import { router } from 'expo-router';
 import auth from '@react-native-firebase/auth';
 import { File, Paths } from 'expo-file-system';
+import Constants from 'expo-constants';
 import * as Sharing from 'expo-sharing';
 import {
   syncProfile, checkFirebasePremium, generateCaregiverCode,
@@ -28,6 +29,7 @@ import {
   CaregiverCodeType, ActiveCaregiverCodes,
 } from '../utils/firestoreSync';
 const RED = '#EC5557';
+const APP_VERSION = Constants.expoConfig?.version ?? '2.0.0';
 
 type ActiveTab = 'profile' | 'settings';
 
@@ -592,17 +594,28 @@ const handleSave = () => {
 
   const DIABETES_TYPES: DiabetesType[] = ['Type 1', 'Type 2', 'LADA', 'Other'];
 
-  const formatDobDisplay = (iso: string) => {
-    if (!iso) return '';
-    const d = new Date(iso);
-    if (isNaN(d.getTime())) return iso;
-    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-  };
-
   const parseDobToDate = (iso: string): Date => {
     if (!iso) return new Date();
-    const d = new Date(iso);
-    return isNaN(d.getTime()) ? new Date() : d;
+    const parts = iso.split('-').map(Number);
+    if (parts.length === 3 && parts.every((n) => !isNaN(n))) {
+      return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+    return new Date();
+  };
+
+  const formatDobDisplay = (iso: string) => {
+    if (!iso) return '';
+    const parts = iso.split('-').map(Number);
+    if (parts.length !== 3 || parts.some(isNaN)) return iso;
+    const d = new Date(parts[0], parts[1] - 1, parts[2]);
+    if (isNaN(d.getTime())) return iso;
+    const today = new Date();
+    let age = today.getFullYear() - d.getFullYear();
+    const notYetHadBirthday =
+      today.getMonth() < d.getMonth() ||
+      (today.getMonth() === d.getMonth() && today.getDate() < d.getDate());
+    if (notYetHadBirthday) age--;
+    return `${age}`;
   };
 
   return (
@@ -825,15 +838,15 @@ const handleSave = () => {
                           await b.commit();
                         }
 
-                        // Clear local state immediately
-                        useGlucoseStore.getState().clearLocalData();
-                        useSubscriptionStore.getState().setPremiumPaid(false);
-
-                        // Delete Firebase Auth account first, then sign out
+                        // Delete Firebase Auth account before clearing local state
                         const currentUser = auth().currentUser;
                         if (currentUser) {
                           await currentUser.delete();
                         }
+
+                        // Only clear local state after Auth deletion succeeds
+                        useGlucoseStore.getState().clearLocalData();
+                        useSubscriptionStore.getState().setPremiumPaid(false);
 
                       } catch (e: any) {
                         Alert.alert(
@@ -1209,9 +1222,9 @@ function SettingsTab() {
 
       <SectionCard>
         <SectionTitle text={t.about} />
-        <View style={s.aboutRow}><Text style={[s.aboutLabel, { color: colors.textMuted }]}>{t.appVersion}</Text><Text style={[s.aboutValue, { color: colors.text }]}>2.0.0</Text></View>
+        <View style={s.aboutRow}><Text style={[s.aboutLabel, { color: colors.textMuted }]}>{t.appVersion}</Text><Text style={[s.aboutValue, { color: colors.text }]}>{APP_VERSION}</Text></View>
         <Divider />
-        <TouchableOpacity style={s.aboutLinkRow} onPress={() => Linking.openURL('mailto:liviu.dev.cozac@proton.me?subject=DiabEasy%20Feedback&body=App%20version%3A%202.0.0%0A%0A')} activeOpacity={0.75}>
+        <TouchableOpacity style={s.aboutLinkRow} onPress={() => Linking.openURL(`mailto:liviu.dev.cozac@proton.me?subject=DiabEasy%20Feedback&body=App%20version%3A%20${encodeURIComponent(APP_VERSION)}%0A%0A`)} activeOpacity={0.75}>
           <Text style={[s.aboutLink, { color: colors.text }]}>{t.sendFeedback}</Text>
           <Text style={[s.aboutChevron, { color: colors.border }]}>›</Text>
         </TouchableOpacity>
