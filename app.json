@@ -99,42 +99,7 @@
         "expo-build-properties",
         {
           "ios": {
-            "deploymentTarget": "16.0",
-            "useFrameworks": "static",
-            "extraPods": [
-              {
-                "name": "FirebaseAuth",
-                "modular_headers": true
-              },
-              {
-                "name": "FirebaseCoreInternal",
-                "modular_headers": true
-              },
-              {
-                "name": "FirebaseFirestore",
-                "modular_headers": true
-              },
-              {
-                "name": "GoogleUtilities",
-                "modular_headers": true
-              },
-              {
-                "name": "FirebaseAuthInterop",
-                "modular_headers": true
-              },
-              {
-                "name": "FirebaseAppCheckInterop",
-                "modular_headers": true
-              },
-              {
-                "name": "RecaptchaInterop",
-                "modular_headers": true
-              },
-              {
-                "name": "FirebaseFirestoreInternal",
-                "modular_headers": true
-              }
-            ]
+            "deploymentTarget": "16.0"
           }
         }
       ]
