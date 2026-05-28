@@ -11,24 +11,18 @@ module.exports = function withFirebaseModularHeaders(config) {
 
       const patch = `
   installer.pods_project.targets.each do |target|
-    modular_pods = ['FirebaseAuth', 'FirebaseCoreInternal', 'FirebaseFirestore',
-      'GoogleUtilities', 'FirebaseAuthInterop', 'FirebaseAppCheckInterop',
-      'RecaptchaInterop', 'FirebaseFirestoreInternal', 'FirebaseCore',
-      'FirebaseCoreExtension']
-    if modular_pods.include?(target.name)
-      target.build_configurations.each do |config|
-        config.build_settings['DEFINES_MODULE'] = 'YES'
-      end
+    target.build_configurations.each do |config|
+      config.build_settings['DEFINES_MODULE'] = 'YES'
+      config.build_settings['OTHER_CFLAGS'] = '$(inherited) -Wno-non-modular-include-in-framework-module'
+      config.build_settings['OTHER_CPLUSPLUSFLAGS'] = '$(inherited) -Wno-non-modular-include-in-framework-module'
     end
   end`;
 
-      if (!podfile.includes('DEFINES_MODULE')) {
-        podfile = podfile.replace(
-          /post_install do \|installer\|/,
-          `post_install do |installer|\n${patch}`
-        );
-        fs.writeFileSync(podfilePath, podfile);
-      }
+      podfile = podfile.replace(
+        /post_install do \|installer\|/,
+        `post_install do |installer|\n${patch}`
+      );
+      fs.writeFileSync(podfilePath, podfile);
 
       return config;
     },
