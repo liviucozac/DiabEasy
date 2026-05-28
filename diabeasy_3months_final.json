@@ -1,0 +1,5692 @@
+{
+  "exportedAt": "2026-05-15T18:54:10.863Z",
+  "profile": {
+    "name": "Liviu Cozac",
+    "email": "",
+    "age": "1991-03-20T20:43:00.000Z",
+    "diabetesType": "Type 1",
+    "diagnosisDate": "05/2014",
+    "doctorName": "Gologan Mihaela",
+    "clinicName": "Regina Maria",
+    "address": "110 Drumul Crețeștilor"
+  },
+  "settings": {
+    "theme": "light",
+    "glucoseUnit": "mg/dL",
+    "language": "ro",
+    "notificationsEnabled": true,
+    "isf": 50,
+    "carbRatio": 10,
+    "targetGlucose": 100,
+    "insulinAnalogType": "fiasp",
+    "dia": 5,
+    "longActingInsulinType": "degludec",
+    "emergencyNumber": "112",
+    "insulinParamsSet": true,
+    "glucoseLow": 70,
+    "glucoseHigh": 175,
+    "securityMethod": "none",
+    "securityHash": "",
+    "lockTimeout": "1min",
+    "hasSeenSecuritySetup": true,
+    "hasConsented": true
+  },
+  "glucoseHistory": [
+    {
+      "id": "0os800qofmp7a0hpa",
+      "value": 153,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-15T20:50:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "rk1q0yvr6mp7a0hpa",
+      "value": 107,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-15T18:38:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "kbsm4g4qxmp7a0hpa",
+      "value": 109,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-15T13:08:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "3e9zxfjscmp7a0hpa",
+      "value": 184,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-15T12:57:00.000Z",
+      "type": "postMeal",
+      "notes": "dulciuri"
+    },
+    {
+      "id": "pl4ygexicmp7a0hpa",
+      "value": 133,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-15T07:30:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "vz2ll2ywlmp7a0hpa",
+      "value": 101,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-14T20:33:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "kp0bvtbaump7a0hpa",
+      "value": 114,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-14T13:07:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "0wqvcaz5bmp7a0hpa",
+      "value": 336,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-14T07:23:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "ux1h4n2gvmp7a0hpa",
+      "value": 90,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-14T05:19:00.000Z",
+      "type": "fasting",
+      "notes": "stres"
+    },
+    {
+      "id": "wg3579jknmp7a0hpa",
+      "value": 104,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-13T20:40:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "r893fv5t4mp7a0hpa",
+      "value": 146,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-13T18:53:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "n3auiwbhymp7a0hpa",
+      "value": 96,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-13T13:16:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "n67hygdq5mp7a0hp9",
+      "value": 95,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-12T20:41:00.000Z",
+      "type": "bedtime",
+      "notes": "răceală"
+    },
+    {
+      "id": "jikvotb8hmp7a0hp9",
+      "value": 111,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-12T18:46:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "5aj7xgrrsmp7a0hp9",
+      "value": 125,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-12T13:05:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "xacid4i73mp7a0hp9",
+      "value": 111,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-12T12:34:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "5vz8jqxzemp7a0hp9",
+      "value": 116,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-12T05:11:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "g03n0ls97mp7a0hp9",
+      "value": 102,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-11T20:32:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "0wg2zor4bmp7a0hp9",
+      "value": 114,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-11T16:58:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "ihczg8opjmp7a0hp9",
+      "value": 220,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-11T13:19:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "x8i6s48t1mp7a0hp9",
+      "value": 315,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-11T12:49:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "xj1txp0x0mp7a0hp9",
+      "value": 120,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-10T20:47:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "gbzbju3eymp7a0hp9",
+      "value": 174,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-10T18:33:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "2ye8vncf7mp7a0hp9",
+      "value": 103,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-10T16:58:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "1rtwrffkgmp7a0hp9",
+      "value": 170,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-10T12:50:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "2bcqu70a2mp7a0hp9",
+      "value": 97,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-10T10:58:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "642gj66zhmp7a0hp9",
+      "value": 146,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-10T07:35:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "c8tf5sngtmp7a0hp9",
+      "value": 93,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-09T16:56:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "6jpdylv0nmp7a0hp9",
+      "value": 92,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-09T10:44:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "u9tbl7jg9mp7a0hp9",
+      "value": 321,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-09T07:27:00.000Z",
+      "type": "postMeal",
+      "notes": "după masă copioasă"
+    },
+    {
+      "id": "62pxafnu8mp7a0hp9",
+      "value": 128,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-09T05:38:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "u9cuk7vy3mp7a0hp9",
+      "value": 232,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-08T18:34:00.000Z",
+      "type": "postMeal",
+      "notes": "activitate fizică intensă"
+    },
+    {
+      "id": "zgsfxms8kmp7a0hp9",
+      "value": 125,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-08T16:51:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "wqy7huh3vmp7a0hp9",
+      "value": 91,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-08T10:47:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "hssr36r5gmp7a0hp9",
+      "value": 314,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-08T07:41:00.000Z",
+      "type": "postMeal",
+      "notes": "activitate fizică intensă"
+    },
+    {
+      "id": "52nw2dj4omp7a0hp9",
+      "value": 114,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-08T05:50:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "eofrh34kgmp7a0hp9",
+      "value": 158,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-07T20:48:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "1dm85p9iemp7a0hp9",
+      "value": 177,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-07T13:24:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "c7534puvkmp7a0hp9",
+      "value": 160,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-07T12:56:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "ms3xjjegtmp7a0hp9",
+      "value": 136,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-07T10:40:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "kn1xe2i38mp7a0hp9",
+      "value": 215,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-07T07:42:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "6u0ir7bk9mp7a0hp9",
+      "value": 158,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-06T20:37:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "uopct0v4tmp7a0hp9",
+      "value": 230,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-06T18:33:00.000Z",
+      "type": "postMeal",
+      "notes": "activitate fizică intensă"
+    },
+    {
+      "id": "i7ptem0lfmp7a0hp9",
+      "value": 107,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-06T16:47:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "59wkmb9gomp7a0hp9",
+      "value": 112,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-06T13:18:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "cjurosuj5mp7a0hp9",
+      "value": 167,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-06T12:30:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "ngd3n6j5bmp7a0hp9",
+      "value": 62,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-06T10:56:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "yudd9zaicmp7a0hp9",
+      "value": 178,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-05T18:58:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "a854hfbf9mp7a0hp9",
+      "value": 135,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-05T16:58:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "4b5w29drtmp7a0hp9",
+      "value": 180,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-05T12:38:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "w6xyl0oihmp7a0hp9",
+      "value": 98,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-05T10:38:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "neg1uti52mp7a0hp9",
+      "value": 136,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-05T07:34:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "kgwndbe59mp7a0hp9",
+      "value": 132,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-05T05:22:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "is8c6k6vump7a0hp9",
+      "value": 103,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-04T16:54:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "a3d0o8geump7a0hp9",
+      "value": 117,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-04T12:38:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "c4t6ckn17mp7a0hp9",
+      "value": 91,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-04T10:34:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "qdc9df1z1mp7a0hp9",
+      "value": 212,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-04T07:39:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "0uoe6erpymp7a0hp9",
+      "value": 62,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-04T05:42:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "9h27f8hfhmp7a0hp9",
+      "value": 172,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-03T18:57:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "f908qm4rbmp7a0hp9",
+      "value": 107,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-03T16:48:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "6uvqy3r9cmp7a0hp9",
+      "value": 141,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-03T07:17:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "hgr2bivd1mp7a0hp9",
+      "value": 102,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-03T05:41:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "j0zh0ggt5mp7a0hp9",
+      "value": 139,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-02T18:42:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "efczdirazmp7a0hp9",
+      "value": 91,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-02T16:55:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "gn4etj7jpmp7a0hp9",
+      "value": 94,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-02T13:11:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "3c53d38gimp7a0hp9",
+      "value": 127,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-02T12:30:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "v3za6qh9fmp7a0hp9",
+      "value": 127,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-02T10:52:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "gbmgveiaump7a0hp9",
+      "value": 172,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-01T18:30:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "8xd4f8tpzmp7a0hp9",
+      "value": 137,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-01T16:47:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "txocndtj6mp7a0hp9",
+      "value": 147,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-01T12:42:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "z6x4ec34pmp7a0hp9",
+      "value": 55,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-01T07:39:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "kbikvkzfdmp7a0hp9",
+      "value": 127,
+      "unit": "mg/dL",
+      "timestamp": "2026-05-01T05:38:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "pwn7yw8gtmp7a0hp9",
+      "value": 102,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-30T20:36:00.000Z",
+      "type": "bedtime",
+      "notes": "petrecere"
+    },
+    {
+      "id": "kx2y6x50fmp7a0hp9",
+      "value": 106,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-30T18:41:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "72vwawfczmp7a0hp9",
+      "value": 127,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-30T12:32:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "aokqguhytmp7a0hp9",
+      "value": 179,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-30T10:44:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "wzyilzctomp7a0hp9",
+      "value": 113,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-30T07:45:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "7vct4hqmmmp7a0hp9",
+      "value": 61,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-29T16:50:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "vpobs1xdsmp7a0hp9",
+      "value": 112,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-29T12:40:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "q2ebjl8hpmp7a0hp9",
+      "value": 158,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-29T07:16:00.000Z",
+      "type": "postMeal",
+      "notes": "dulciuri"
+    },
+    {
+      "id": "2bg11ynvmmp7a0hp8",
+      "value": 103,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-29T05:11:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "dc5jx2r2fmp7a0hp8",
+      "value": 152,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-28T16:56:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "7yz67y8xfmp7a0hp8",
+      "value": 151,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-28T12:37:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "vj0n36zulmp7a0hp8",
+      "value": 148,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-28T10:42:00.000Z",
+      "type": "preMeal",
+      "notes": "dulciuri"
+    },
+    {
+      "id": "5ui8f2djvmp7a0hp8",
+      "value": 338,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-28T07:37:00.000Z",
+      "type": "postMeal",
+      "notes": "activitate fizică intensă"
+    },
+    {
+      "id": "gaczf7ajhmp7a0hp8",
+      "value": 103,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-28T05:17:00.000Z",
+      "type": "fasting",
+      "notes": "dulciuri"
+    },
+    {
+      "id": "0pvdzxcexmp7a0hp8",
+      "value": 108,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-27T16:48:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "fzvzpymg3mp7a0hp8",
+      "value": 99,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-27T13:03:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "hecywk5nump7a0hp8",
+      "value": 188,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-27T07:15:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "cjvxpje01mp7a0hp8",
+      "value": 132,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-27T05:32:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "mop311iovmp7a0hp8",
+      "value": 123,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-26T20:42:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "yp6xlmvv4mp7a0hp8",
+      "value": 132,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-26T13:25:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "ai1v5hifmmp7a0hp8",
+      "value": 149,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-26T10:50:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "7mpka2nfgmp7a0hp8",
+      "value": 112,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-26T07:25:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "bb1xu7etrmp7a0hp8",
+      "value": 117,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-26T05:10:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "439njafmdmp7a0hp8",
+      "value": 132,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-25T20:49:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "7004bqgajmp7a0hp8",
+      "value": 204,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-25T18:51:00.000Z",
+      "type": "postMeal",
+      "notes": "activitate fizică intensă"
+    },
+    {
+      "id": "8gbo4wk86mp7a0hp8",
+      "value": 139,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-25T13:19:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "per1e0l99mp7a0hp8",
+      "value": 155,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-25T10:37:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "7kw6abectmp7a0hp8",
+      "value": 187,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-24T18:48:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "nu155dwjxmp7a0hp8",
+      "value": 101,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-24T13:15:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "hk53qgvucmp7a0hp8",
+      "value": 185,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-24T12:49:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "uz97p44q8mp7a0hp8",
+      "value": 115,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-24T10:42:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "0awii1fzpmp7a0hp8",
+      "value": 134,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-24T05:12:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "hnu654ufcmp7a0hp8",
+      "value": 147,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-23T20:59:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "ycd399wx7mp7a0hp8",
+      "value": 99,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-23T13:06:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "sou52lqcdmp7a0hp8",
+      "value": 117,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-23T12:36:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "buydojogpmp7a0hp8",
+      "value": 115,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-23T10:49:00.000Z",
+      "type": "preMeal",
+      "notes": "zi de post"
+    },
+    {
+      "id": "jf75weohjmp7a0hp8",
+      "value": 332,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-23T07:44:00.000Z",
+      "type": "postMeal",
+      "notes": "după masă copioasă"
+    },
+    {
+      "id": "y8r7jwpx9mp7a0hp8",
+      "value": 153,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-22T18:46:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "0cju02fr5mp7a0hp8",
+      "value": 120,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-22T16:46:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "jchf8sc7ymp7a0hp8",
+      "value": 159,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-22T13:10:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "f8sam3rsymp7a0hp8",
+      "value": 145,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-22T12:58:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "tnepmshbgmp7a0hp8",
+      "value": 86,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-22T05:13:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "h135ugtvhmp7a0hp8",
+      "value": 71,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-21T18:37:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "ypvkqbjn6mp7a0hp8",
+      "value": 129,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-21T16:46:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "qb2ozhdzlmp7a0hp8",
+      "value": 247,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-21T12:46:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "vmhc2yjytmp7a0hp8",
+      "value": 151,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-21T10:32:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "7s8pjbxhqmp7a0hp8",
+      "value": 217,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-21T07:21:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "28v267erimp7a0hp8",
+      "value": 115,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-21T05:39:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "eucfoz0domp7a0hp8",
+      "value": 166,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-20T18:32:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "rk7tytgxvmp7a0hp8",
+      "value": 135,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-20T16:46:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "8cg8e6k8xmp7a0hp8",
+      "value": 125,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-20T12:59:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "n8pkb0pd4mp7a0hp8",
+      "value": 123,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-19T20:31:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "3w0rjtjfump7a0hp8",
+      "value": 164,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-19T18:31:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "3gtdklwgump7a0hp8",
+      "value": 219,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-19T12:35:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "5rnziyfqsmp7a0hp8",
+      "value": 101,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-19T10:47:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "wvcs9rizzmp7a0hp8",
+      "value": 150,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-18T20:35:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "bikjuiwsxmp7a0hp8",
+      "value": 97,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-18T10:31:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "9tb4ifrsemp7a0hp8",
+      "value": 185,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-18T07:29:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "6o102t4mxmp7a0hp8",
+      "value": 122,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-18T05:45:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "638qh7vuhmp7a0hp8",
+      "value": 154,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-17T18:50:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "xyr8uzppzmp7a0hp8",
+      "value": 115,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-17T13:08:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "o9mizs363mp7a0hp8",
+      "value": 160,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-17T12:58:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "e8ynhviy0mp7a0hp8",
+      "value": 108,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-17T05:22:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "os48soisqmp7a0hp8",
+      "value": 226,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-16T18:35:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "3k8c18wpjmp7a0hp8",
+      "value": 98,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-16T13:05:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "p4oir3v23mp7a0hp8",
+      "value": 172,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-16T12:48:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "ynoxzlt84mp7a0hp8",
+      "value": 116,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-16T07:39:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "146nrxkktmp7a0hp8",
+      "value": 109,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-16T05:18:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "cq7tbrzeomp7a0hp8",
+      "value": 143,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-15T20:51:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "wc8s83l5nmp7a0hp8",
+      "value": 154,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-15T18:45:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "9wsoqzovamp7a0hp8",
+      "value": 116,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-15T16:49:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "sa8e24q9hmp7a0hp8",
+      "value": 242,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-15T12:43:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "mdlps3k4qmp7a0hp7",
+      "value": 109,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-14T13:16:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "y878q4b1nmp7a0hp7",
+      "value": 64,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-14T12:43:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "c4rkzssdtmp7a0hp7",
+      "value": 106,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-14T10:46:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "3343ust65mp7a0hp7",
+      "value": 122,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-14T05:17:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "akjnbnzrump7a0hp7",
+      "value": 207,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-13T16:50:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "rxmufnyi4mp7a0hp7",
+      "value": 167,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-13T13:08:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "ohijwysapmp7a0hp7",
+      "value": 181,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-13T12:50:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "o1lr6axc1mp7a0hp7",
+      "value": 62,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-13T10:38:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "u4v0jrgzvmp7a0hp7",
+      "value": 139,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-13T07:37:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "py8vhtzj8mp7a0hp7",
+      "value": 134,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-12T20:53:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "7d6tp7pznmp7a0hp7",
+      "value": 152,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-12T18:32:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "79mb13twwmp7a0hp7",
+      "value": 126,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-12T16:50:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "baerto8qtmp7a0hp7",
+      "value": 182,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-12T12:31:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "cuh90l1c1mp7a0hp7",
+      "value": 151,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-11T20:36:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "v4nv5sfmsmp7a0hp7",
+      "value": 116,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-11T16:59:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "zkclju7h4mp7a0hp7",
+      "value": 218,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-11T13:30:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "8t44903zfmp7a0hp7",
+      "value": 97,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-11T10:46:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "brwwzyp79mp7a0hp7",
+      "value": 201,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-11T07:22:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "8u5phn1u7mp7a0hp7",
+      "value": 132,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-10T20:40:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "nexb8rhb2mp7a0hp7",
+      "value": 108,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-10T18:52:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "7bisu57n6mp7a0hp7",
+      "value": 114,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-10T16:52:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "g981e3zfrmp7a0hp7",
+      "value": 125,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-10T13:03:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "6iq8wdalimp7a0hp7",
+      "value": 99,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-09T20:55:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "i24dtyc5amp7a0hp7",
+      "value": 335,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-09T18:34:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "84colra1imp7a0hp7",
+      "value": 154,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-09T16:59:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "vw0uxqcc7mp7a0hp7",
+      "value": 168,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-09T13:24:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "vp7od9c1fmp7a0hp7",
+      "value": 63,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-09T10:32:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "t4n6xkj2mmp7a0hp7",
+      "value": 247,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-08T18:55:00.000Z",
+      "type": "postMeal",
+      "notes": "activitate fizică intensă"
+    },
+    {
+      "id": "86gh7id27mp7a0hp7",
+      "value": 147,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-08T16:56:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "qo10u41h1mp7a0hp7",
+      "value": 248,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-08T12:32:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "jsxbj7kf0mp7a0hp7",
+      "value": 90,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-08T05:20:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "m3nwoejc2mp7a0hp7",
+      "value": 125,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-07T20:33:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "6s18dxrlqmp7a0hp7",
+      "value": 124,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-07T18:53:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "wqteutaoomp7a0hp7",
+      "value": 125,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-07T16:54:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "j1zye938cmp7a0hp7",
+      "value": 146,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-07T13:18:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "1800xk8rvmp7a0hp7",
+      "value": 125,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-07T10:59:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "9v37ewba5mp7a0hp7",
+      "value": 102,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-06T20:34:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "mo6y59xvsmp7a0hp7",
+      "value": 145,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-06T18:40:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "syp9g0gzrmp7a0hp7",
+      "value": 101,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-06T13:01:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "soh5pyqxzmp7a0hp7",
+      "value": 108,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-06T12:56:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "gbopg14e3mp7a0hp7",
+      "value": 142,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-06T10:48:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "l3ne1es0mmp7a0hp7",
+      "value": 151,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-05T20:38:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "g08mdl0hump7a0hp7",
+      "value": 138,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-05T16:45:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "52lipp0pxmp7a0hp7",
+      "value": 132,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-05T13:05:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "xuozc5sovmp7a0hp7",
+      "value": 171,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-05T12:38:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "93p3r5hgimp7a0hp7",
+      "value": 138,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-05T07:38:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "lil4tm2i5mp7a0hp7",
+      "value": 116,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-05T05:45:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "mx7l0h39kmp7a0hp7",
+      "value": 152,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-04T16:49:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "0fjx9ooz3mp7a0hp7",
+      "value": 96,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-04T13:01:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "f5zzgpzb0mp7a0hp7",
+      "value": 246,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-04T12:37:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "bl3d6l75nmp7a0hp7",
+      "value": 116,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-04T10:43:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "vsty6lsfdmp7a0hp7",
+      "value": 135,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-03T18:59:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "4hvlicvj6mp7a0hp7",
+      "value": 155,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-03T10:30:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "miuu6z66omp7a0hp7",
+      "value": 101,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-03T05:22:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "zydgjqlkhmp7a0hp7",
+      "value": 141,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-02T18:58:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "pv1kpla48mp7a0hp7",
+      "value": 152,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-02T16:56:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "5936i5xcamp7a0hp7",
+      "value": 121,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-02T10:44:00.000Z",
+      "type": "preMeal",
+      "notes": "zi de post"
+    },
+    {
+      "id": "xosb17vvxmp7a0hp7",
+      "value": 152,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-02T07:25:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "h6nj93favmp7a0hp7",
+      "value": 155,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-01T20:43:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "pit4g57j1mp7a0hp7",
+      "value": 116,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-01T18:43:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "5o6nrf0l5mp7a0hp7",
+      "value": 58,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-01T12:48:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "f7urz4y87mp7a0hp6",
+      "value": 106,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-01T10:38:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "i4cn8679fmp7a0hp6",
+      "value": 116,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-01T07:34:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "gb3seeaj4mp7a0hp6",
+      "value": 101,
+      "unit": "mg/dL",
+      "timestamp": "2026-04-01T05:11:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "gcaq5trh7mp7a0hp6",
+      "value": 149,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-31T16:53:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "dbb5inag8mp7a0hp6",
+      "value": 120,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-31T12:44:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "s1ir9afz9mp7a0hp6",
+      "value": 127,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-31T10:44:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "in7q8l7h4mp7a0hp6",
+      "value": 66,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-31T05:24:00.000Z",
+      "type": "fasting",
+      "notes": "stres"
+    },
+    {
+      "id": "yk8lwanrymp7a0hp6",
+      "value": 64,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-30T20:37:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "dom8yt6limp7a0hp6",
+      "value": 114,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-30T12:32:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "0xorovsb6mp7a0hp6",
+      "value": 110,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-30T10:36:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "p98em4k7smp7a0hp6",
+      "value": 172,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-30T07:38:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "j7n4oy86smp7a0hp6",
+      "value": 141,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-29T20:31:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "dzh0djobpmp7a0hp6",
+      "value": 158,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-29T16:48:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "3saq21phpmp7a0hp6",
+      "value": 141,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-29T12:43:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "tq303keammp7a0hp6",
+      "value": 154,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-29T10:30:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "sa33v7onamp7a0hp6",
+      "value": 169,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-29T07:18:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "nx457cci6mp7a0hp6",
+      "value": 130,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-28T20:43:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "rqw2ud0axmp7a0hp6",
+      "value": 149,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-28T18:55:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "6s2jsgou0mp7a0hp6",
+      "value": 161,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-28T13:08:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "qizwkvwuomp7a0hp6",
+      "value": 107,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-28T12:55:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "85m0a4ij3mp7a0hp6",
+      "value": 118,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-28T07:20:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "dfvw1y57imp7a0hp6",
+      "value": 126,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-27T18:48:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "1f3oh2hf3mp7a0hp6",
+      "value": 135,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-27T13:13:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "uv7h1bcbhmp7a0hp6",
+      "value": 153,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-27T10:33:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "kogpj05i5mp7a0hp6",
+      "value": 144,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-27T07:17:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "ds4o35ytmmp7a0hp6",
+      "value": 160,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-26T13:06:00.000Z",
+      "type": "random",
+      "notes": "stres"
+    },
+    {
+      "id": "au5ugs614mp7a0hp6",
+      "value": 321,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-26T07:39:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "uoyogeww8mp7a0hp6",
+      "value": 114,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-26T05:28:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "3nph1llqbmp7a0hp6",
+      "value": 190,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-25T20:59:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "syddi6h7rmp7a0hp6",
+      "value": 224,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-25T18:49:00.000Z",
+      "type": "postMeal",
+      "notes": "activitate fizică intensă"
+    },
+    {
+      "id": "4hrqnb9njmp7a0hp6",
+      "value": 95,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-25T13:14:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "sz6us8yfvmp7a0hp6",
+      "value": 135,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-25T07:16:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "5lwtbkwnhmp7a0hp6",
+      "value": 123,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-25T05:44:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "8khgyp6j7mp7a0hp6",
+      "value": 133,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-24T20:46:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "kd1ecd1irmp7a0hp6",
+      "value": 120,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-24T16:57:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "arsazmuzxmp7a0hp6",
+      "value": 67,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-24T12:47:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "eojf3z5h7mp7a0hp6",
+      "value": 110,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-24T07:25:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "2g6592a3jmp7a0hp6",
+      "value": 134,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-24T05:48:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "lra8c3yzwmp7a0hp6",
+      "value": 147,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-23T18:33:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "rmqbl1hvpmp7a0hp6",
+      "value": 110,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-23T16:59:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "bzd371xz0mp7a0hp6",
+      "value": 106,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-23T13:08:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "lsje038vhmp7a0hp6",
+      "value": 172,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-23T07:28:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "931hf247bmp7a0hp6",
+      "value": 85,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-23T05:38:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "59r0cmotcmp7a0hp6",
+      "value": 207,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-22T12:37:00.000Z",
+      "type": "postMeal",
+      "notes": "petrecere"
+    },
+    {
+      "id": "6hyz3qmfkmp7a0hp6",
+      "value": 125,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-22T07:37:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "rqmf1rhjlmp7a0hp6",
+      "value": 87,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-22T05:20:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "2p75icxjnmp7a0hp6",
+      "value": 140,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-21T20:55:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "8nn3g4t7ymp7a0hp6",
+      "value": 112,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-21T18:35:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "vam7yfxm5mp7a0hp6",
+      "value": 146,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-21T12:42:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "6ltkdaczmmp7a0hp6",
+      "value": 110,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-21T10:34:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "37op0a6utmp7a0hp6",
+      "value": 156,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-20T20:59:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "je8wbk7ujmp7a0hp6",
+      "value": 188,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-20T12:55:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "tob6dd6nbmp7a0hp6",
+      "value": 119,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-20T10:47:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "0x3bk5jswmp7a0hp6",
+      "value": 132,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-20T05:49:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "a7qh7nvizmp7a0hp6",
+      "value": 144,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-19T12:48:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "jb26tzybbmp7a0hp6",
+      "value": 101,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-19T10:49:00.000Z",
+      "type": "preMeal",
+      "notes": "zi de post"
+    },
+    {
+      "id": "ff5ulwuvqmp7a0hp6",
+      "value": 116,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-19T07:35:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "66gqmwmktmp7a0hp6",
+      "value": 112,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-19T05:40:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "amqtg24vump7a0hp6",
+      "value": 108,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-18T20:30:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "mam6qzywgmp7a0hp6",
+      "value": 111,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-18T13:26:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "sgn6nzyqfmp7a0hp6",
+      "value": 139,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-18T07:19:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "qcxebgen8mp7a0hp6",
+      "value": 103,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-18T05:28:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "0q3omkdtvmp7a0hp5",
+      "value": 135,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-17T20:55:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "1x2u1805rmp7a0hp5",
+      "value": 151,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-17T13:19:00.000Z",
+      "type": "random",
+      "notes": "sport"
+    },
+    {
+      "id": "o4hcu0w0amp7a0hp5",
+      "value": 106,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-17T10:44:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "5hu69x1jpmp7a0hp5",
+      "value": 166,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-17T07:38:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "rlcprgwz1mp7a0hp5",
+      "value": 135,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-17T05:37:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "ci9h0y951mp7a0hp5",
+      "value": 118,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-16T18:36:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "otleudxs0mp7a0hp5",
+      "value": 161,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-16T13:06:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "m0jkkp2ocmp7a0hp5",
+      "value": 134,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-16T12:39:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "fwmngd7igmp7a0hp5",
+      "value": 143,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-16T10:56:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "de8vk8i66mp7a0hp5",
+      "value": 304,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-16T07:27:00.000Z",
+      "type": "postMeal",
+      "notes": "după masă copioasă"
+    },
+    {
+      "id": "um96459jwmp7a0hp5",
+      "value": 95,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-16T05:18:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "pmeq42tb2mp7a0hp5",
+      "value": 130,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-15T20:57:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "1of8o32hbmp7a0hp5",
+      "value": 130,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-15T18:52:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "1rxy6juzimp7a0hp5",
+      "value": 100,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-15T16:50:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "0yxe55b4mmp7a0hp5",
+      "value": 94,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-15T13:28:00.000Z",
+      "type": "random",
+      "notes": "răceală"
+    },
+    {
+      "id": "u0n7ykkk2mp7a0hp5",
+      "value": 137,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-15T12:41:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "wtwvgj02pmp7a0hp5",
+      "value": 227,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-14T18:36:00.000Z",
+      "type": "postMeal",
+      "notes": "activitate fizică intensă"
+    },
+    {
+      "id": "k4cfpisibmp7a0hp5",
+      "value": 105,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-14T13:29:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "vo4owzcewmp7a0hp5",
+      "value": 68,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-14T12:42:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "seojnjvxwmp7a0hp5",
+      "value": 124,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-14T07:44:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "njeakc05lmp7a0hp5",
+      "value": 83,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-14T05:41:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "ac0rzlb89mp7a0hp5",
+      "value": 66,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-13T13:02:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "hagaj8e03mp7a0hp5",
+      "value": 106,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-13T12:58:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "jn7udbmuump7a0hp5",
+      "value": 200,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-13T10:56:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "po0sk0mc6mp7a0hp5",
+      "value": 138,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-13T07:40:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "967tp6jjcmp7a0hp5",
+      "value": 172,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-12T18:30:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "8v0hfznhpmp7a0hp5",
+      "value": 127,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-12T13:04:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "47rphxza6mp7a0hp5",
+      "value": 173,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-12T12:52:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "pfufmq5fpmp7a0hp5",
+      "value": 112,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-12T10:34:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "5mnixd5comp7a0hp5",
+      "value": 117,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-11T20:59:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "ygteamfpnmp7a0hp5",
+      "value": 60,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-11T07:26:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "cp5y28yepmp7a0hp5",
+      "value": 192,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-11T05:49:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "n96u3n667mp7a0hp5",
+      "value": 141,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-10T20:44:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "9acwjlr3smp7a0hp5",
+      "value": 148,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-10T16:50:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "orzqqyfm0mp7a0hp5",
+      "value": 139,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-10T10:42:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "yeqkf73k9mp7a0hp5",
+      "value": 93,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-10T05:33:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "vy9wthz6fmp7a0hp5",
+      "value": 121,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-09T13:29:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "67kyuclsmmp7a0hp5",
+      "value": 188,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-09T07:38:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "dwffu8sr1mp7a0hp5",
+      "value": 185,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-09T05:18:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "8gwsxvtjlmp7a0hp5",
+      "value": 102,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-08T20:51:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "83zwsgekhmp7a0hp5",
+      "value": 98,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-08T16:53:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "wrc7i1pmkmp7a0hp5",
+      "value": 157,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-08T12:58:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "n8m1r261ump7a0hp5",
+      "value": 96,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-08T10:32:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "h1hicotbmmp7a0hp5",
+      "value": 90,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-07T16:51:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "lcy16lfb3mp7a0hp5",
+      "value": 157,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-07T13:14:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "5s526ycsdmp7a0hp5",
+      "value": 135,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-07T07:38:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "hsbt4viwsmp7a0hp5",
+      "value": 114,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-07T05:29:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "yuy9ep8c9mp7a0hp5",
+      "value": 123,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-06T20:33:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "y3atllwu1mp7a0hp5",
+      "value": 155,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-06T18:44:00.000Z",
+      "type": "postMeal",
+      "notes": "dulciuri"
+    },
+    {
+      "id": "0h0sn8whdmp7a0hp5",
+      "value": 119,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-06T16:49:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "3353eyomwmp7a0hp5",
+      "value": 92,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-06T13:21:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "dpkvjh1y8mp7a0hp5",
+      "value": 318,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-06T12:31:00.000Z",
+      "type": "postMeal",
+      "notes": "după masă copioasă"
+    },
+    {
+      "id": "3ehuxpknnmp7a0hp5",
+      "value": 65,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-05T13:24:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "c5cren4gdmp7a0hp5",
+      "value": 152,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-05T10:48:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "8wjdun3nomp7a0hp5",
+      "value": 142,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-05T07:27:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "9wbxakkgnmp7a0hp5",
+      "value": 151,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-04T20:36:00.000Z",
+      "type": "bedtime",
+      "notes": "răceală"
+    },
+    {
+      "id": "g4buf6l7jmp7a0hp5",
+      "value": 113,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-04T18:35:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "yig85yxelmp7a0hp5",
+      "value": 184,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-04T16:50:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "ruew153skmp7a0hp5",
+      "value": 139,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-04T13:00:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "do61ipsgomp7a0hp5",
+      "value": 139,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-04T07:16:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "zcu7zaxkqmp7a0hp5",
+      "value": 62,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-03T18:55:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "xzm21fqfnmp7a0hp5",
+      "value": 160,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-03T13:02:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "t98me7rdsmp7a0hp5",
+      "value": 155,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-03T10:54:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "85w4hmqtfmp7a0hp5",
+      "value": 115,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-03T07:18:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "ye40xjho4mp7a0hp4",
+      "value": 125,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-03T05:10:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "szl12djblmp7a0hp4",
+      "value": 191,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-02T20:56:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "unulaetofmp7a0hp4",
+      "value": 171,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-02T18:55:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "e1et700xwmp7a0hp4",
+      "value": 145,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-02T13:09:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "9rmc8z99mmp7a0hp4",
+      "value": 138,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-02T07:28:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "fs1vquqtxmp7a0hp4",
+      "value": 89,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-02T05:15:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "he4y2gfatmp7a0hp4",
+      "value": 123,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-01T20:37:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "cgke83fk7mp7a0hp4",
+      "value": 149,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-01T18:47:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "is9ybhliimp7a0hp4",
+      "value": 124,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-01T16:53:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "9n50cpxj2mp7a0hp4",
+      "value": 144,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-01T12:41:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "xdo1yp6dvmp7a0hp4",
+      "value": 145,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-01T10:58:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "8xhjjsctump7a0hp4",
+      "value": 126,
+      "unit": "mg/dL",
+      "timestamp": "2026-03-01T07:16:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "oh4iqxa64mp7a0hp4",
+      "value": 108,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-28T20:37:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "hnbc6s7xmmp7a0hp4",
+      "value": 145,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-28T13:14:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "9krw5wax2mp7a0hp4",
+      "value": 144,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-28T12:47:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "y50ponrdhmp7a0hp4",
+      "value": 120,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-28T05:27:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "mxc6bvbhnmp7a0hp4",
+      "value": 150,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-27T13:25:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "l9oamwrfmmp7a0hp4",
+      "value": 182,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-27T07:20:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "c8k7rqetvmp7a0hp4",
+      "value": 98,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-27T05:40:00.000Z",
+      "type": "fasting",
+      "notes": "zi de post"
+    },
+    {
+      "id": "67lw87fexmp7a0hp4",
+      "value": 207,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-26T20:47:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "27jq9xzzamp7a0hp4",
+      "value": 141,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-26T18:38:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "y8niq3c1qmp7a0hp4",
+      "value": 131,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-26T10:57:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "16obq3v1imp7a0hp4",
+      "value": 124,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-26T07:31:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "cn416vu2tmp7a0hp4",
+      "value": 150,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-25T18:40:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "h933kviyqmp7a0hp4",
+      "value": 114,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-25T16:52:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "6nugjsvvfmp7a0hp4",
+      "value": 131,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-25T13:11:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "bunw45pvhmp7a0hp4",
+      "value": 98,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-25T10:57:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "yin3z71ewmp7a0hp4",
+      "value": 150,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-25T07:35:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "akm1fwvr4mp7a0hp4",
+      "value": 137,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-25T05:45:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "nd5dhlyncmp7a0hp4",
+      "value": 61,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-24T16:59:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "2f4rpx85gmp7a0hp4",
+      "value": 111,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-24T10:54:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "2qmv73njsmp7a0hp4",
+      "value": 115,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-24T07:37:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "gwuxc7lximp7a0hp4",
+      "value": 138,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-24T05:39:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "exgpgse9imp7a0hp4",
+      "value": 138,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-23T20:43:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "ttb3puv4emp7a0hp4",
+      "value": 153,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-23T18:41:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "ur28xjuu4mp7a0hp4",
+      "value": 117,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-23T12:35:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "qv38724cdmp7a0hp4",
+      "value": 88,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-23T10:38:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "j8ch7xa4pmp7a0hp4",
+      "value": 105,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-22T20:44:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "ib5g88y53mp7a0hp4",
+      "value": 147,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-22T16:48:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "qnxwsrotzmp7a0hp4",
+      "value": 126,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-22T10:46:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "qmw4w16dpmp7a0hp4",
+      "value": 147,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-21T18:32:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "qp1iybwvwmp7a0hp4",
+      "value": 122,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-21T16:57:00.000Z",
+      "type": "preMeal",
+      "notes": "răceală"
+    },
+    {
+      "id": "zka4wtsyrmp7a0hp4",
+      "value": 170,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-21T12:50:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "7ls08o4n4mp7a0hp4",
+      "value": 108,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-21T10:51:00.000Z",
+      "type": "preMeal",
+      "notes": "răceală"
+    },
+    {
+      "id": "l49kcmalbmp7a0hp4",
+      "value": 143,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-20T12:52:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "hp1me86i4mp7a0hp4",
+      "value": 91,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-20T10:39:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "b271z8e6imp7a0hp4",
+      "value": 152,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-20T07:18:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "6db1pdwh0mp7a0hp4",
+      "value": 98,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-20T05:28:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "0bosp71f1mp7a0hp4",
+      "value": 170,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-19T18:32:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "a7t6mkaucmp7a0hp4",
+      "value": 149,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-19T16:56:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "iwphrstjwmp7a0hp4",
+      "value": 108,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-19T13:14:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "5r1tmviy1mp7a0hp4",
+      "value": 163,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-19T12:50:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "by9izw58gmp7a0hp4",
+      "value": 95,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-19T10:57:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "2ecjytbv4mp7a0hp4",
+      "value": 169,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-19T07:32:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "mq7axqky9mp7a0hp3",
+      "value": 157,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-18T16:59:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "6pbtzpo7ump7a0hp3",
+      "value": 120,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-18T12:59:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "5f85suqmtmp7a0hp3",
+      "value": 137,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-18T10:51:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "u5amii3pwmp7a0hp3",
+      "value": 303,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-18T07:24:00.000Z",
+      "type": "postMeal",
+      "notes": "după masă copioasă"
+    },
+    {
+      "id": "zleygau94mp7a0hp3",
+      "value": 183,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-17T12:48:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "fcajvow4mmp7a0hp3",
+      "value": 151,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-17T10:36:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "q83cdj8cxmp7a0hp3",
+      "value": 106,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-17T07:41:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "gfoipz0whmp7a0hp3",
+      "value": 96,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-17T05:10:00.000Z",
+      "type": "fasting",
+      "notes": ""
+    },
+    {
+      "id": "3gqfryp52mp7a0hp3",
+      "value": 109,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-16T20:51:00.000Z",
+      "type": "bedtime",
+      "notes": ""
+    },
+    {
+      "id": "dm9iivp9hmp7a0hp3",
+      "value": 100,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-16T16:56:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "rxu6ad5pomp7a0hp3",
+      "value": 178,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-16T13:18:00.000Z",
+      "type": "random",
+      "notes": ""
+    },
+    {
+      "id": "wkhooscyfmp7a0hp3",
+      "value": 118,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-16T12:33:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "sisf029rymp7a0hp3",
+      "value": 155,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-16T10:37:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "ouc8stw7jmp7a0hp3",
+      "value": 144,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-16T07:19:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "uax8mm459mp7a0hp2",
+      "value": 128,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-15T16:52:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "n0gq465mbmp7a0hp2",
+      "value": 132,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-15T12:42:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    },
+    {
+      "id": "me4iqg4eqmp7a0hp2",
+      "value": 123,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-15T10:50:00.000Z",
+      "type": "preMeal",
+      "notes": ""
+    },
+    {
+      "id": "js8pu500ymp7a0hp1",
+      "value": 166,
+      "unit": "mg/dL",
+      "timestamp": "2026-02-15T07:26:00.000Z",
+      "type": "postMeal",
+      "notes": ""
+    }
+  ],
+  "insulinLog": [
+    {
+      "id": "0cew1feufmp7a0hpa",
+      "type": "Rapid-acting",
+      "units": 10,
+      "time": "19:06",
+      "timestamp": "2026-05-15T17:06:00.000Z"
+    },
+    {
+      "id": "l92v6bwdrmp7a0hpa",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "13:00",
+      "timestamp": "2026-05-15T11:00:00.000Z"
+    },
+    {
+      "id": "0p30nj8vemp7a0hpa",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "07:52",
+      "timestamp": "2026-05-15T05:52:00.000Z"
+    },
+    {
+      "id": "eiksonmf6mp7a0hpa",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:29",
+      "timestamp": "2026-05-15T05:34:00.000Z"
+    },
+    {
+      "id": "euqfv9cdkmp7a0hpa",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "19:14",
+      "timestamp": "2026-05-14T17:14:00.000Z"
+    },
+    {
+      "id": "5u3s48hq9mp7a0hpa",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "13:05",
+      "timestamp": "2026-05-14T11:05:00.000Z"
+    },
+    {
+      "id": "3eftjru8ymp7a0hpa",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "07:40",
+      "timestamp": "2026-05-14T05:40:00.000Z"
+    },
+    {
+      "id": "ikcem53gnmp7a0hpa",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:40",
+      "timestamp": "2026-05-14T05:25:00.000Z"
+    },
+    {
+      "id": "4zp91y7w8mp7a0hpa",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "19:20",
+      "timestamp": "2026-05-13T17:20:00.000Z"
+    },
+    {
+      "id": "lspvl3ahymp7a0hpa",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "13:07",
+      "timestamp": "2026-05-13T11:07:00.000Z"
+    },
+    {
+      "id": "xks7zjakump7a0hpa",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "07:42",
+      "timestamp": "2026-05-13T05:42:00.000Z"
+    },
+    {
+      "id": "6y63h6ocimp7a0hpa",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:30",
+      "timestamp": "2026-05-13T05:28:00.000Z"
+    },
+    {
+      "id": "0sgmttblsmp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "19:14",
+      "timestamp": "2026-05-12T17:14:00.000Z"
+    },
+    {
+      "id": "m829aev0tmp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "13:12",
+      "timestamp": "2026-05-12T11:12:00.000Z"
+    },
+    {
+      "id": "uh27i2sbgmp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "07:44",
+      "timestamp": "2026-05-12T05:44:00.000Z"
+    },
+    {
+      "id": "aq2kkbse2mp7a0hp9",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:36",
+      "timestamp": "2026-05-12T05:40:00.000Z"
+    },
+    {
+      "id": "ruifdeu90mp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "19:16",
+      "timestamp": "2026-05-11T17:16:00.000Z"
+    },
+    {
+      "id": "ok91v8tahmp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "13:06",
+      "timestamp": "2026-05-11T11:06:00.000Z"
+    },
+    {
+      "id": "b06t35uzrmp7a0hp9",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:45",
+      "timestamp": "2026-05-11T05:44:00.000Z"
+    },
+    {
+      "id": "2zag3le9rmp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "07:42",
+      "timestamp": "2026-05-11T05:42:00.000Z"
+    },
+    {
+      "id": "qyj9en6cjmp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "19:20",
+      "timestamp": "2026-05-10T17:20:00.000Z"
+    },
+    {
+      "id": "nm312n1nbmp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "13:15",
+      "timestamp": "2026-05-10T11:15:00.000Z"
+    },
+    {
+      "id": "fz5o47466mp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "07:54",
+      "timestamp": "2026-05-10T05:54:00.000Z"
+    },
+    {
+      "id": "phvdz0dd2mp7a0hp9",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:43",
+      "timestamp": "2026-05-10T05:28:00.000Z"
+    },
+    {
+      "id": "1h16pz9krmp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "19:19",
+      "timestamp": "2026-05-09T17:19:00.000Z"
+    },
+    {
+      "id": "dmjow7n9tmp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "13:00",
+      "timestamp": "2026-05-09T11:00:00.000Z"
+    },
+    {
+      "id": "j49xq4ck4mp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "07:49",
+      "timestamp": "2026-05-09T05:49:00.000Z"
+    },
+    {
+      "id": "a7w2zpbn2mp7a0hp9",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:35",
+      "timestamp": "2026-05-09T05:29:00.000Z"
+    },
+    {
+      "id": "qdl3v96hamp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "19:13",
+      "timestamp": "2026-05-08T17:13:00.000Z"
+    },
+    {
+      "id": "ss4qqrq6emp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "13:08",
+      "timestamp": "2026-05-08T11:08:00.000Z"
+    },
+    {
+      "id": "nk4jdela3mp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "07:43",
+      "timestamp": "2026-05-08T05:43:00.000Z"
+    },
+    {
+      "id": "6rb8pns1wmp7a0hp9",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:30",
+      "timestamp": "2026-05-08T05:39:00.000Z"
+    },
+    {
+      "id": "1uxhnk64amp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "19:13",
+      "timestamp": "2026-05-07T17:13:00.000Z"
+    },
+    {
+      "id": "7bnil7ejimp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "13:14",
+      "timestamp": "2026-05-07T11:14:00.000Z"
+    },
+    {
+      "id": "p3tfq59femp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "07:50",
+      "timestamp": "2026-05-07T05:50:00.000Z"
+    },
+    {
+      "id": "yz23n8rrdmp7a0hp9",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:32",
+      "timestamp": "2026-05-07T05:38:00.000Z"
+    },
+    {
+      "id": "mz2d0auoomp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 10,
+      "time": "19:15",
+      "timestamp": "2026-05-06T17:15:00.000Z"
+    },
+    {
+      "id": "wgttum97nmp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "13:03",
+      "timestamp": "2026-05-06T11:03:00.000Z"
+    },
+    {
+      "id": "ocmaforbkmp7a0hp9",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:30",
+      "timestamp": "2026-05-06T05:42:00.000Z"
+    },
+    {
+      "id": "2tze4cwrbmp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "07:40",
+      "timestamp": "2026-05-06T05:40:00.000Z"
+    },
+    {
+      "id": "koiiyej13mp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "19:09",
+      "timestamp": "2026-05-05T17:09:00.000Z"
+    },
+    {
+      "id": "l9z3pe4otmp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "13:07",
+      "timestamp": "2026-05-05T11:07:00.000Z"
+    },
+    {
+      "id": "kgk3dvr3imp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 11,
+      "time": "07:48",
+      "timestamp": "2026-05-05T05:48:00.000Z"
+    },
+    {
+      "id": "p8sb0v7kpmp7a0hp9",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:31",
+      "timestamp": "2026-05-05T05:33:00.000Z"
+    },
+    {
+      "id": "jap451w8rmp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "19:12",
+      "timestamp": "2026-05-04T17:12:00.000Z"
+    },
+    {
+      "id": "kshmpiu5ymp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "13:06",
+      "timestamp": "2026-05-04T11:06:00.000Z"
+    },
+    {
+      "id": "c7e4wcshxmp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "07:49",
+      "timestamp": "2026-05-04T05:49:00.000Z"
+    },
+    {
+      "id": "h0553hsb3mp7a0hp9",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:42",
+      "timestamp": "2026-05-04T05:34:00.000Z"
+    },
+    {
+      "id": "swbke7rfgmp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "19:12",
+      "timestamp": "2026-05-03T17:12:00.000Z"
+    },
+    {
+      "id": "cn7431b0amp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "13:07",
+      "timestamp": "2026-05-03T11:07:00.000Z"
+    },
+    {
+      "id": "mq8qwbbb0mp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "07:40",
+      "timestamp": "2026-05-03T05:40:00.000Z"
+    },
+    {
+      "id": "zm8zxtv8zmp7a0hp9",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:32",
+      "timestamp": "2026-05-03T05:36:00.000Z"
+    },
+    {
+      "id": "sw1pj49ldmp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 10,
+      "time": "19:07",
+      "timestamp": "2026-05-02T17:07:00.000Z"
+    },
+    {
+      "id": "2oem2gfiqmp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "13:06",
+      "timestamp": "2026-05-02T11:06:00.000Z"
+    },
+    {
+      "id": "4ce2zgv83mp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "07:50",
+      "timestamp": "2026-05-02T05:50:00.000Z"
+    },
+    {
+      "id": "shuxtuwv2mp7a0hp9",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:30",
+      "timestamp": "2026-05-02T05:41:00.000Z"
+    },
+    {
+      "id": "8wx59ys0nmp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "19:19",
+      "timestamp": "2026-05-01T17:19:00.000Z"
+    },
+    {
+      "id": "bodtkix7lmp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "13:05",
+      "timestamp": "2026-05-01T11:05:00.000Z"
+    },
+    {
+      "id": "sqjlg90mymp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "07:41",
+      "timestamp": "2026-05-01T05:41:00.000Z"
+    },
+    {
+      "id": "htl9pd915mp7a0hp9",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:42",
+      "timestamp": "2026-05-01T05:32:00.000Z"
+    },
+    {
+      "id": "zmq6zogrsmp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "19:18",
+      "timestamp": "2026-04-30T17:18:00.000Z"
+    },
+    {
+      "id": "djnpogyutmp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "13:11",
+      "timestamp": "2026-04-30T11:11:00.000Z"
+    },
+    {
+      "id": "wgwhxnv8wmp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "07:48",
+      "timestamp": "2026-04-30T05:48:00.000Z"
+    },
+    {
+      "id": "6uyedpykzmp7a0hp9",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:28",
+      "timestamp": "2026-04-30T05:34:00.000Z"
+    },
+    {
+      "id": "al6tqsesxmp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 10,
+      "time": "19:19",
+      "timestamp": "2026-04-29T17:19:00.000Z"
+    },
+    {
+      "id": "dq9hs5m3jmp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "13:09",
+      "timestamp": "2026-04-29T11:09:00.000Z"
+    },
+    {
+      "id": "swtu9qsq4mp7a0hp9",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "07:43",
+      "timestamp": "2026-04-29T05:43:00.000Z"
+    },
+    {
+      "id": "3cxqzovafmp7a0hp9",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:40",
+      "timestamp": "2026-04-29T05:29:00.000Z"
+    },
+    {
+      "id": "xik1ld372mp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "19:06",
+      "timestamp": "2026-04-28T17:06:00.000Z"
+    },
+    {
+      "id": "b4h3nyi8pmp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "13:02",
+      "timestamp": "2026-04-28T11:02:00.000Z"
+    },
+    {
+      "id": "o1odlygnhmp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "07:48",
+      "timestamp": "2026-04-28T05:48:00.000Z"
+    },
+    {
+      "id": "kllakhk5zmp7a0hp8",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:25",
+      "timestamp": "2026-04-28T05:27:00.000Z"
+    },
+    {
+      "id": "ljnocssipmp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "19:11",
+      "timestamp": "2026-04-27T17:11:00.000Z"
+    },
+    {
+      "id": "zov7jaevwmp7a0hp8",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:30",
+      "timestamp": "2026-04-27T05:44:00.000Z"
+    },
+    {
+      "id": "bd525q111mp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "07:44",
+      "timestamp": "2026-04-27T05:44:00.000Z"
+    },
+    {
+      "id": "ydwtfc9tomp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "19:14",
+      "timestamp": "2026-04-26T17:14:00.000Z"
+    },
+    {
+      "id": "6sh4ka2p1mp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "13:08",
+      "timestamp": "2026-04-26T11:08:00.000Z"
+    },
+    {
+      "id": "344e9s1t9mp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "07:51",
+      "timestamp": "2026-04-26T05:51:00.000Z"
+    },
+    {
+      "id": "1u293n35amp7a0hp8",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:33",
+      "timestamp": "2026-04-26T05:25:00.000Z"
+    },
+    {
+      "id": "9904bvueump7a0hp8",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "19:09",
+      "timestamp": "2026-04-25T17:09:00.000Z"
+    },
+    {
+      "id": "obowuigz8mp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "13:10",
+      "timestamp": "2026-04-25T11:10:00.000Z"
+    },
+    {
+      "id": "xw9nr5qkrmp7a0hp8",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:35",
+      "timestamp": "2026-04-25T05:38:00.000Z"
+    },
+    {
+      "id": "bw8ht4yommp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 10,
+      "time": "19:05",
+      "timestamp": "2026-04-24T17:05:00.000Z"
+    },
+    {
+      "id": "jtfe1f5demp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "13:15",
+      "timestamp": "2026-04-24T11:15:00.000Z"
+    },
+    {
+      "id": "8eos89sc7mp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 10,
+      "time": "07:45",
+      "timestamp": "2026-04-24T05:45:00.000Z"
+    },
+    {
+      "id": "g594ozgmmmp7a0hp8",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:41",
+      "timestamp": "2026-04-24T05:26:00.000Z"
+    },
+    {
+      "id": "if7qi0afjmp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "19:12",
+      "timestamp": "2026-04-23T17:12:00.000Z"
+    },
+    {
+      "id": "hsluma40gmp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "07:46",
+      "timestamp": "2026-04-23T05:46:00.000Z"
+    },
+    {
+      "id": "xygmc1s8qmp7a0hp8",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:38",
+      "timestamp": "2026-04-23T05:39:00.000Z"
+    },
+    {
+      "id": "bn53j5611mp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "19:11",
+      "timestamp": "2026-04-22T17:11:00.000Z"
+    },
+    {
+      "id": "telec6yefmp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "13:11",
+      "timestamp": "2026-04-22T11:11:00.000Z"
+    },
+    {
+      "id": "ifi9vi885mp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "07:41",
+      "timestamp": "2026-04-22T05:41:00.000Z"
+    },
+    {
+      "id": "g5nb6b3dfmp7a0hp8",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:27",
+      "timestamp": "2026-04-22T05:31:00.000Z"
+    },
+    {
+      "id": "8yp97l7sjmp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "19:20",
+      "timestamp": "2026-04-21T17:20:00.000Z"
+    },
+    {
+      "id": "ozgalwmetmp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "13:02",
+      "timestamp": "2026-04-21T11:02:00.000Z"
+    },
+    {
+      "id": "3q4ml7oi5mp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "07:48",
+      "timestamp": "2026-04-21T05:48:00.000Z"
+    },
+    {
+      "id": "lgakb21elmp7a0hp8",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:39",
+      "timestamp": "2026-04-21T05:45:00.000Z"
+    },
+    {
+      "id": "ruzu3wk9gmp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "19:10",
+      "timestamp": "2026-04-20T17:10:00.000Z"
+    },
+    {
+      "id": "r22t7jjyhmp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "13:03",
+      "timestamp": "2026-04-20T11:03:00.000Z"
+    },
+    {
+      "id": "b722dbui5mp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "07:50",
+      "timestamp": "2026-04-20T05:50:00.000Z"
+    },
+    {
+      "id": "yh77l1q8jmp7a0hp8",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:29",
+      "timestamp": "2026-04-20T05:45:00.000Z"
+    },
+    {
+      "id": "zbf20295jmp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "19:07",
+      "timestamp": "2026-04-19T17:07:00.000Z"
+    },
+    {
+      "id": "5mokiwvtomp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "13:08",
+      "timestamp": "2026-04-19T11:08:00.000Z"
+    },
+    {
+      "id": "qjqbb40awmp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "07:47",
+      "timestamp": "2026-04-19T05:47:00.000Z"
+    },
+    {
+      "id": "88dwejutnmp7a0hp8",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:25",
+      "timestamp": "2026-04-19T05:30:00.000Z"
+    },
+    {
+      "id": "oj4x9k970mp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 11,
+      "time": "19:09",
+      "timestamp": "2026-04-18T17:09:00.000Z"
+    },
+    {
+      "id": "x7kb1iyq2mp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "13:14",
+      "timestamp": "2026-04-18T11:14:00.000Z"
+    },
+    {
+      "id": "nytqlb6p4mp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "07:42",
+      "timestamp": "2026-04-18T05:42:00.000Z"
+    },
+    {
+      "id": "3xpazpeugmp7a0hp8",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:44",
+      "timestamp": "2026-04-18T05:40:00.000Z"
+    },
+    {
+      "id": "gx82rqqthmp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "19:13",
+      "timestamp": "2026-04-17T17:13:00.000Z"
+    },
+    {
+      "id": "2impomiyamp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "13:15",
+      "timestamp": "2026-04-17T11:15:00.000Z"
+    },
+    {
+      "id": "ic0tdr1ozmp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "07:43",
+      "timestamp": "2026-04-17T05:43:00.000Z"
+    },
+    {
+      "id": "qn3hdp191mp7a0hp8",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:34",
+      "timestamp": "2026-04-17T05:38:00.000Z"
+    },
+    {
+      "id": "c6944ndvrmp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "13:04",
+      "timestamp": "2026-04-16T11:04:00.000Z"
+    },
+    {
+      "id": "wbdpcdfcbmp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "07:49",
+      "timestamp": "2026-04-16T05:49:00.000Z"
+    },
+    {
+      "id": "pgosrf8mjmp7a0hp8",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:28",
+      "timestamp": "2026-04-16T05:25:00.000Z"
+    },
+    {
+      "id": "ogpeofguump7a0hp8",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "19:06",
+      "timestamp": "2026-04-15T17:06:00.000Z"
+    },
+    {
+      "id": "68rzrrorkmp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "13:06",
+      "timestamp": "2026-04-15T11:06:00.000Z"
+    },
+    {
+      "id": "6a9ttg896mp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "07:43",
+      "timestamp": "2026-04-15T05:43:00.000Z"
+    },
+    {
+      "id": "v74qudl4xmp7a0hp8",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:44",
+      "timestamp": "2026-04-15T05:27:00.000Z"
+    },
+    {
+      "id": "vu27lnxfump7a0hp8",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "19:10",
+      "timestamp": "2026-04-14T17:10:00.000Z"
+    },
+    {
+      "id": "1mtavwrybmp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "13:15",
+      "timestamp": "2026-04-14T11:15:00.000Z"
+    },
+    {
+      "id": "1qkve0ra9mp7a0hp8",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "07:41",
+      "timestamp": "2026-04-14T05:41:00.000Z"
+    },
+    {
+      "id": "zm5zc5cximp7a0hp7",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:34",
+      "timestamp": "2026-04-14T05:38:00.000Z"
+    },
+    {
+      "id": "vk5v6zygvmp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "19:10",
+      "timestamp": "2026-04-13T17:10:00.000Z"
+    },
+    {
+      "id": "ckai3qlusmp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "13:12",
+      "timestamp": "2026-04-13T11:12:00.000Z"
+    },
+    {
+      "id": "owf0lsa8ump7a0hp7",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "07:53",
+      "timestamp": "2026-04-13T05:53:00.000Z"
+    },
+    {
+      "id": "tcvpb5evymp7a0hp7",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:27",
+      "timestamp": "2026-04-13T05:39:00.000Z"
+    },
+    {
+      "id": "bm5giv3homp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "19:10",
+      "timestamp": "2026-04-12T17:10:00.000Z"
+    },
+    {
+      "id": "ymzwiupbnmp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "13:06",
+      "timestamp": "2026-04-12T11:06:00.000Z"
+    },
+    {
+      "id": "uxeydrz60mp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "07:47",
+      "timestamp": "2026-04-12T05:47:00.000Z"
+    },
+    {
+      "id": "rz9krio1cmp7a0hp7",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:45",
+      "timestamp": "2026-04-12T05:33:00.000Z"
+    },
+    {
+      "id": "d4uelhnztmp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "19:08",
+      "timestamp": "2026-04-11T17:08:00.000Z"
+    },
+    {
+      "id": "r31cw3pl6mp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "13:01",
+      "timestamp": "2026-04-11T11:01:00.000Z"
+    },
+    {
+      "id": "vf78by1fhmp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "07:43",
+      "timestamp": "2026-04-11T05:43:00.000Z"
+    },
+    {
+      "id": "lgss0fzzxmp7a0hp7",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:43",
+      "timestamp": "2026-04-11T05:36:00.000Z"
+    },
+    {
+      "id": "sl35ds1pzmp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 10,
+      "time": "19:16",
+      "timestamp": "2026-04-10T17:16:00.000Z"
+    },
+    {
+      "id": "z2gobanwemp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "13:00",
+      "timestamp": "2026-04-10T11:00:00.000Z"
+    },
+    {
+      "id": "x9jff5gdmmp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "07:48",
+      "timestamp": "2026-04-10T05:48:00.000Z"
+    },
+    {
+      "id": "vbf7avm2omp7a0hp7",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:28",
+      "timestamp": "2026-04-10T05:34:00.000Z"
+    },
+    {
+      "id": "eqrkcq4ixmp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "19:16",
+      "timestamp": "2026-04-09T17:16:00.000Z"
+    },
+    {
+      "id": "be28wten5mp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "13:07",
+      "timestamp": "2026-04-09T11:07:00.000Z"
+    },
+    {
+      "id": "gbyvku1rgmp7a0hp7",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:45",
+      "timestamp": "2026-04-09T05:45:00.000Z"
+    },
+    {
+      "id": "rmdjaspxlmp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "07:44",
+      "timestamp": "2026-04-09T05:44:00.000Z"
+    },
+    {
+      "id": "2e5uy0fjhmp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "19:16",
+      "timestamp": "2026-04-08T17:16:00.000Z"
+    },
+    {
+      "id": "mrfe2he2zmp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "13:01",
+      "timestamp": "2026-04-08T11:01:00.000Z"
+    },
+    {
+      "id": "p6423nazsmp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "07:50",
+      "timestamp": "2026-04-08T05:50:00.000Z"
+    },
+    {
+      "id": "e27bkhx1kmp7a0hp7",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:43",
+      "timestamp": "2026-04-08T05:37:00.000Z"
+    },
+    {
+      "id": "f1smyk2y7mp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "19:19",
+      "timestamp": "2026-04-07T17:19:00.000Z"
+    },
+    {
+      "id": "b9opj9ddamp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "13:03",
+      "timestamp": "2026-04-07T11:03:00.000Z"
+    },
+    {
+      "id": "5hdht0ecdmp7a0hp7",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:30",
+      "timestamp": "2026-04-07T05:41:00.000Z"
+    },
+    {
+      "id": "nv8hddq2mmp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 10,
+      "time": "07:41",
+      "timestamp": "2026-04-07T05:41:00.000Z"
+    },
+    {
+      "id": "q3mrlde7emp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "19:17",
+      "timestamp": "2026-04-06T17:17:00.000Z"
+    },
+    {
+      "id": "72wekdk7ump7a0hp7",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "13:15",
+      "timestamp": "2026-04-06T11:15:00.000Z"
+    },
+    {
+      "id": "ak21a8da9mp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "07:44",
+      "timestamp": "2026-04-06T05:44:00.000Z"
+    },
+    {
+      "id": "pf7v5yxmgmp7a0hp7",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:37",
+      "timestamp": "2026-04-06T05:27:00.000Z"
+    },
+    {
+      "id": "igbyehndump7a0hp7",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "19:17",
+      "timestamp": "2026-04-05T17:17:00.000Z"
+    },
+    {
+      "id": "03svvo9hfmp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "13:01",
+      "timestamp": "2026-04-05T11:01:00.000Z"
+    },
+    {
+      "id": "7qoycdmpemp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "07:41",
+      "timestamp": "2026-04-05T05:41:00.000Z"
+    },
+    {
+      "id": "wirfqsia5mp7a0hp7",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:44",
+      "timestamp": "2026-04-05T05:35:00.000Z"
+    },
+    {
+      "id": "06yqk1f41mp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 10,
+      "time": "19:07",
+      "timestamp": "2026-04-04T17:07:00.000Z"
+    },
+    {
+      "id": "abdiguqbbmp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "13:14",
+      "timestamp": "2026-04-04T11:14:00.000Z"
+    },
+    {
+      "id": "56zt0mit8mp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "07:52",
+      "timestamp": "2026-04-04T05:52:00.000Z"
+    },
+    {
+      "id": "hwzfmx0simp7a0hp7",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:40",
+      "timestamp": "2026-04-04T05:43:00.000Z"
+    },
+    {
+      "id": "ds96g1t5imp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 11,
+      "time": "19:10",
+      "timestamp": "2026-04-03T17:10:00.000Z"
+    },
+    {
+      "id": "nz141g78kmp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "13:01",
+      "timestamp": "2026-04-03T11:01:00.000Z"
+    },
+    {
+      "id": "ypi0eedm7mp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "07:46",
+      "timestamp": "2026-04-03T05:46:00.000Z"
+    },
+    {
+      "id": "7xdowsf1rmp7a0hp7",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:33",
+      "timestamp": "2026-04-03T05:26:00.000Z"
+    },
+    {
+      "id": "87yn5109gmp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "19:06",
+      "timestamp": "2026-04-02T17:06:00.000Z"
+    },
+    {
+      "id": "zqqi1fzfomp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "13:15",
+      "timestamp": "2026-04-02T11:15:00.000Z"
+    },
+    {
+      "id": "bmuq3n87xmp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "07:54",
+      "timestamp": "2026-04-02T05:54:00.000Z"
+    },
+    {
+      "id": "5tu1dqqjvmp7a0hp7",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:36",
+      "timestamp": "2026-04-02T05:37:00.000Z"
+    },
+    {
+      "id": "z4ifnl8xrmp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 10,
+      "time": "19:17",
+      "timestamp": "2026-04-01T17:17:00.000Z"
+    },
+    {
+      "id": "pi3tnx31bmp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "13:05",
+      "timestamp": "2026-04-01T11:05:00.000Z"
+    },
+    {
+      "id": "5bi66fabhmp7a0hp7",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "07:55",
+      "timestamp": "2026-04-01T05:55:00.000Z"
+    },
+    {
+      "id": "vvos59i9gmp7a0hp7",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:26",
+      "timestamp": "2026-04-01T05:28:00.000Z"
+    },
+    {
+      "id": "2u14206hamp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "19:13",
+      "timestamp": "2026-03-31T17:13:00.000Z"
+    },
+    {
+      "id": "z6ylvezozmp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "13:13",
+      "timestamp": "2026-03-31T11:13:00.000Z"
+    },
+    {
+      "id": "oa7zrdl4hmp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "07:51",
+      "timestamp": "2026-03-31T05:51:00.000Z"
+    },
+    {
+      "id": "0ny89kl6qmp7a0hp6",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:38",
+      "timestamp": "2026-03-31T05:29:00.000Z"
+    },
+    {
+      "id": "t6skd4icomp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "19:06",
+      "timestamp": "2026-03-30T17:06:00.000Z"
+    },
+    {
+      "id": "ynejky5fymp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "13:04",
+      "timestamp": "2026-03-30T11:04:00.000Z"
+    },
+    {
+      "id": "wcg9234uemp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "07:40",
+      "timestamp": "2026-03-30T05:40:00.000Z"
+    },
+    {
+      "id": "8d2548hstmp7a0hp6",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:43",
+      "timestamp": "2026-03-30T05:36:00.000Z"
+    },
+    {
+      "id": "o69liuw3mmp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "19:10",
+      "timestamp": "2026-03-29T17:10:00.000Z"
+    },
+    {
+      "id": "s5fj2kaiomp7a0hp6",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:36",
+      "timestamp": "2026-03-29T05:41:00.000Z"
+    },
+    {
+      "id": "r5r5n668zmp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "07:40",
+      "timestamp": "2026-03-29T05:40:00.000Z"
+    },
+    {
+      "id": "85ioae9u0mp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "19:20",
+      "timestamp": "2026-03-28T17:20:00.000Z"
+    },
+    {
+      "id": "0xpozmqpsmp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "13:15",
+      "timestamp": "2026-03-28T11:15:00.000Z"
+    },
+    {
+      "id": "04fa8cjmamp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "07:49",
+      "timestamp": "2026-03-28T05:49:00.000Z"
+    },
+    {
+      "id": "fbuewf6djmp7a0hp6",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:26",
+      "timestamp": "2026-03-28T05:35:00.000Z"
+    },
+    {
+      "id": "7ec0xpusfmp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "19:12",
+      "timestamp": "2026-03-27T17:12:00.000Z"
+    },
+    {
+      "id": "rxw15ic2amp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "13:10",
+      "timestamp": "2026-03-27T11:10:00.000Z"
+    },
+    {
+      "id": "f0jvpo3momp7a0hp6",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:36",
+      "timestamp": "2026-03-27T05:44:00.000Z"
+    },
+    {
+      "id": "2k6lirtxtmp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "07:43",
+      "timestamp": "2026-03-27T05:43:00.000Z"
+    },
+    {
+      "id": "765yny33ump7a0hp6",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "19:14",
+      "timestamp": "2026-03-26T17:14:00.000Z"
+    },
+    {
+      "id": "zg8nig2jcmp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "07:54",
+      "timestamp": "2026-03-26T05:54:00.000Z"
+    },
+    {
+      "id": "qnb9rvoe4mp7a0hp6",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:41",
+      "timestamp": "2026-03-26T05:30:00.000Z"
+    },
+    {
+      "id": "hx85h3sr7mp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "19:06",
+      "timestamp": "2026-03-25T17:06:00.000Z"
+    },
+    {
+      "id": "3xr3y0vgqmp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "13:04",
+      "timestamp": "2026-03-25T11:04:00.000Z"
+    },
+    {
+      "id": "yyj7g77itmp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "07:50",
+      "timestamp": "2026-03-25T05:50:00.000Z"
+    },
+    {
+      "id": "aay6hgwixmp7a0hp6",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:31",
+      "timestamp": "2026-03-25T05:27:00.000Z"
+    },
+    {
+      "id": "e3up7whjrmp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "19:14",
+      "timestamp": "2026-03-24T17:14:00.000Z"
+    },
+    {
+      "id": "o2fms3o0lmp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "13:03",
+      "timestamp": "2026-03-24T11:03:00.000Z"
+    },
+    {
+      "id": "lt2owktaxmp7a0hp6",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:31",
+      "timestamp": "2026-03-24T05:26:00.000Z"
+    },
+    {
+      "id": "bqcvarzuomp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "19:11",
+      "timestamp": "2026-03-23T17:11:00.000Z"
+    },
+    {
+      "id": "17rsjmmyqmp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "13:02",
+      "timestamp": "2026-03-23T11:02:00.000Z"
+    },
+    {
+      "id": "5q0xr2xi6mp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "07:54",
+      "timestamp": "2026-03-23T05:54:00.000Z"
+    },
+    {
+      "id": "i1ogp5iptmp7a0hp6",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:33",
+      "timestamp": "2026-03-23T05:28:00.000Z"
+    },
+    {
+      "id": "q9y7i8mjcmp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "19:18",
+      "timestamp": "2026-03-22T17:18:00.000Z"
+    },
+    {
+      "id": "969ajrgsxmp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "13:01",
+      "timestamp": "2026-03-22T11:01:00.000Z"
+    },
+    {
+      "id": "62ex88y8ymp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "07:52",
+      "timestamp": "2026-03-22T05:52:00.000Z"
+    },
+    {
+      "id": "91yf4mf6zmp7a0hp6",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:29",
+      "timestamp": "2026-03-22T05:30:00.000Z"
+    },
+    {
+      "id": "9feyv0mmpmp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 10,
+      "time": "19:20",
+      "timestamp": "2026-03-21T17:20:00.000Z"
+    },
+    {
+      "id": "yfdv67nrxmp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "13:15",
+      "timestamp": "2026-03-21T11:15:00.000Z"
+    },
+    {
+      "id": "aadrrx4wqmp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "07:48",
+      "timestamp": "2026-03-21T05:48:00.000Z"
+    },
+    {
+      "id": "7rf6h2uwsmp7a0hp6",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:35",
+      "timestamp": "2026-03-21T05:25:00.000Z"
+    },
+    {
+      "id": "4c2p0p8mlmp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 11,
+      "time": "19:13",
+      "timestamp": "2026-03-20T17:13:00.000Z"
+    },
+    {
+      "id": "dellot2hnmp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "13:09",
+      "timestamp": "2026-03-20T11:09:00.000Z"
+    },
+    {
+      "id": "xjeoz7yi1mp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "07:54",
+      "timestamp": "2026-03-20T05:54:00.000Z"
+    },
+    {
+      "id": "dq9jhv4zump7a0hp6",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:41",
+      "timestamp": "2026-03-20T05:33:00.000Z"
+    },
+    {
+      "id": "j9jzin454mp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "19:16",
+      "timestamp": "2026-03-19T17:16:00.000Z"
+    },
+    {
+      "id": "56f9lmorfmp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "07:52",
+      "timestamp": "2026-03-19T05:52:00.000Z"
+    },
+    {
+      "id": "wq8vf6vfimp7a0hp6",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:33",
+      "timestamp": "2026-03-19T05:27:00.000Z"
+    },
+    {
+      "id": "6sunbubh2mp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 10,
+      "time": "19:12",
+      "timestamp": "2026-03-18T17:12:00.000Z"
+    },
+    {
+      "id": "q3sv734skmp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "13:11",
+      "timestamp": "2026-03-18T11:11:00.000Z"
+    },
+    {
+      "id": "mfjy8szynmp7a0hp6",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:34",
+      "timestamp": "2026-03-18T05:41:00.000Z"
+    },
+    {
+      "id": "6ysl07etcmp7a0hp6",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "07:41",
+      "timestamp": "2026-03-18T05:41:00.000Z"
+    },
+    {
+      "id": "0z5x01rcxmp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "19:09",
+      "timestamp": "2026-03-17T17:09:00.000Z"
+    },
+    {
+      "id": "4pbzwwybzmp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "13:00",
+      "timestamp": "2026-03-17T11:00:00.000Z"
+    },
+    {
+      "id": "tinymj6x7mp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 10,
+      "time": "07:45",
+      "timestamp": "2026-03-17T05:45:00.000Z"
+    },
+    {
+      "id": "9ck9o446pmp7a0hp5",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:33",
+      "timestamp": "2026-03-17T05:40:00.000Z"
+    },
+    {
+      "id": "fm2hxflfrmp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "19:07",
+      "timestamp": "2026-03-16T17:07:00.000Z"
+    },
+    {
+      "id": "yna9kjbxvmp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "13:00",
+      "timestamp": "2026-03-16T11:00:00.000Z"
+    },
+    {
+      "id": "zv2ef006jmp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "07:45",
+      "timestamp": "2026-03-16T05:45:00.000Z"
+    },
+    {
+      "id": "8lcu0cgdxmp7a0hp5",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:42",
+      "timestamp": "2026-03-16T05:34:00.000Z"
+    },
+    {
+      "id": "sake9swrhmp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "19:17",
+      "timestamp": "2026-03-15T17:17:00.000Z"
+    },
+    {
+      "id": "ejnpvd3aomp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "13:09",
+      "timestamp": "2026-03-15T11:09:00.000Z"
+    },
+    {
+      "id": "bimkb5oz8mp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "07:52",
+      "timestamp": "2026-03-15T05:52:00.000Z"
+    },
+    {
+      "id": "14sycpqnhmp7a0hp5",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:33",
+      "timestamp": "2026-03-15T05:29:00.000Z"
+    },
+    {
+      "id": "c2fsyrhfkmp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "19:17",
+      "timestamp": "2026-03-14T17:17:00.000Z"
+    },
+    {
+      "id": "g4vosznlvmp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "13:05",
+      "timestamp": "2026-03-14T11:05:00.000Z"
+    },
+    {
+      "id": "mv9ch7jfjmp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "07:51",
+      "timestamp": "2026-03-14T05:51:00.000Z"
+    },
+    {
+      "id": "30xv3aiuymp7a0hp5",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:40",
+      "timestamp": "2026-03-14T05:41:00.000Z"
+    },
+    {
+      "id": "usrwatnocmp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 10,
+      "time": "19:20",
+      "timestamp": "2026-03-13T17:20:00.000Z"
+    },
+    {
+      "id": "01yfkxaltmp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "13:14",
+      "timestamp": "2026-03-13T11:14:00.000Z"
+    },
+    {
+      "id": "rpoco99zxmp7a0hp5",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:40",
+      "timestamp": "2026-03-13T05:29:00.000Z"
+    },
+    {
+      "id": "0rxpu1formp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "19:07",
+      "timestamp": "2026-03-12T17:07:00.000Z"
+    },
+    {
+      "id": "7m9jmn0n4mp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "13:15",
+      "timestamp": "2026-03-12T11:15:00.000Z"
+    },
+    {
+      "id": "1r9jnokk2mp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "07:43",
+      "timestamp": "2026-03-12T05:43:00.000Z"
+    },
+    {
+      "id": "mt918di8fmp7a0hp5",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:30",
+      "timestamp": "2026-03-12T05:25:00.000Z"
+    },
+    {
+      "id": "8dpro7836mp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 10,
+      "time": "19:12",
+      "timestamp": "2026-03-11T17:12:00.000Z"
+    },
+    {
+      "id": "u0yz1n2kdmp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "13:14",
+      "timestamp": "2026-03-11T11:14:00.000Z"
+    },
+    {
+      "id": "1sq97aplcmp7a0hp5",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:38",
+      "timestamp": "2026-03-11T05:41:00.000Z"
+    },
+    {
+      "id": "5m7rrglitmp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "07:41",
+      "timestamp": "2026-03-11T05:41:00.000Z"
+    },
+    {
+      "id": "1pf4h9492mp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "19:20",
+      "timestamp": "2026-03-10T17:20:00.000Z"
+    },
+    {
+      "id": "gqdhmnruomp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "13:08",
+      "timestamp": "2026-03-10T11:08:00.000Z"
+    },
+    {
+      "id": "3xmre1hscmp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 10,
+      "time": "07:47",
+      "timestamp": "2026-03-10T05:47:00.000Z"
+    },
+    {
+      "id": "uwxpsil5tmp7a0hp5",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:33",
+      "timestamp": "2026-03-10T05:37:00.000Z"
+    },
+    {
+      "id": "phsllgkj3mp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "19:19",
+      "timestamp": "2026-03-09T17:19:00.000Z"
+    },
+    {
+      "id": "d6axyy3ohmp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "13:07",
+      "timestamp": "2026-03-09T11:07:00.000Z"
+    },
+    {
+      "id": "dyud14lxrmp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "07:54",
+      "timestamp": "2026-03-09T05:54:00.000Z"
+    },
+    {
+      "id": "tr0sk7iwwmp7a0hp5",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:41",
+      "timestamp": "2026-03-09T05:28:00.000Z"
+    },
+    {
+      "id": "0yk4sk6q9mp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "19:05",
+      "timestamp": "2026-03-08T17:05:00.000Z"
+    },
+    {
+      "id": "ekwd9464pmp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "13:11",
+      "timestamp": "2026-03-08T11:11:00.000Z"
+    },
+    {
+      "id": "lpz0lhcy6mp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "07:54",
+      "timestamp": "2026-03-08T05:54:00.000Z"
+    },
+    {
+      "id": "t87veaw8bmp7a0hp5",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:45",
+      "timestamp": "2026-03-08T05:30:00.000Z"
+    },
+    {
+      "id": "qqdql2hipmp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "19:15",
+      "timestamp": "2026-03-07T17:15:00.000Z"
+    },
+    {
+      "id": "2diofvttnmp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "07:51",
+      "timestamp": "2026-03-07T05:51:00.000Z"
+    },
+    {
+      "id": "908rdy92smp7a0hp5",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:44",
+      "timestamp": "2026-03-07T05:26:00.000Z"
+    },
+    {
+      "id": "w66xu5iskmp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 10,
+      "time": "19:12",
+      "timestamp": "2026-03-06T17:12:00.000Z"
+    },
+    {
+      "id": "6a5r2o2ekmp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "13:10",
+      "timestamp": "2026-03-06T11:10:00.000Z"
+    },
+    {
+      "id": "wvsq6u4qemp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 10,
+      "time": "07:41",
+      "timestamp": "2026-03-06T05:41:00.000Z"
+    },
+    {
+      "id": "3g466c3q2mp7a0hp5",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:40",
+      "timestamp": "2026-03-06T05:28:00.000Z"
+    },
+    {
+      "id": "zvfftxd2lmp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "19:08",
+      "timestamp": "2026-03-05T17:08:00.000Z"
+    },
+    {
+      "id": "gv87lp9rhmp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "13:01",
+      "timestamp": "2026-03-05T11:01:00.000Z"
+    },
+    {
+      "id": "rnwzrnw9bmp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "07:42",
+      "timestamp": "2026-03-05T05:42:00.000Z"
+    },
+    {
+      "id": "c1rthsp7imp7a0hp5",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:39",
+      "timestamp": "2026-03-05T05:33:00.000Z"
+    },
+    {
+      "id": "31wmn23f7mp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 10,
+      "time": "19:06",
+      "timestamp": "2026-03-04T17:06:00.000Z"
+    },
+    {
+      "id": "akfkvs2bymp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "13:00",
+      "timestamp": "2026-03-04T11:00:00.000Z"
+    },
+    {
+      "id": "hrvxybtwvmp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "07:55",
+      "timestamp": "2026-03-04T05:55:00.000Z"
+    },
+    {
+      "id": "vyv2z5oz3mp7a0hp5",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:32",
+      "timestamp": "2026-03-04T05:25:00.000Z"
+    },
+    {
+      "id": "24nuwc5hwmp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "19:14",
+      "timestamp": "2026-03-03T17:14:00.000Z"
+    },
+    {
+      "id": "nulk2xhx4mp7a0hp5",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "13:06",
+      "timestamp": "2026-03-03T11:06:00.000Z"
+    },
+    {
+      "id": "ip0ymo2xqmp7a0hp5",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:34",
+      "timestamp": "2026-03-03T05:30:00.000Z"
+    },
+    {
+      "id": "4dzl3ufvdmp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "19:16",
+      "timestamp": "2026-03-02T17:16:00.000Z"
+    },
+    {
+      "id": "z6f4f9iqfmp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "13:12",
+      "timestamp": "2026-03-02T11:12:00.000Z"
+    },
+    {
+      "id": "kp3oemszzmp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "07:46",
+      "timestamp": "2026-03-02T05:46:00.000Z"
+    },
+    {
+      "id": "idoge0l5nmp7a0hp4",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:40",
+      "timestamp": "2026-03-02T05:39:00.000Z"
+    },
+    {
+      "id": "q3jk9jixlmp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "19:17",
+      "timestamp": "2026-03-01T17:17:00.000Z"
+    },
+    {
+      "id": "hkyo4pxt9mp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "13:15",
+      "timestamp": "2026-03-01T11:15:00.000Z"
+    },
+    {
+      "id": "m2chqwogymp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "07:52",
+      "timestamp": "2026-03-01T05:52:00.000Z"
+    },
+    {
+      "id": "rl3zu19p5mp7a0hp4",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:36",
+      "timestamp": "2026-03-01T05:32:00.000Z"
+    },
+    {
+      "id": "9ff7l498mmp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 10,
+      "time": "19:12",
+      "timestamp": "2026-02-28T17:12:00.000Z"
+    },
+    {
+      "id": "sluqjuyromp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "13:01",
+      "timestamp": "2026-02-28T11:01:00.000Z"
+    },
+    {
+      "id": "17tf4tmfcmp7a0hp4",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:32",
+      "timestamp": "2026-02-28T05:41:00.000Z"
+    },
+    {
+      "id": "tv016b0oemp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "19:13",
+      "timestamp": "2026-02-27T17:13:00.000Z"
+    },
+    {
+      "id": "moj3abi5imp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "13:02",
+      "timestamp": "2026-02-27T11:02:00.000Z"
+    },
+    {
+      "id": "qwhf2loc3mp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 10,
+      "time": "07:42",
+      "timestamp": "2026-02-27T05:42:00.000Z"
+    },
+    {
+      "id": "dhigmhw0bmp7a0hp4",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:25",
+      "timestamp": "2026-02-27T05:31:00.000Z"
+    },
+    {
+      "id": "c7vt9cq6gmp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "19:09",
+      "timestamp": "2026-02-26T17:09:00.000Z"
+    },
+    {
+      "id": "dm3y9q670mp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "13:08",
+      "timestamp": "2026-02-26T11:08:00.000Z"
+    },
+    {
+      "id": "vijamyufmmp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "07:42",
+      "timestamp": "2026-02-26T05:42:00.000Z"
+    },
+    {
+      "id": "viusrf9k3mp7a0hp4",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:38",
+      "timestamp": "2026-02-26T05:30:00.000Z"
+    },
+    {
+      "id": "9csidvo52mp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 10,
+      "time": "19:16",
+      "timestamp": "2026-02-25T17:16:00.000Z"
+    },
+    {
+      "id": "336h77evqmp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "13:01",
+      "timestamp": "2026-02-25T11:01:00.000Z"
+    },
+    {
+      "id": "6ptv85xfmmp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "07:53",
+      "timestamp": "2026-02-25T05:53:00.000Z"
+    },
+    {
+      "id": "2lp5ba155mp7a0hp4",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:27",
+      "timestamp": "2026-02-25T05:36:00.000Z"
+    },
+    {
+      "id": "kb62sxw6rmp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "13:10",
+      "timestamp": "2026-02-24T11:10:00.000Z"
+    },
+    {
+      "id": "f74sg2g24mp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "07:40",
+      "timestamp": "2026-02-24T05:40:00.000Z"
+    },
+    {
+      "id": "8eyydvvf5mp7a0hp4",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:44",
+      "timestamp": "2026-02-24T05:38:00.000Z"
+    },
+    {
+      "id": "6gh4se6czmp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "19:17",
+      "timestamp": "2026-02-23T17:17:00.000Z"
+    },
+    {
+      "id": "qsa46tw4jmp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "13:15",
+      "timestamp": "2026-02-23T11:15:00.000Z"
+    },
+    {
+      "id": "wgtal2lxbmp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "07:47",
+      "timestamp": "2026-02-23T05:47:00.000Z"
+    },
+    {
+      "id": "q2tep1iwump7a0hp4",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:40",
+      "timestamp": "2026-02-23T05:42:00.000Z"
+    },
+    {
+      "id": "q8rvjxphamp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "19:10",
+      "timestamp": "2026-02-22T17:10:00.000Z"
+    },
+    {
+      "id": "saprq5u5nmp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "13:14",
+      "timestamp": "2026-02-22T11:14:00.000Z"
+    },
+    {
+      "id": "hbtdgsieymp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "07:43",
+      "timestamp": "2026-02-22T05:43:00.000Z"
+    },
+    {
+      "id": "2ua47p7y7mp7a0hp4",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:33",
+      "timestamp": "2026-02-22T05:26:00.000Z"
+    },
+    {
+      "id": "mun6qkckfmp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "19:11",
+      "timestamp": "2026-02-21T17:11:00.000Z"
+    },
+    {
+      "id": "xnsqwqul6mp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "13:07",
+      "timestamp": "2026-02-21T11:07:00.000Z"
+    },
+    {
+      "id": "vw0wggqzpmp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "07:49",
+      "timestamp": "2026-02-21T05:49:00.000Z"
+    },
+    {
+      "id": "5fv00dhinmp7a0hp4",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:30",
+      "timestamp": "2026-02-21T05:25:00.000Z"
+    },
+    {
+      "id": "f77e98ia4mp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "19:14",
+      "timestamp": "2026-02-20T17:14:00.000Z"
+    },
+    {
+      "id": "rzjb8jl4emp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "13:07",
+      "timestamp": "2026-02-20T11:07:00.000Z"
+    },
+    {
+      "id": "e0ismaufmmp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "07:48",
+      "timestamp": "2026-02-20T05:48:00.000Z"
+    },
+    {
+      "id": "koom3ui8mmp7a0hp4",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:43",
+      "timestamp": "2026-02-20T05:44:00.000Z"
+    },
+    {
+      "id": "p196gwrskmp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "19:07",
+      "timestamp": "2026-02-19T17:07:00.000Z"
+    },
+    {
+      "id": "txev5ryxlmp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "13:06",
+      "timestamp": "2026-02-19T11:06:00.000Z"
+    },
+    {
+      "id": "5b0ka50tomp7a0hp4",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "07:50",
+      "timestamp": "2026-02-19T05:50:00.000Z"
+    },
+    {
+      "id": "fk37kp2b1mp7a0hp4",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:42",
+      "timestamp": "2026-02-19T05:26:00.000Z"
+    },
+    {
+      "id": "mrlg6w5zrmp7a0hp3",
+      "type": "Rapid-acting",
+      "units": 11,
+      "time": "19:19",
+      "timestamp": "2026-02-18T17:19:00.000Z"
+    },
+    {
+      "id": "qune2evadmp7a0hp3",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "13:08",
+      "timestamp": "2026-02-18T11:08:00.000Z"
+    },
+    {
+      "id": "1xoz7sco2mp7a0hp3",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "07:51",
+      "timestamp": "2026-02-18T05:51:00.000Z"
+    },
+    {
+      "id": "m4xiadetlmp7a0hp3",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:30",
+      "timestamp": "2026-02-18T05:41:00.000Z"
+    },
+    {
+      "id": "psmapg6pfmp7a0hp3",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "19:16",
+      "timestamp": "2026-02-17T17:16:00.000Z"
+    },
+    {
+      "id": "dcztvg4m8mp7a0hp3",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "13:00",
+      "timestamp": "2026-02-17T11:00:00.000Z"
+    },
+    {
+      "id": "ct56kfy4omp7a0hp3",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "07:44",
+      "timestamp": "2026-02-17T05:44:00.000Z"
+    },
+    {
+      "id": "b3yjxjnhhmp7a0hp3",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:39",
+      "timestamp": "2026-02-17T05:41:00.000Z"
+    },
+    {
+      "id": "e0llcgb6lmp7a0hp3",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "19:13",
+      "timestamp": "2026-02-16T17:13:00.000Z"
+    },
+    {
+      "id": "bpofrh4qmmp7a0hp3",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "13:09",
+      "timestamp": "2026-02-16T11:09:00.000Z"
+    },
+    {
+      "id": "hglkllrixmp7a0hp3",
+      "type": "Rapid-acting",
+      "units": 9,
+      "time": "07:49",
+      "timestamp": "2026-02-16T05:49:00.000Z"
+    },
+    {
+      "id": "zlwroyj0hmp7a0hp3",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:41",
+      "timestamp": "2026-02-16T05:37:00.000Z"
+    },
+    {
+      "id": "9ivad9ly7mp7a0hp3",
+      "type": "Rapid-acting",
+      "units": 8,
+      "time": "19:19",
+      "timestamp": "2026-02-15T17:19:00.000Z"
+    },
+    {
+      "id": "cngr3lq2cmp7a0hp3",
+      "type": "Rapid-acting",
+      "units": 7,
+      "time": "13:09",
+      "timestamp": "2026-02-15T11:09:00.000Z"
+    },
+    {
+      "id": "lbdhit7jcmp7a0hp3",
+      "type": "Rapid-acting",
+      "units": 6,
+      "time": "07:44",
+      "timestamp": "2026-02-15T05:44:00.000Z"
+    },
+    {
+      "id": "nnm7es1b9mp7a0hp2",
+      "type": "Long-acting",
+      "units": 15,
+      "time": "07:43",
+      "timestamp": "2026-02-15T05:37:00.000Z"
+    }
+  ],
+  "savedMeals": []
+}

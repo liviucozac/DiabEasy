@@ -2,7 +2,7 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import {
   View, Text, ScrollView, TextInput,
-  TouchableOpacity, StyleSheet, Platform, Dimensions, PanResponder, Alert, Modal,
+  TouchableOpacity, StyleSheet, Platform, Dimensions, PanResponder, Alert, Modal, Animated,
 } from 'react-native';
 import { EmptyState } from '../components/EmptyState';
 import { PressBtn } from '../components/PressBtn';
@@ -17,6 +17,69 @@ import { useTranslation } from '../hooks/useTranslation';
 
 type HistoryEntry = GlucoseEntry;
 
+// ─── PDF Loading Modal ────────────────────────────────────────────────────────
+
+function PdfLoadingModal({ visible, title, body }: { visible: boolean; title?: string; body?: string }) {
+  const { colors, isDark } = useTheme();
+  const t = useTranslation();
+
+  const spin  = useRef(new Animated.Value(0)).current;
+  const pulse = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (!visible) return;
+    spin.setValue(0);
+    pulse.setValue(1);
+
+    const spinAnim = Animated.loop(
+      Animated.timing(spin, { toValue: 1, duration: 1100, useNativeDriver: true })
+    );
+    const pulseAnim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1.3, duration: 550, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1.0, duration: 550, useNativeDriver: true }),
+      ])
+    );
+    spinAnim.start();
+    pulseAnim.start();
+    return () => {
+      spinAnim.stop();
+      pulseAnim.stop();
+      spin.setValue(0);
+      pulse.setValue(1);
+    };
+  }, [visible]);
+
+  const rotate = spin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" statusBarTranslucent>
+      <View style={pls.overlay}>
+        <View style={[pls.card, { backgroundColor: isDark ? '#1e1e1e' : '#ffffff', shadowColor: '#000' }]}>
+          <View style={pls.animWrap}>
+            {/* Spinning ring */}
+            <Animated.View style={[pls.ring, { borderColor: colors.red, transform: [{ rotate }] }]} />
+            {/* Pulsing centre dot */}
+            <Animated.View style={[pls.dot, { backgroundColor: colors.red, transform: [{ scale: pulse }] }]} />
+          </View>
+          <Text style={[pls.title, { color: colors.text }]}>{title ?? t.preparingPdf}</Text>
+          <Text style={[pls.body,  { color: colors.textMuted }]}>{body ?? t.preparingPdfBody}</Text>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const pls = StyleSheet.create({
+  overlay:  { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' },
+  card:     { width: 260, borderRadius: 18, padding: 28, alignItems: 'center', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.18, shadowRadius: 20, elevation: 12 },
+  animWrap: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
+  ring:     { position: 'absolute', width: 72, height: 72, borderRadius: 36, borderWidth: 4, borderRightColor: 'transparent', borderBottomColor: 'transparent' },
+  dot:      { width: 22, height: 22, borderRadius: 11 },
+  title:    { fontSize: 15, fontWeight: '700', textAlign: 'center', marginBottom: 6 },
+  body:     { fontSize: 12, textAlign: 'center', lineHeight: 18 },
+});
+
 const statusIcon = (interpretation: string): string =>
   interpretation === 'Low' ? '↓' : interpretation === 'High' ? '↑' : '✓';
 
@@ -28,7 +91,7 @@ const getColorClass = (value: number, unit: string, lowMgdl = 70, highMgdl = 180
   return 'high';
 };
 
-function LineChart({ data, colors }: { data: HistoryEntry[]; colors: any }) {
+function LineChart({ data, colors, displayUnit = 'mg/dL' }: { data: HistoryEntry[]; colors: any; displayUnit?: Unit }) {
   const { settings } = useGlucoseStore();
   const W = Dimensions.get('window').width - 64;
   const H = 160;
@@ -38,16 +101,20 @@ function LineChart({ data, colors }: { data: HistoryEntry[]; colors: any }) {
 
   if (data.length < 2) return null;
 
-  const Y_MIN = 0;
-  const Y_MAX = 220;
-  const Y_TICKS = [0, 50, 100, 150, 200];
+  const isMmol = displayUnit === 'mmol/L';
+  const Y_MAX   = isMmol ? 13 : 220;
+  const Y_TICKS = isMmol ? [0, 3, 6, 9, 12] : [0, 50, 100, 150, 200];
+
+  const toDisplay = (e: HistoryEntry) =>
+    e.unit === displayUnit ? e.value
+      : displayUnit === 'mmol/L' ? e.value / 18.0182 : e.value * 18.0182;
 
   const toY = (val: number) =>
-    PAD.top + chartH - (Math.min(Math.max(val, Y_MIN), Y_MAX) / Y_MAX) * chartH;
+    PAD.top + chartH - (Math.min(Math.max(val, 0), Y_MAX) / Y_MAX) * chartH;
 
   const pts = data.map((e, i) => ({
     x: PAD.left + (i / (data.length - 1)) * chartW,
-    y: toY(e.value),
+    y: toY(toDisplay(e)),
     entry: e,
   }));
 
@@ -66,7 +133,7 @@ function LineChart({ data, colors }: { data: HistoryEntry[]; colors: any }) {
             <Line x1={PAD.left} y1={y} x2={W - PAD.right} y2={y}
               stroke={colors.border} strokeWidth={1} strokeDasharray="3,3" />
             <SvgText x={PAD.left - 6} y={y + 4} fontSize={9} fill={colors.textMuted} textAnchor="end">
-              {val === 200 ? '200+' : val}
+              {isMmol ? val.toFixed(0) : val === 200 ? '200+' : val}
             </SvgText>
           </G>
         );
@@ -94,7 +161,7 @@ function LineChart({ data, colors }: { data: HistoryEntry[]; colors: any }) {
   );
 }
 
-function ExpandedLineChart({ data, colors }: { data: HistoryEntry[]; colors: any }) {
+function ExpandedLineChart({ data, colors, displayUnit = 'mg/dL' }: { data: HistoryEntry[]; colors: any; displayUnit?: Unit }) {
   const { settings } = useGlucoseStore();
   const screenW = Dimensions.get('window').width;
   const POINT_W = 56;
@@ -106,16 +173,20 @@ function ExpandedLineChart({ data, colors }: { data: HistoryEntry[]; colors: any
 
   if (data.length < 2) return null;
 
-  const Y_MIN = 0;
-  const Y_MAX = 220;
-  const Y_TICKS = [0, 50, 100, 150, 200];
+  const isMmol = displayUnit === 'mmol/L';
+  const Y_MAX   = isMmol ? 13 : 220;
+  const Y_TICKS = isMmol ? [0, 3, 6, 9, 12] : [0, 50, 100, 150, 200];
+
+  const toDisplay = (e: HistoryEntry) =>
+    e.unit === displayUnit ? e.value
+      : displayUnit === 'mmol/L' ? e.value / 18.0182 : e.value * 18.0182;
 
   const toY = (val: number) =>
-    PAD.top + chartH - (Math.min(Math.max(val, Y_MIN), Y_MAX) / Y_MAX) * chartH;
+    PAD.top + chartH - (Math.min(Math.max(val, 0), Y_MAX) / Y_MAX) * chartH;
 
   const pts = data.map((e, i) => ({
     x: PAD.left + (i / (data.length - 1)) * chartW_inner,
-    y: toY(e.value),
+    y: toY(toDisplay(e)),
     entry: e,
   }));
 
@@ -130,7 +201,7 @@ function ExpandedLineChart({ data, colors }: { data: HistoryEntry[]; colors: any
             <Line x1={PAD.left} y1={y} x2={totalW - PAD.right} y2={y}
               stroke={colors.border} strokeWidth={1} strokeDasharray="3,3" />
             <SvgText x={PAD.left - 6} y={y + 4} fontSize={9} fill={colors.textMuted} textAnchor="end">
-              {val === 200 ? '200+' : val}
+              {isMmol ? val.toFixed(0) : val === 200 ? '200+' : val}
             </SvgText>
           </G>
         );
@@ -207,13 +278,22 @@ function PieChart({ normal, high, low, colors }: { normal: number; high: number;
         {arcs.map((arc, i) => (
           <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
             <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: arc.color }} />
-            <Text style={{ fontSize: 12, color: colors.textMuted }}>{arc.label} ({arc.value})</Text>
+            <Text style={{ fontSize: 12, color: colors.textMuted }}>{arc.label} {(arc.fraction * 100).toFixed(0)}% ({arc.value})</Text>
           </View>
         ))}
       </View>
     </View>
   );
 }
+
+const getInterpretation = (e: GlucoseEntry, lowMgdl: number, highMgdl: number): 'Low' | 'Normal' | 'High' => {
+  if (e.interpretation === 'Low' || e.interpretation === 'High' || e.interpretation === 'Normal')
+    return e.interpretation as 'Low' | 'Normal' | 'High';
+  const mgdl = e.unit === 'mmol/L' ? e.value * 18.0182 : e.value;
+  if (mgdl < lowMgdl)  return 'Low';
+  if (mgdl > highMgdl) return 'High';
+  return 'Normal';
+};
 
 export default function HistoryScreen() {
   const { history, removeEntry, insulinEntries, profile, settings, caregiverSession, setCaregiverSession } = useGlucoseStore();
@@ -250,6 +330,14 @@ useEffect(() => {
   const interpretationLabel = (interp: string) =>
     interp === 'Low' ? t.statusLow : interp === 'High' ? t.statusHigh : t.statusNormal;
 
+  const [pdfLoading,     setPdfLoading]     = useState(false);
+  const [tabLoading,     setTabLoading]     = useState(() => history.length > 30);
+
+  useEffect(() => {
+    if (!tabLoading) return;
+    const t = setTimeout(() => setTabLoading(false), 350);
+    return () => clearTimeout(t);
+  }, []);
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo,   setFilterDateTo]   = useState('');
   const [filterMin,      setFilterMin]      = useState('');
@@ -345,9 +433,9 @@ useEffect(() => {
     return filteredHistory.some(e => new Date(e.timestamp).getTime() < cutoff);
   }, [filteredHistory, isPremium]);
 
-  const pieNormal = filteredHistory.filter(e => e.interpretation === 'Normal').length;
-  const pieHigh   = filteredHistory.filter(e => e.interpretation === 'High').length;
-  const pieLow    = filteredHistory.filter(e => e.interpretation === 'Low').length;
+  const pieNormal = filteredHistory.filter(e => getInterpretation(e, glucoseLow, glucoseHigh) === 'Normal').length;
+  const pieHigh   = filteredHistory.filter(e => getInterpretation(e, glucoseLow, glucoseHigh) === 'High').length;
+  const pieLow    = filteredHistory.filter(e => getInterpretation(e, glucoseLow, glucoseHigh) === 'Low').length;
   const totalReadings = filteredHistory.length;
 
   const avgGlucoseMgDl = useMemo(() => {
@@ -410,12 +498,16 @@ useEffect(() => {
     const d = new Date(entry.timestamp);
     const date = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
     const time = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    const dispUnit = settings.glucoseUnit;
+    const dispVal  = entry.unit !== dispUnit
+      ? dispUnit === 'mmol/L' ? (entry.value / 18.0182).toFixed(1) : String(Math.round(entry.value * 18.0182))
+      : dispUnit === 'mmol/L' ? entry.value.toFixed(1) : String(entry.value);
     return (
       <View key={entry.id} style={[styles.historyItem, { backgroundColor: colors.bgSecondary, borderColor: colors.bgSecondary, borderBottomColor: barColor }]}>
         <View style={styles.entryRow}>
           <Text style={[styles.entryDate,  { color: colors.text }]}>{date}</Text>
           <Text style={[styles.entryTime,  { color: colors.textMuted }]}>{time}</Text>
-          <Text style={[styles.entryValue, { color: colors.text }]}>{entry.value} {entry.unit}</Text>
+          <Text style={[styles.entryValue, { color: colors.text }]}>{dispVal} {dispUnit}</Text>
           <Text style={[styles.entryBadge, { color: barColor }]}>{statusIcon(entry.interpretation)} {interpretationLabel(entry.interpretation)}</Text>
           {!caregiverSession && (
             <TouchableOpacity onPress={() => removeEntry(entry.id)} activeOpacity={0.7}>
@@ -432,6 +524,8 @@ useEffect(() => {
   const inputStyle = [styles.filterInput, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }];
 
   const exportPDF = async (basic: boolean = false) => {
+    setPdfLoading(true);
+    await new Promise(r => setTimeout(r, 350));
     const toMgdL = (value: number, unit: Unit) => unit === 'mmol/L' ? value * 18.0182 : value;
     const sevenDaysAgo = Date.now() - 7 * 86_400_000;
     const pdfData = basic
@@ -514,35 +608,54 @@ useEffect(() => {
     }).filter(Boolean).join('');
 
     const chartEntries = [...pdfData].reverse();
-    const svgLineChart = (() => {
+    const svgLineCharts = (() => {
       if (chartEntries.length < 2) return '';
-      const W = 560, H = 150, padL = 44, padR = 12, padT = 12, padB = 32;
-      const vals = chartEntries.map(e => e.value);
-      const minV = Math.min(...vals), maxV = Math.max(...vals);
-      const rng  = maxV - minV || 1;
-      const xStep = (W - padL - padR) / (chartEntries.length - 1);
-      const toX = (i: number) => padL + i * xStep;
-      const toY = (v: number) => padT + (H - padT - padB) * (1 - (v - minV) / rng);
-      const points  = chartEntries.map((e, i) => `${toX(i).toFixed(1)},${toY(e.value).toFixed(1)}`).join(' ');
-      const dots    = chartEntries.map((e, i) => {
-        const col = e.interpretation === 'Low' ? '#e53935' : e.interpretation === 'High' ? '#ef6c00' : '#2e7d32';
-        return `<circle cx="${toX(i).toFixed(1)}" cy="${toY(e.value).toFixed(1)}" r="3" fill="${col}" stroke="#fff" stroke-width="1"/>`;
+      const W = 560, H = 130, padL = 44, padR = 12, padT = 12, padB = 30;
+      const windowMs = 14 * 86_400_000;
+      const latestTs  = new Date(chartEntries[chartEntries.length - 1].timestamp).getTime();
+      const earliestTs = new Date(chartEntries[0].timestamp).getTime();
+      const windows: (typeof chartEntries)[] = [];
+      let wEnd = latestTs + 1;
+      while (wEnd > earliestTs) {
+        const wStart = wEnd - windowMs;
+        const chunk = chartEntries.filter(e => {
+          const ts = new Date(e.timestamp).getTime();
+          return ts >= wStart && ts < wEnd;
+        });
+        if (chunk.length >= 2) windows.push(chunk);
+        wEnd = wStart;
+      }
+      return windows.map(chunk => {
+        const vals = chunk.map(e => e.value);
+        const minV = Math.min(...vals), maxV = Math.max(...vals);
+        const rng  = maxV - minV || 1;
+        const toX  = (i: number) => padL + (i / (chunk.length - 1)) * (W - padL - padR);
+        const toY  = (v: number) => padT + (H - padT - padB) * (1 - (v - minV) / rng);
+        const points = chunk.map((e, i) => `${toX(i).toFixed(1)},${toY(e.value).toFixed(1)}`).join(' ');
+        const dots   = chunk.map((e, i) => {
+          const col = e.interpretation === 'Low' ? '#e53935' : e.interpretation === 'High' ? '#ef6c00' : '#2e7d32';
+          return `<circle cx="${toX(i).toFixed(1)}" cy="${toY(e.value).toFixed(1)}" r="3" fill="${col}" stroke="#fff" stroke-width="1"/>`;
+        }).join('');
+        const lblCount = Math.min(7, chunk.length);
+        const xLabels  = Array.from({ length: lblCount }, (_, k) => {
+          const idx = Math.round((k / (lblCount - 1)) * (chunk.length - 1));
+          const td  = new Date(chunk[idx].timestamp);
+          const lbl = `${String(td.getDate()).padStart(2,'0')}/${String(td.getMonth()+1).padStart(2,'0')}`;
+          return `<text x="${toX(idx).toFixed(1)}" y="${H - 4}" text-anchor="middle" font-size="7" fill="#999">${lbl}</text>`;
+        }).join('');
+        const yTicks = [minV, (minV + maxV) / 2, maxV].map(v =>
+          `<line x1="${padL}" y1="${toY(v).toFixed(1)}" x2="${W - padR}" y2="${toY(v).toFixed(1)}" stroke="#f0f0f0" stroke-width="1"/><text x="${padL - 4}" y="${toY(v).toFixed(1)}" text-anchor="end" dominant-baseline="middle" font-size="7" fill="#999">${v.toFixed(0)}</text>`
+        ).join('');
+        const s  = new Date(chunk[0].timestamp);
+        const ed = new Date(chunk[chunk.length - 1].timestamp);
+        const period = `${String(s.getDate()).padStart(2,'0')}/${String(s.getMonth()+1).padStart(2,'0')} — ${String(ed.getDate()).padStart(2,'0')}/${String(ed.getMonth()+1).padStart(2,'0')}/${ed.getFullYear()}`;
+        return `<div style="margin-bottom:12px"><div style="font-size:8px;color:#999;margin-bottom:2px">${period} · ${chunk.length} ${L.readings}</div><svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">${yTicks}<polyline points="${points}" fill="none" stroke="#ec5557" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>${dots}${xLabels}<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H - padB}" stroke="#ddd" stroke-width="1"/><line x1="${padL}" y1="${H - padB}" x2="${W - padR}" y2="${H - padB}" stroke="#ddd" stroke-width="1"/></svg></div>`;
       }).join('');
-      const xLabels = Array.from({ length: Math.min(6, chartEntries.length) }, (_, k) => {
-        const idx = Math.round((k / (Math.min(6, chartEntries.length) - 1)) * (chartEntries.length - 1));
-        const td = new Date(chartEntries[idx].timestamp);
-        const lbl = `${String(td.getDate()).padStart(2,'0')}/${String(td.getMonth()+1).padStart(2,'0')}`;
-        return `<text x="${toX(idx).toFixed(1)}" y="${H - 4}" text-anchor="middle" font-size="7" fill="#999">${lbl}</text>`;
-      }).join('');
-      const yTicks = [minV, (minV + maxV) / 2, maxV].map(v =>
-        `<line x1="${padL}" y1="${toY(v).toFixed(1)}" x2="${W - padR}" y2="${toY(v).toFixed(1)}" stroke="#f0f0f0" stroke-width="1"/><text x="${padL - 4}" y="${toY(v).toFixed(1)}" text-anchor="end" dominant-baseline="middle" font-size="7" fill="#999">${v.toFixed(0)}</text>`
-      ).join('');
-      return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">${yTicks}<polyline points="${points}" fill="none" stroke="#ec5557" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>${dots}${xLabels}<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H - padB}" stroke="#ddd" stroke-width="1"/><line x1="${padL}" y1="${H - padB}" x2="${W - padR}" y2="${H - padB}" stroke="#ddd" stroke-width="1"/></svg>`;
     })();
 
-    const pdfPieNormal = pdfData.filter(e => e.interpretation === 'Normal').length;
-    const pdfPieHigh   = pdfData.filter(e => e.interpretation === 'High').length;
-    const pdfPieLow    = pdfData.filter(e => e.interpretation === 'Low').length;
+    const pdfPieNormal = pdfData.filter(e => getInterpretation(e, settings.glucoseLow, settings.glucoseHigh) === 'Normal').length;
+    const pdfPieHigh   = pdfData.filter(e => getInterpretation(e, settings.glucoseLow, settings.glucoseHigh) === 'High').length;
+    const pdfPieLow    = pdfData.filter(e => getInterpretation(e, settings.glucoseLow, settings.glucoseHigh) === 'Low').length;
     const svgPieChart = (() => {
       const total = pdfPieNormal + pdfPieHigh + pdfPieLow;
       if (total === 0) return '';
@@ -579,18 +692,27 @@ useEffect(() => {
       return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">${paths}<circle cx="${cx}" cy="${cy}" r="${innerR}" fill="white"/><text x="${cx}" y="${cy - 5}" text-anchor="middle" font-size="18" font-weight="900" fill="#1a1a1a">${total}</text><text x="${cx}" y="${cy + 12}" text-anchor="middle" font-size="8" fill="#777">readings</text>${legend}</svg>`;
     })();
 
+    const interpLabel: Record<string, string> = { Low: L.low, Normal: L.normal, High: L.high };
+    const ctxLabel: Record<string, string> = Object.fromEntries(
+      CONTEXT_KEYS.map((k, i) => [k, CONTEXT_LABELS[i]])
+    );
+
     const glucoseRows = [...pdfData].reverse().map((e, i) => {
       const bg  = i % 2 === 0 ? '#ffffff' : '#f7f7f7';
       const gd  = new Date(e.timestamp);
       const dp  = `${String(gd.getDate()).padStart(2,'0')}/${String(gd.getMonth()+1).padStart(2,'0')}/${gd.getFullYear()}`;
       const tp  = `${String(gd.getHours()).padStart(2,'0')}:${String(gd.getMinutes()).padStart(2,'0')}`;
-      const col = e.interpretation === 'Low' ? '#e53935' : e.interpretation === 'High' ? '#ef6c00' : '#2e7d32';
-      return `<tr style="background:${bg}"><td>${dp}</td><td>${tp}</td><td style="font-weight:700">${e.value} ${e.unit}</td><td style="color:${col};font-weight:700">${e.interpretation}</td><td>${e.fasting || '-'}</td><td>${e.symptoms || '-'}</td></tr>`;
+      const interp = getInterpretation(e, settings.glucoseLow, settings.glucoseHigh);
+      const col = interp === 'Low' ? '#e53935' : interp === 'High' ? '#ef6c00' : '#2e7d32';
+      const statusStr = interpLabel[interp];
+      const ctxStr    = ctxLabel[e.fasting ?? ''] ?? e.fasting ?? '-';
+      return `<tr style="background:${bg}"><td>${dp}</td><td>${tp}</td><td style="font-weight:700">${e.value} ${e.unit}</td><td style="color:${col};font-weight:700">${statusStr}</td><td>${ctxStr}</td><td>${e.symptoms || '-'}</td></tr>`;
     }).join('');
 
     const insulinRows = displayInsulin.map((e, i) => {
-      const bg = i % 2 === 0 ? '#ffffff' : '#f7f7f7';
-      return `<tr style="background:${bg}"><td>${fmtInsulinDate(e)}</td><td>${e.time}</td><td>${e.type}</td><td style="font-weight:700">${e.units}u</td></tr>`;
+      const bg      = i % 2 === 0 ? '#ffffff' : '#f7f7f7';
+      const typeStr = e.type === 'Rapid-acting' ? t.rapidActing : t.longActing;
+      return `<tr style="background:${bg}"><td>${fmtInsulinDate(e)}</td><td>${e.time}</td><td>${typeStr}</td><td style="font-weight:700">${e.units}u</td></tr>`;
     }).join('');
 
     const css = `
@@ -622,21 +744,45 @@ useEffect(() => {
       td{padding:3px 6px;border-bottom:1px solid #f0f0f0}
       .ctx-th{background:#f5f5f5;color:#555;font-size:8.5px}
       .pg{page-break-before:always}
+      .toc{border:1px solid #e8e8e8;border-radius:8px;padding:10px 16px;margin-bottom:16px;background:#fafafa}
+      .toc-title{font-size:10px;font-weight:700;color:#ec5557;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.6px}
+      .toc-item{display:flex;justify-content:space-between;font-size:8.5px;color:#555;padding:3px 0;border-bottom:1px dotted #e0e0e0}
+      .toc-item:last-child{border-bottom:none}
+      .toc-link{color:#1565c0;text-decoration:none}
+      .sec-anchor{display:block;margin-top:14px}
       .disclaimer-block{margin-top:18px;border:1.5px solid #e53935;border-radius:8px;padding:10px 14px;background:#fff8f8;font-size:8.5px;color:#555;line-height:1.5}
       .footer{margin-top:10px;font-size:7.5px;color:#ccc;text-align:center;border-top:1px solid #eee;padding-top:6px}
     `;
+
+    const tocItems = [
+      { href: '#patient',    label: L.patientInfo },
+      { href: '#metrics',    label: L.keyMetrics },
+      ...(svgPieChart ? [{ href: '#breakdown', label: L.readingsBreakdown }] : []),
+      ...(!basic ? [
+        { href: '#tir',      label: L.timeInRange },
+        ...(contextRows ? [{ href: '#context', label: L.readingsByContext }] : []),
+        ...(svgLineCharts   ? [{ href: '#trend',    label: L.glucoseTrend }] : []),
+      ] : []),
+      { href: '#glog',       label: L.glucoseLog },
+      ...(insulinRows ? [{ href: '#ilog', label: L.insulinLog }] : []),
+    ];
 
     const html = `<html><head><meta charset="utf-8"/><style>${css}</style></head><body>
       <div class="hdr">
         <div><div class="hdr-title">DiabEasy</div><div class="hdr-sub">${L.reportTitle}${basic ? ' · ' + L.basic7day : ''}</div></div>
         <div class="hdr-right">${L.generated}: ${genDate} at ${genTime}<br/>${L.period}: ${dateFrom} — ${dateTo}<br/>${n} ${L.readings} &nbsp;|&nbsp; ${totalInsulin}u ${L.insulinLogged}</div>
       </div>
+      <div class="toc">
+        <div class="toc-title">${L.tableOfContents}</div>
+        ${tocItems.map((item, i) => `<div class="toc-item"><a class="toc-link" href="${item.href}">${i + 1}. ${item.label}</a></div>`).join('')}
+      </div>
+      <a id="patient" class="sec-anchor"></a>
       <div class="patient">
         <div class="patient-header"><span class="patient-header-text">${L.patientInfo}</span></div>
         <div class="patient-body">
           ${[
             { label: L.fullName,      value: profile?.name,          placeholder: L.notProviderUpdateProfile },
-            { label: L.age,           value: profile?.age,           placeholder: L.notProvided },
+            { label: t.dateOfBirth,   value: profile?.age ? profile.age.split('T')[0].split('-').reverse().join('/') : '', placeholder: L.notProvided },
             { label: L.diabetesType,  value: profile?.diabetesType,  placeholder: L.notSpecified },
             { label: L.diagnosisDate, value: profile?.diagnosisDate, placeholder: L.notProvided },
             { label: L.physician,     value: profile?.doctorName,    placeholder: L.notProviderUpdateProfile },
@@ -644,6 +790,8 @@ useEffect(() => {
           ].map(f => `<div class="pf"><div class="pf-label">${f.label}</div>${f.value ? `<div class="pf-value">${f.value}</div>` : `<div class="pf-empty">${f.placeholder}</div>`}</div>`).join('')}
         </div>
       </div>
+      <a id="metrics" class="sec-anchor"></a>
+      <div class="sec">${L.keyMetrics}</div>
       <div class="metrics">
         <div class="mc"><div class="mv" style="color:#ec5557">${avgMgdL !== null ? avgMgdL.toFixed(1) : '—'}</div><div class="ml">${L.avgGlucose}</div><div class="mr">${L.target}: ${settings.targetGlucose} mg/dL</div></div>
         <div class="mc"><div class="mv" style="color:#1565c0">${eHbA1c ?? '—'}%</div><div class="ml">${L.estHba1c}</div><div class="mr">${L.target}: &lt;7.0%</div></div>
@@ -652,17 +800,19 @@ useEffect(() => {
         <div class="mc"><div class="mv" style="color:#555">${cvPercent ?? '—'}%</div><div class="ml">${L.variability}</div><div class="mr"><span class="badge ${cvStable ? 'stable' : 'unstable'}">${cvPercent !== null ? (cvStable ? L.stable : L.unstable) : '—'}</span></div></div>
         <div class="mc"><div class="mv" style="color:#555">${n}</div><div class="ml">${L.totalReadings}</div><div class="mr">${totalInsulin}u ${L.insulinLogged}</div></div>
       </div>
+      ${svgPieChart ? `<a id="breakdown" class="sec-anchor"></a><div class="sec">${L.readingsBreakdown}</div>${svgPieChart}` : ''}
       ${!basic ? `
+      <a id="tir" class="sec-anchor"></a>
       <div class="sec">${L.timeInRange}</div>${svgTIRBar || `<p style="color:#aaa;font-size:10px">${L.noData}</p>`}
-      ${contextRows ? `<div class="sec">${L.readingsByContext}</div><table><thead><tr class="ctx-th"><th class="ctx-th">${L.context}</th><th class="ctx-th">${L.readings}</th><th class="ctx-th">${L.avg}</th><th class="ctx-th">${L.min}</th><th class="ctx-th">${L.max}</th><th class="ctx-th">${L.inRange}</th></tr></thead><tbody>${contextRows}</tbody></table>` : ''}
-      ${svgLineChart ? `<div class="sec">${L.glucoseTrend}</div>${svgLineChart}` : ''}
-      ${svgPieChart ? `<div class="sec">${L.readingsBreakdown}</div>${svgPieChart}` : ''}
+      ${contextRows ? `<a id="context" class="sec-anchor"></a><div class="sec">${L.readingsByContext}</div><table><thead><tr class="ctx-th"><th class="ctx-th">${L.context}</th><th class="ctx-th">${L.readings}</th><th class="ctx-th">${L.avg}</th><th class="ctx-th">${L.min}</th><th class="ctx-th">${L.max}</th><th class="ctx-th">${L.inRange}</th></tr></thead><tbody>${contextRows}</tbody></table>` : ''}
+      ${svgLineCharts ? `<a id="trend" class="sec-anchor"></a><div class="sec">${L.glucoseTrend}</div>${svgLineCharts}` : ''}
       ` : `<div style="border:1.5px dashed #ec5557;border-radius:8px;padding:10px 14px;margin:14px 0;text-align:center;color:#ec5557;font-size:10px;font-weight:700">📊 ${L.chartsInPremium}</div>`}
       <div class="pg"></div>
+      <a id="glog" class="sec-anchor"></a>
       <div class="sec">${L.glucoseLog}</div>
       <table><thead><tr><th>${L.date}</th><th>${L.time}</th><th>${L.glucose}</th><th>${L.status}</th><th>${L.context}</th><th>${L.notes}</th></tr></thead>
       <tbody>${glucoseRows || `<tr><td colspan="6" style="text-align:center;color:#aaa;padding:10px;font-style:italic">${L.noGlucoseData}</td></tr>`}</tbody></table>
-      ${insulinRows ? `<div class="sec" style="margin-top:14px">${L.insulinLog}</div><table><thead><tr><th>${L.date}</th><th>${L.time}</th><th>${L.type}</th><th>${L.units}</th></tr></thead><tbody>${insulinRows}</tbody></table>` : ''}
+      ${insulinRows ? `<a id="ilog" class="sec-anchor"></a><div class="sec" style="margin-top:14px">${L.insulinLog}</div><table><thead><tr><th>${L.date}</th><th>${L.time}</th><th>${L.type}</th><th>${L.units}</th></tr></thead><tbody>${insulinRows}</tbody></table>` : ''}
       <div class="disclaimer-block">${L.disclaimer}</div>
       <div class="footer">${L.generated}: ${genDate} at ${genTime}</div>
     </body></html>`;
@@ -673,10 +823,15 @@ useEffect(() => {
     } catch (error) {
       console.error('PDF export error:', error);
       Alert.alert(t.exportFailed, t.exportFailedBody);
+    } finally {
+      setPdfLoading(false);
     }
   };
 
   return (
+    <>
+    <PdfLoadingModal visible={pdfLoading} />
+    <PdfLoadingModal visible={tabLoading} title={t.loadingHistory} body={t.loadingHistoryBody} />
     <ScrollView
       style={[styles.container, { backgroundColor: colors.bg }]}
       contentContainerStyle={styles.contentContainer}
@@ -770,6 +925,9 @@ useEffect(() => {
                 <Text style={[styles.upgradeLinkText, { color: colors.red }]}>{t.unlockFullReports}</Text>
               </TouchableOpacity>
             )}
+          <Text style={[styles.upgradeLinkText, { color: colors.textMuted, textAlign: 'center', marginBottom: 4, fontSize: 11 }]}>
+            {t.pdfExportDisclaimer}
+          </Text>
         </View>
       )}
 
@@ -900,7 +1058,7 @@ useEffect(() => {
             <Text style={{ fontSize: 11, fontWeight: '600', color: colors.red }}>{t.expandChart}</Text>
           </TouchableOpacity>
           <View style={{ alignItems: 'center', marginVertical: 8 }}>
-            <LineChart data={chartData} colors={colors} />
+            <LineChart data={chartData} colors={colors} displayUnit={settings.glucoseUnit} />
           </View>
           <View style={styles.lineLegend}>
             {[{ label: t.statusLow, color: colors.low }, { label: t.statusNormal, color: colors.normal }, { label: t.statusHigh, color: colors.high }].map(l => (
@@ -921,7 +1079,7 @@ useEffect(() => {
                   </TouchableOpacity>
                 </View>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  <ExpandedLineChart data={chartData} colors={colors} />
+                  <ExpandedLineChart data={chartData} colors={colors} displayUnit={settings.glucoseUnit} />
                 </ScrollView>
                 <View style={[styles.lineLegend, { marginTop: 12 }]}>
                   {[{ label: t.statusLow, color: colors.low }, { label: t.statusNormal, color: colors.normal }, { label: t.statusHigh, color: colors.high }].map(l => (
@@ -963,6 +1121,9 @@ useEffect(() => {
                 weeklyAverages.map((week, i) => {
                   const color = week.avg < 75 ? colors.low : week.avg <= 150 ? colors.normal : colors.high;
                   const label = week.avg < 75 ? t.statusLow : week.avg <= 150 ? t.statusNormal : t.statusHigh;
+                  const dispAvg = settings.glucoseUnit === 'mmol/L'
+                    ? (week.avg / 18.0182).toFixed(1)
+                    : String(week.avg);
                   return (
                     <View key={i} style={{
                       flexDirection: 'row', justifyContent: 'space-between',
@@ -973,7 +1134,7 @@ useEffect(() => {
                         {t.weekOf} {week.weekStart.substring(5).replace('-', '/')}
                       </Text>
                       <Text style={{ fontSize: 12, color: colors.textMuted }}>{t.weeklyReadingsCount(week.count)}</Text>
-                      <Text style={{ fontSize: 13, fontWeight: '700', color }}>{week.avg} mg/dL</Text>
+                      <Text style={{ fontSize: 13, fontWeight: '700', color }}>{dispAvg} {settings.glucoseUnit}</Text>
                       <Text style={{ fontSize: 11, fontWeight: '600', color }}>{label}</Text>
                     </View>
                   );
@@ -996,6 +1157,7 @@ useEffect(() => {
         </TouchableOpacity>
       )}
     </ScrollView>
+    </>
   );
 }
 

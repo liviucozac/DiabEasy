@@ -18,6 +18,7 @@ import {
 } from '../utils/notificationUtils';
 import { LockScreen } from '../components/LockScreen';
 import { ConsentModal } from '../components/ConsentModal';
+import { LanguagePromptModal } from '../components/LanguagePromptModal';
 import {
   onAuthStateChanged, signIn, signUp, sendPasswordReset,
 } from '../utils/firebaseAuth';
@@ -29,6 +30,7 @@ import { useSubscriptionStore } from '../store/subscriptionStore';
 import { router } from 'expo-router';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
+import {Alert } from 'react-native';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -73,6 +75,13 @@ function AuthGateScreen() {
 
   // ─── Email / Password Auth ────────────────────────────────────────────────
 
+  const criteria = [
+  { id: 'len',     label: t.criteriaLength  ?? 'At least 8 characters',          test: (p: string) => p.length >= 8 },
+  { id: 'upper',   label: t.criteriaUpper   ?? 'One uppercase letter',            test: (p: string) => /[A-Z]/.test(p) },
+  { id: 'num',     label: t.criteriaNumber  ?? 'One number',                      test: (p: string) => /[0-9]/.test(p) },
+  { id: 'special', label: t.criteriaSpecial ?? 'One special character (!@#$%...)',test: (p: string) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(p) },
+];
+
   const handleAuth = async () => {
     if (!email.trim() || !password.trim()) { setError(t.pleaseEnterEmailAndPassword); return; }
     if (mode === 'signup') {
@@ -90,17 +99,17 @@ function AuthGateScreen() {
       checkFirebasePremium().then(ok => { if (ok) setPremiumPaid(true); }).catch(() => {});
       setEmail(''); setPassword(''); setConfirmPassword('');
     } catch (e: any) {
-      if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found') {
-        setError('Wrong email and/or password. Please try again.');
-      } else if (e.code === 'auth/too-many-requests') {
-        setError('Too many failed attempts. Please try again later.');
-      } else if (e.code === 'auth/invalid-email') {
-        setError('Please enter a valid email address.');
-      } else if (e.code === 'auth/email-already-in-use') {
-        setError('An account with this email already exists.');
-      } else {
-        setError(e.message ?? t.authenticationFailed);
-      }
+  if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found') {
+    setError(t.wrongEmailOrPassword);
+  } else if (e.code === 'auth/too-many-requests') {
+    setError(t.tooManyAttempts);
+  } else if (e.code === 'auth/invalid-email') {
+    setError(t.invalidEmail);
+  } else if (e.code === 'auth/email-already-in-use') {
+    setError(t.emailAlreadyInUse);
+} else {
+    setError(e.message ?? t.authenticationFailed);
+  }
     } finally {
       setLoading(false);
     }
@@ -172,23 +181,50 @@ function AuthGateScreen() {
 
         {/* Confirm Password (signup only) */}
         {mode === 'signup' && (
-          <>
-            <Text style={{ fontSize: 12, fontWeight: '600', color: colors.textMuted, marginBottom: 4, marginTop: 10 }}>
-              {t.confirmPasswordLabel}
-            </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderRadius: 6, borderColor: colors.border, backgroundColor: colors.inputBg, marginBottom: 10 }}>
-              <TextInput
-                style={{ flex: 1, paddingVertical: Platform.OS === 'ios' ? 10 : 8, paddingHorizontal: 12, fontSize: 14, color: colors.text }}
-                value={confirmPassword} onChangeText={setConfirmPassword}
-                placeholder={t.confirmPasswordLabel} placeholderTextColor={colors.placeholder}
-                secureTextEntry={!showConfirmPassword} returnKeyType="done"
-              />
-              <TouchableOpacity onPress={() => setShowConfirmPassword(v => !v)} activeOpacity={0.7} style={{ paddingHorizontal: 12 }}>
-                <Text style={{ fontSize: 16 }}>{showConfirmPassword ? '🙈' : '👁️'}</Text>
-              </TouchableOpacity>
+  <>
+    {/* Live password criteria */}
+    {password.length > 0 && (
+      <View style={{ backgroundColor: colors.bgCard, borderRadius: 8, padding: 10, marginBottom: 8 }}>
+        {criteria.map(c => {
+          const met = c.test(password);
+          return (
+            <View key={c.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+              <Text style={{ fontSize: 13, color: met ? '#2e7d32' : colors.textMuted }}>
+                {met ? '✓' : '○'}
+              </Text>
+              <Text style={{ fontSize: 12, color: met ? '#2e7d32' : colors.textMuted }}>
+                {c.label}
+              </Text>
             </View>
-          </>
+          );
+        })}
+      </View>
+    )}
+
+    {/* Confirm password */}
+    <Text style={{ fontSize: 12, fontWeight: '600', color: colors.textMuted, marginBottom: 4, marginTop: 6 }}>
+      {t.confirmPasswordLabel}
+    </Text>
+    <View style={{ flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderRadius: 6, borderColor: colors.border, backgroundColor: colors.inputBg, marginBottom: 4 }}>
+      <TextInput
+        style={{ flex: 1, paddingVertical: Platform.OS === 'ios' ? 10 : 8, paddingHorizontal: 12, fontSize: 14, color: colors.text }}
+        value={confirmPassword} onChangeText={setConfirmPassword}
+        placeholder={t.confirmPasswordLabel} placeholderTextColor={colors.placeholder}
+        secureTextEntry={!showConfirmPassword} returnKeyType="done"
+      />
+      <TouchableOpacity onPress={() => setShowConfirmPassword(v => !v)} activeOpacity={0.7} style={{ paddingHorizontal: 12 }}>
+        <Text style={{ fontSize: 16 }}>{showConfirmPassword ? '🙈' : '👁️'}</Text>
+      </TouchableOpacity>
+    </View>
+
+    {/* Live match indicator */}
+    {confirmPassword.length > 0 && (
+      <Text style={{ fontSize: 12, color: password === confirmPassword ? '#2e7d32' : '#e53935', marginBottom: 6 }}>
+        {password === confirmPassword ? '✓ Passwords match' : '✗ Passwords do not match'}
+      </Text>
         )}
+      </>
+      )}
 
         {!!error   && <Text style={{ fontSize: 12, color: '#e53935', marginTop: 8, textAlign: 'center' }}>{error}</Text>}
         {!!success && <Text style={{ fontSize: 12, color: '#2e7d32', marginTop: 8, textAlign: 'center' }}>{success}</Text>}
@@ -491,13 +527,13 @@ function RootContent() {
     ownPremiumBeforeCaregiver, setOwnPremiumBeforeCaregiver,
   } = useGlucoseStore();
 
-  useEffect(() => {
-    if (settings.languageDetected) return;
-    const SUPPORTED = ['en', 'ro', 'it', 'de', 'fr', 'nl'];
-    const code = getLocales()[0]?.languageCode ?? 'en';
-    const lang = SUPPORTED.includes(code) ? code : 'en';
-    setSettings({ language: lang, languageDetected: true });
-  }, []);
+useEffect(() => {
+  if (settings.languageDetected) return;
+  const SUPPORTED = ['en', 'ro', 'it', 'de', 'fr', 'nl'];
+  const code = getLocales()[0]?.languageCode ?? 'en';
+  const lang = SUPPORTED.includes(code) ? code : 'en';
+  setSettings({ language: lang, languageDetected: true });
+}, []);
   const permGranted    = useRef(false);
   const [isLocked,     setIsLocked]     = useState(false);
   const [user,         setUser]         = useState<any>(null);
@@ -588,23 +624,26 @@ function RootContent() {
   if (isLocked)     return <LockScreen onUnlock={() => setIsLocked(false)} />;
   if (!roleChosen) {
     return (
-      <RoleSelectionScreen
-        onPatient={() => {
-          if (caregiverSession) {
-            useSubscriptionStore.getState().setPremiumPaid(ownPremiumBeforeCaregiver);
-          }
-          setCaregiverSession(null);
-          setRoleChosen(true);
-        }}
-        onCaregiver={(session) => {
-          const ownPremium = useSubscriptionStore.getState().isPremiumPaid;
-          setOwnPremiumBeforeCaregiver(ownPremium);
-          useSubscriptionStore.getState().setPremiumPaid(session.isPremium);
-          setCaregiverSession(session);
-          setRoleChosen(true);
-          setTimeout(() => router.replace('/history'), 500);
-        }}
-      />
+      <>
+        <RoleSelectionScreen
+          onPatient={() => {
+            if (caregiverSession) {
+              useSubscriptionStore.getState().setPremiumPaid(ownPremiumBeforeCaregiver);
+            }
+            setCaregiverSession(null);
+            setRoleChosen(true);
+          }}
+          onCaregiver={(session) => {
+            const ownPremium = useSubscriptionStore.getState().isPremiumPaid;
+            setOwnPremiumBeforeCaregiver(ownPremium);
+            useSubscriptionStore.getState().setPremiumPaid(session.isPremium);
+            setCaregiverSession(session);
+            setRoleChosen(true);
+            setTimeout(() => router.replace('/history'), 500);
+          }}
+        />
+        <LanguagePromptModal />
+      </>
     );
   }
 

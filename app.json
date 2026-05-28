@@ -10,7 +10,16 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.liviucozac.diabeasy"
+      "bundleIdentifier": "com.liviucozac.diabeasy",
+      "buildNumber": "1",
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Allow DiabEasy to access your camera to scan your glucometer.",
+        "NSBluetoothAlwaysUsageDescription": "Allow DiabEasy to use Bluetooth to connect to your glucometer.",
+        "NSLocationWhenInUseUsageDescription": "Allow DiabEasy to access your location to scan for nearby Bluetooth glucometers.",
+        "NSContactsUsageDescription": "Allow DiabEasy to access your contacts.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.liviucozac.diabeasy",
@@ -29,7 +38,10 @@
         "android.permission.BLUETOOTH_ADMIN",
         "android.permission.BLUETOOTH_SCAN",
         "android.permission.BLUETOOTH_CONNECT",
-        "android.permission.ACCESS_FINE_LOCATION"
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.WRITE_CONTACTS",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -82,7 +94,50 @@
       ],
       "@react-native-google-signin/google-signin",
       "expo-web-browser",
-      "expo-localization"
+      "expo-localization",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "16.0",
+            "useFrameworks": "static",
+            "extraPods": [
+              {
+                "name": "FirebaseAuth",
+                "modular_headers": true
+              },
+              {
+                "name": "FirebaseCoreInternal",
+                "modular_headers": true
+              },
+              {
+                "name": "FirebaseFirestore",
+                "modular_headers": true
+              },
+              {
+                "name": "GoogleUtilities",
+                "modular_headers": true
+              },
+              {
+                "name": "FirebaseAuthInterop",
+                "modular_headers": true
+              },
+              {
+                "name": "FirebaseAppCheckInterop",
+                "modular_headers": true
+              },
+              {
+                "name": "RecaptchaInterop",
+                "modular_headers": true
+              },
+              {
+                "name": "FirebaseFirestoreInternal",
+                "modular_headers": true
+              }
+            ]
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

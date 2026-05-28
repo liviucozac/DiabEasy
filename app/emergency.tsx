@@ -10,6 +10,8 @@ import { useTheme } from '../context/AppContext';
 import { PressBtn } from '../components/PressBtn';
 import { useTranslation } from '../hooks/useTranslation';
 import { useGlucoseStore } from '../store/glucoseStore';
+import { getLocales } from 'expo-localization';
+
 
 function SectionCard({ children }: { children: React.ReactNode }) {
   const { colors, isDark } = useTheme();
@@ -42,12 +44,14 @@ const EMERGENCY_MAP: Record<string, string> = {
   AU: '000', NZ: '111',
   GB: '999', IE: '999',
   IN: '112', JP: '119', CN: '120', KR: '119',
+  RO: '112', IT: '112', DE: '112', FR: '112', NL: '112',
+  ES: '112', PT: '112', BE: '112', AT: '112', CH: '117',
+  PL: '112', SE: '112', NO: '112', DK: '112', FI: '112',
 };
 
 function getLocaleEmergencyNumber(): string {
   try {
-    const locale = Intl.DateTimeFormat().resolvedOptions().locale;
-    const region = locale.split('-').pop()?.toUpperCase() ?? '';
+    const region = getLocales()[0]?.regionCode?.toUpperCase() ?? '';
     return EMERGENCY_MAP[region] ?? '112';
   } catch {
     return '112';
@@ -70,8 +74,21 @@ export default function EmergencyScreen() {
     setLocationLoading(true);
     setLocationAddress('');
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') { setLocationLoading(false); return; }
+      const { status, canAskAgain } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setLocationLoading(false);
+        if (!canAskAgain) {
+          // Permission permanently denied — nothing we can do
+          return;
+        }
+        // Explain why "While using" is better
+        Alert.alert(
+          '📍 Location Access',
+          'For the best experience on the SOS screen, choose "While using the app" so your address stays available without re-asking.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
       const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
       const [place] = await Location.reverseGeocodeAsync(loc.coords);
       if (place) {
@@ -86,7 +103,9 @@ export default function EmergencyScreen() {
     setLocationLoading(false);
   };
 
-  useEffect(() => { fetchLocation(); }, []);
+  useEffect(() => {
+  if (!locationAddress) fetchLocation();
+}, []);
 
   const pulseAnim = useRef(new Animated.Value(1)).current;
   useEffect(() => {

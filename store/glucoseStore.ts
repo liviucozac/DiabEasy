@@ -104,6 +104,7 @@ export interface AppSettings {
   hasSeenSecuritySetup: boolean;
   hasConsented: boolean;
   languageDetected: boolean;
+  languagePromptShown: boolean;
 }
 
 interface GlucoseStore {
@@ -175,6 +176,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   hasSeenSecuritySetup: false,
   hasConsented: false,
   languageDetected: false,
+  languagePromptShown: false,
 };
 
 export const useGlucoseStore = create<GlucoseStore>()(

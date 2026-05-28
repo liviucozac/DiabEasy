@@ -304,7 +304,15 @@ function AccountSection({ user }: { user: any }) {
       setPwSuccess(t.passwordUpdated);
       setCurrentPw(''); setNewPw(''); setConfirmPw('');
       setTimeout(() => { setShowChangePw(false); setPwSuccess(''); }, 1500);
-    } catch (e: any) { setPwError(e.message ?? t.couldNotUpdatePassword); }
+    } catch (e: any) {
+  if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password') {
+    setPwError(t.incorrectCurrentPassword);
+  } else if (e.code === 'auth/too-many-requests') {
+    setPwError(t.tooManyAttempts);
+  } else {
+    setPwError(t.couldNotUpdatePassword);
+  }
+}
     finally { setPwLoading(false); }
   };
 
@@ -596,7 +604,8 @@ const handleSave = () => {
 
   const parseDobToDate = (iso: string): Date => {
     if (!iso) return new Date();
-    const parts = iso.split('-').map(Number);
+    const dateOnly = iso.split('T')[0];
+    const parts = dateOnly.split('-').map(Number);
     if (parts.length === 3 && parts.every((n) => !isNaN(n))) {
       return new Date(parts[0], parts[1] - 1, parts[2]);
     }
@@ -605,17 +614,11 @@ const handleSave = () => {
 
   const formatDobDisplay = (iso: string) => {
     if (!iso) return '';
-    const parts = iso.split('-').map(Number);
-    if (parts.length !== 3 || parts.some(isNaN)) return iso;
-    const d = new Date(parts[0], parts[1] - 1, parts[2]);
-    if (isNaN(d.getTime())) return iso;
-    const today = new Date();
-    let age = today.getFullYear() - d.getFullYear();
-    const notYetHadBirthday =
-      today.getMonth() < d.getMonth() ||
-      (today.getMonth() === d.getMonth() && today.getDate() < d.getDate());
-    if (notYetHadBirthday) age--;
-    return `${age}`;
+    const dateOnly = iso.split('T')[0];
+    const parts = dateOnly.split('-').map(Number);
+    if (parts.length === 3 && parts.every(n => !isNaN(n)))
+      return `${String(parts[2]).padStart(2, '0')}/${String(parts[1]).padStart(2, '0')}/${parts[0]}`;
+    return dateOnly;
   };
 
   return (
@@ -664,7 +667,7 @@ const handleSave = () => {
                         <DateTimePicker
                           value={parseDobToDate(dob)}
                           mode="date" display="spinner" maximumDate={new Date()}
-                          onChange={(_, date) => { if (date) setDob(date.toISOString()); }}
+                          onChange={(_, date) => { if (date) setDob(date.toISOString().split('T')[0]); }}
                         />
                         <TouchableOpacity style={[s.dateModalDone, { backgroundColor: colors.red }]} onPress={() => setShowDobPicker(false)}>
                           <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>{t.done}</Text>
@@ -676,7 +679,7 @@ const handleSave = () => {
                   <DateTimePicker
                     value={parseDobToDate(dob)}
                     mode="date" display="spinner" maximumDate={new Date()}
-                    onChange={(_, date) => { setShowDobPicker(false); if (date) setDob(date.toISOString()); }}
+                    onChange={(_, date) => { setShowDobPicker(false); if (date) setDob(date.toISOString().split('T')[0]); }}
                   />
                 )
               )}
@@ -1210,6 +1213,9 @@ function SettingsTab() {
             </View>
             <Text style={[s.aboutChevron, { color: colors.border }]}>›</Text>
           </TouchableOpacity>
+          <Text style={[{ fontSize: 11, color: colors.textFaint, marginTop: 4, marginBottom: 8, textAlign: 'center' }]}>
+            {t.pdfExportDisclaimer}
+          </Text>
           <Divider />
           <PressBtn style={[s.dangerBtn]} onPress={handleClearData} activeOpacity={0.75}>
             <Text style={s.dangerBtnText}>{t.clearAllData}</Text>
@@ -1233,6 +1239,27 @@ function SettingsTab() {
           <Text style={[s.disclaimerText, { color: colors.textMuted }]}>{t.appDisclaimer}</Text>
         </View>
       </SectionCard>
+
+      {__DEV__ && (
+        <SectionCard>
+          <TouchableOpacity
+            style={[s.dangerBtn, { backgroundColor: '#1a1a2e', borderColor: '#4a4a8a' }]}
+            activeOpacity={0.75}
+            onPress={() => {
+              const data = require('../diabeasy_3months_final.json');
+              useGlucoseStore.getState().loadFromFirestore(
+                data.glucoseHistory,
+                data.insulinLog,
+                {},
+              );
+              Alert.alert('🧪 Test Data', `Loaded ${data.glucoseHistory.length} glucose + ${data.insulinLog.length} insulin entries.`);
+            }}
+          >
+            <Text style={[s.dangerBtnText, { color: '#a0a0ff' }]}>🧪 Load Test Data</Text>
+          </TouchableOpacity>
+          <Text style={[s.dangerHint, { color: colors.textFaint }]}>Dev only — not visible in production</Text>
+        </SectionCard>
+      )}
     </ScrollView>
   );
 }

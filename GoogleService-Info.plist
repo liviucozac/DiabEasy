@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>150645699717-h5uggjlkkn7hi23k3v82nssdlqeq13tb.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.150645699717-h5uggjlkkn7hi23k3v82nssdlqeq13tb</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>150645699717-lla8md4u9568a9am1nklh49qavkk2ot0.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyAa3B4qSKjksjaI3w0jnsx_C5AssixhRb8</string>
+	<key>GCM_SENDER_ID</key>
+	<string>150645699717</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.liviucozac.diabeasy</string>
+	<key>PROJECT_ID</key>
+	<string>diabeasy2</string>
+	<key>STORAGE_BUCKET</key>
+	<string>diabeasy2.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:150645699717:ios:776b6170f1771b85e5e5ec</string>
+</dict>
+</plist>

@@ -445,7 +445,7 @@ function LogTab() {
           {/* Date + Time on same row */}
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 6 }}>
             <View style={{ flex: 1 }}>
-              <Text style={[s.fieldLabel, { color: colors.textMuted, marginTop: 0 }]}>Date</Text>
+              <Text style={[s.fieldLabel, { color: colors.textMuted, marginTop: 0 }]}>{t.date}</Text>
               <TouchableOpacity
                 style={[s.timeInput, s.timePickerBtn, s.outlineBtnShadow, { backgroundColor: colors.bgCard }]}
                 onPress={() => setShowDatePicker(true)} activeOpacity={0.75}>
@@ -510,22 +510,22 @@ function LogTab() {
         {/* Date filters */}
         <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 11, color: colors.textMuted, marginBottom: 3, fontWeight: '600' }}>From</Text>
+            <Text style={{ fontSize: 11, color: colors.textMuted, marginBottom: 3, fontWeight: '600' }}>{t.fromDate}</Text>
             <TouchableOpacity
               style={[s.timeInput, { justifyContent: 'center', paddingVertical: 6, marginBottom: 0 }]}
               onPress={() => setShowFromPicker(true)} activeOpacity={0.75}>
               <Text style={{ color: filterFrom ? colors.text : colors.placeholder, fontSize: 13 }}>
-                {filterFrom ? fmtFilterDate(filterFrom) : 'Select date'}
+                {filterFrom ? fmtFilterDate(filterFrom) : t.selectDate}
               </Text>
             </TouchableOpacity>
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 11, color: colors.textMuted, marginBottom: 3, fontWeight: '600' }}>To</Text>
+            <Text style={{ fontSize: 11, color: colors.textMuted, marginBottom: 3, fontWeight: '600' }}>{t.toDate}</Text>
             <TouchableOpacity
               style={[s.timeInput, { justifyContent: 'center', paddingVertical: 6, marginBottom: 0 }]}
               onPress={() => setShowToPicker(true)} activeOpacity={0.75}>
               <Text style={{ color: filterTo ? colors.text : colors.placeholder, fontSize: 13 }}>
-                {filterTo ? fmtFilterDate(filterTo) : 'Select date'}
+                {filterTo ? fmtFilterDate(filterTo) : t.selectDate}
               </Text>
             </TouchableOpacity>
           </View>
@@ -534,7 +534,7 @@ function LogTab() {
               onPress={() => { setFilterFrom(''); setFilterTo(''); }}
               activeOpacity={0.7}
               style={{ justifyContent: 'flex-end', paddingBottom: 6 }}>
-              <Text style={{ fontSize: 12, color: colors.red, fontWeight: '600' }}>Clear</Text>
+              <Text style={{ fontSize: 12, color: colors.red, fontWeight: '600' }}>{t.clearFilters}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -570,7 +570,7 @@ function LogTab() {
             </View>
           </>
         ) : filteredEntries.length === 0 ? (
-          <Text style={[s.emptyLogText, { color: colors.textMuted }]}>No entries for selected date range.</Text>
+          <Text style={[s.emptyLogText, { color: colors.textMuted }]}>{t.noEntriesForRange}</Text>
         ) : (
           filteredEntries.map((entry, idx) => {
             const brandName = entry.type === 'Rapid-acting'
@@ -580,7 +580,7 @@ function LogTab() {
             return (
               <View key={entry.id} style={[s.logRowCompact, idx < filteredEntries.length - 1 && s.logRowBorder, { backgroundColor: colors.bgCard }]}>
                 <View style={s.logLeft}>
-                  <Text style={[s.logType, { color: colors.text }]}>{entry.type}</Text>
+                  <Text style={[s.logType, { color: colors.text }]}>{entry.type === 'Rapid-acting' ? t.rapidActing : t.longActing}</Text>
                   <Text style={[s.logTime, { color: colors.textMuted }]}>
                     {brandName}  ·  {entryDate}  ·  {entry.time}
                   </Text>
