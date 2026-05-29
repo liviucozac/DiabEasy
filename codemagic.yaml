@@ -9,7 +9,7 @@ workflows:
         distribution_type: app_store
         bundle_identifier: com.liviucozac.diabeasy
       vars:
-        XCODE_WORKSPACE: "ios/diabeasy.xcworkspace"
+        BUNDLE_ID: "com.liviucozac.diabeasy"
         XCODE_SCHEME: "diabeasy"
       xcode: latest
       node: latest
@@ -18,13 +18,16 @@ workflows:
       - name: Install npm dependencies
         script: |
           npm install
+      - name: Expo prebuild
+        script: |
+          npx expo prebuild --platform ios --clean
       - name: Install CocoaPods
         script: |
           cd ios && pod install
       - name: Build iOS release
         script: |
           xcode-project build-ipa \
-            --workspace "$XCODE_WORKSPACE" \
+            --workspace "ios/diabeasy.xcworkspace" \
             --scheme "$XCODE_SCHEME"
     artifacts:
       - build/ios/ipa/*.ipa
