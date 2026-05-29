@@ -26,9 +26,12 @@ workflows:
           cd ios && pod install
       - name: Build iOS release
         script: |
+          WORKSPACE=$(find ios -name "*.xcworkspace" -maxdepth 1 | head -1)
+          SCHEME=$(find ios -name "*.xcodeproj" -maxdepth 1 | head -1 | xargs basename | sed 's/.xcodeproj//')
+          echo "Using workspace: $WORKSPACE, scheme: $SCHEME"
           xcode-project build-ipa \
-            --workspace "ios/diabeasy.xcworkspace" \
-            --scheme "$XCODE_SCHEME" \
+            --workspace "$WORKSPACE" \
+            --scheme "$SCHEME" \
             --export-options-plist /Users/builder/clone/ExportOptions.plist
     artifacts:
       - build/ios/ipa/*.ipa
