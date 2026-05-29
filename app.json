@@ -59,14 +59,7 @@
         {
           "ios": {
             "deploymentTarget": "16.0",
-            "useFrameworks": "static",
-            "extraPods": [
-              {
-                "name": "hermes-engine",
-                "configurations": ["Debug", "Release"],
-                "modular_headers": true
-              }
-            ]
+            "useFrameworks": "static"
           },
           "android": {}
         }
