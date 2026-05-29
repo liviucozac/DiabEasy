@@ -6,6 +6,7 @@ workflows:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.liviucozac.diabeasy
+        provisioning_profile: DiabEasy AppStore
       vars:
         XCODE_WORKSPACE: "ios/diabeasy.xcworkspace"
         XCODE_SCHEME: "diabeasy"
