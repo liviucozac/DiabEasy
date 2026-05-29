@@ -9,15 +9,11 @@ module.exports = function withFirebaseModularHeaders(config) {
       const podfilePath = path.join(config.modRequest.platformProjectRoot, 'Podfile');
       let podfile = fs.readFileSync(podfilePath, 'utf8');
 
-      // $RNFirebaseAsStaticFramework must be defined before pods are resolved.
-      // Anchor on prepare_react_native_project! which is always present before
-      // expo-build-properties adds use_frameworks!, so the variable is in scope
-      // when CocoaPods evaluates the RNFB podspecs.
+      // Prepend to the file — guaranteed to land before any pod evaluation
+      // regardless of plugin order. Required for @react-native-firebase v21
+      // with useFrameworks: static so podspecs set static_framework = true.
       if (!podfile.includes('$RNFirebaseAsStaticFramework')) {
-        podfile = podfile.replace(
-          'prepare_react_native_project!',
-          `prepare_react_native_project!\n$RNFirebaseAsStaticFramework = true`
-        );
+        podfile = `$RNFirebaseAsStaticFramework = true\n` + podfile;
       }
 
       const patch = `

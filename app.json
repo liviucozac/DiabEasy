@@ -51,6 +51,15 @@
     "plugins": [
       "@react-native-firebase/app",
       "expo-router",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "16.0",
+            "useFrameworks": "static"
+          }
+        }
+      ],
       "./withFirebaseModularHeaders",
 
       [
@@ -96,16 +105,7 @@
       ],
       "@react-native-google-signin/google-signin",
       "expo-web-browser",
-      "expo-localization",
-      [
-        "expo-build-properties",
-        {
-          "ios": {
-            "deploymentTarget": "16.0",
-            "useFrameworks": "static"
-          }
-        }
-      ]
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true,
