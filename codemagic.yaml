@@ -2,15 +2,15 @@ workflows:
   ios-release:
     name: DiabEasy iOS Release
     max_build_duration: 120
+    integrations:
+      app_store_connect: Codemagic
     environment:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.liviucozac.diabeasy
-        provisioning_profile: DiabEasy AppStore
       vars:
         XCODE_WORKSPACE: "ios/diabeasy.xcworkspace"
         XCODE_SCHEME: "diabeasy"
-        APP_STORE_APPLE_ID: 1000000 # Replace with your App Store app Apple ID
       xcode: latest
       node: latest
       cocoapods: default
@@ -29,8 +29,6 @@ workflows:
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
-    integrations:
-      app_store_connect: Codemagic
     publishing:
       app_store_connect:
         auth: integration
