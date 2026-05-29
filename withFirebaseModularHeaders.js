@@ -9,11 +9,14 @@ module.exports = function withFirebaseModularHeaders(config) {
       const podfilePath = path.join(config.modRequest.platformProjectRoot, 'Podfile');
       let podfile = fs.readFileSync(podfilePath, 'utf8');
 
-      // Required for @react-native-firebase v21 + useFrameworks: static
+      // $RNFirebaseAsStaticFramework must be defined before pods are resolved.
+      // Anchor on prepare_react_native_project! which is always present before
+      // expo-build-properties adds use_frameworks!, so the variable is in scope
+      // when CocoaPods evaluates the RNFB podspecs.
       if (!podfile.includes('$RNFirebaseAsStaticFramework')) {
         podfile = podfile.replace(
-          /use_frameworks!/,
-          `$RNFirebaseAsStaticFramework = true\nuse_frameworks!`
+          'prepare_react_native_project!',
+          `prepare_react_native_project!\n$RNFirebaseAsStaticFramework = true`
         );
       }
 
@@ -27,12 +30,11 @@ module.exports = function withFirebaseModularHeaders(config) {
     end
   end`;
 
-      if (!podfile.includes('DEFINES_MODULE')) {
-        podfile = podfile.replace(
-          /post_install do \|installer\|/,
-          `post_install do |installer|\n${patch}`
-        );
-      }
+      // Always apply — EAS always starts from a clean generated Podfile.
+      podfile = podfile.replace(
+        /post_install do \|installer\|/,
+        `post_install do |installer|\n${patch}`
+      );
 
       fs.writeFileSync(podfilePath, podfile);
 
