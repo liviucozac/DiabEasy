@@ -28,6 +28,8 @@ workflows:
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
+    integrations:
+      app_store_connect: Codemagic
     publishing:
       app_store_connect:
         auth: integration
