@@ -29,7 +29,7 @@ workflows:
           xcode-project build-ipa \
             --workspace "ios/diabeasy.xcworkspace" \
             --scheme "$XCODE_SCHEME" \
-            --export-options-plist /Users/builder/clone/ios/ExportOptions.plist
+            --export-options-plist /Users/builder/clone/ExportOptions.plist
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
