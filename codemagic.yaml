@@ -24,6 +24,9 @@ workflows:
       - name: Install CocoaPods
         script: |
           cd ios && pod install
+      - name: Set up code signing
+        script: |
+          xcode-project use-profiles
       - name: Build iOS release
         script: |
           WORKSPACE=$(find ios -name "*.xcworkspace" -maxdepth 1 | head -1)
