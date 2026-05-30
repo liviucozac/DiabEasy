@@ -8,9 +8,6 @@ workflows:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.liviucozac.diabeasy
-      vars:
-        BUNDLE_ID: "com.liviucozac.diabeasy"
-        XCODE_SCHEME: "diabeasy"
       xcode: latest
       node: latest
       cocoapods: default
@@ -26,16 +23,24 @@ workflows:
           cd ios && pod install
       - name: Set up code signing
         script: |
-          xcode-project use-profiles
+          xcode-project use-profiles --project ios/DiabEasy.xcodeproj
       - name: Build iOS release
         script: |
           WORKSPACE=$(find ios -name "*.xcworkspace" -maxdepth 1 | head -1)
           SCHEME=$(find ios -name "*.xcodeproj" -maxdepth 1 | head -1 | xargs basename | sed 's/.xcodeproj//')
           echo "Using workspace: $WORKSPACE, scheme: $SCHEME"
-          xcode-project build-ipa \
-            --workspace "$WORKSPACE" \
-            --scheme "$SCHEME" \
-            --export-options-plist /Users/builder/clone/ExportOptions.plist
+          xcodebuild \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -archivePath build/DiabEasy.xcarchive \
+            -allowProvisioningUpdates \
+            archive
+          xcodebuild \
+            -exportArchive \
+            -archivePath build/DiabEasy.xcarchive \
+            -exportOptionsPlist ExportOptions.plist \
+            -exportPath build/ios/ipa
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
