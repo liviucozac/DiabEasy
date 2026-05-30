@@ -9,9 +9,6 @@ module.exports = function withFirebaseModularHeaders(config) {
       const podfilePath = path.join(config.modRequest.platformProjectRoot, 'Podfile');
       let podfile = fs.readFileSync(podfilePath, 'utf8');
 
-      // Prepend to the file — guaranteed to land before any pod evaluation
-      // regardless of plugin order. Required for @react-native-firebase v21
-      // with useFrameworks: static so podspecs set static_framework = true.
       if (!podfile.includes('$RNFirebaseAsStaticFramework')) {
         podfile = `$RNFirebaseAsStaticFramework = true\n` + podfile;
       }
@@ -21,16 +18,27 @@ module.exports = function withFirebaseModularHeaders(config) {
     target.build_configurations.each do |config|
       config.build_settings['DEFINES_MODULE'] = 'YES'
       config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
-      config.build_settings['OTHER_CFLAGS'] = '$(inherited) -Wno-non-modular-include-in-framework-module -Wno-implicit-int -Wno-implicit-function-declaration -Wno-error=implicit-int -Wno-error=implicit-function-declaration -Wno-error'
-      config.build_settings['OTHER_CPLUSplusflags'] = '$(inherited) -Wno-non-modular-include-in-framework-module'
       config.build_settings['GCC_TREAT_IMPLICIT_FUNCTION_DECLARATIONS_AS_ERRORS'] = 'NO'
       config.build_settings['CLANG_WARN_IMPLICIT_FUNCTION_DECLARATION'] = 'NO'
+      config.build_settings['CLANG_WARN_IMPLICIT_INT'] = 'NO'
       config.build_settings['GCC_WARN_ABOUT_RETURN_TYPE'] = 'NO'
+      flags = '$(inherited) -Wno-non-modular-include-in-framework-module -Wno-implicit-int -Wno-implicit-function-declaration -Wno-error=implicit-int -Wno-error=implicit-function-declaration -Wno-error=return-type -Wno-error'
+      config.build_settings['OTHER_CFLAGS'] = flags
+      config.build_settings['OTHER_CPLUSPLUSFLAGS'] = '$(inherited) -Wno-non-modular-include-in-framework-module'
+    end
+  end
+
+  # Specifically fix RNFBFirestore
+  firestore_target = installer.pods_project.targets.find { |t| t.name == 'RNFBFirestore' }
+  if firestore_target
+    firestore_target.build_configurations.each do |config|
+      config.build_settings['OTHER_CFLAGS'] = '$(inherited) -Wno-implicit-int -Wno-implicit-function-declaration -Wno-error -w'
+      config.build_settings['GCC_TREAT_IMPLICIT_FUNCTION_DECLARATIONS_AS_ERRORS'] = 'NO'
+      config.build_settings['CLANG_WARN_IMPLICIT_FUNCTION_DECLARATION'] = 'NO'
       config.build_settings['CLANG_WARN_IMPLICIT_INT'] = 'NO'
     end
   end`;
 
-      // Always apply — EAS always starts from a clean generated Podfile.
       podfile = podfile.replace(
         /post_install do \|installer\|/,
         `post_install do |installer|\n${patch}`
