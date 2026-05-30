@@ -7,9 +7,9 @@
     "icon": "./assets/images/icon.png",
     "scheme": "diabeasy",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.liviucozac.diabeasy",
       "buildNumber": "1",
       "entitlements": {
