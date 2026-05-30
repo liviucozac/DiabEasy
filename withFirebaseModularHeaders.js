@@ -17,7 +17,7 @@ module.exports = function withFirebaseModularHeaders(config) {
       if (!podfile.includes('firestore-ios-sdk-frameworks')) {
         podfile = podfile.replace(
           /^(source 'https:\/\/cdn.cocoapods.org\/'|platform :ios)/m,
-          `pod 'FirebaseFirestore', :git => 'https://github.com/invertase/firestore-ios-sdk-frameworks.git', :tag => '11.12.0'\n\n$1`
+          `pod 'FirebaseFirestore', :git => 'https://github.com/invertase/firestore-ios-sdk-frameworks.git', :tag => '11.11.0'\n\n$1`
         );
       }
 
