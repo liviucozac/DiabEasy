@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": false,
+      "supportsTablet": true,
       "bundleIdentifier": "com.liviucozac.diabeasy",
       "buildNumber": "1",
       "entitlements": {
@@ -60,11 +60,12 @@
           "ios": {
             "deploymentTarget": "16.0",
             "useFrameworks": "static",
-            "pods": {
-              "RNFBApp": { "modular_headers": true },
-              "RNFBFirestore": { "modular_headers": true },
-              "RNFBAuth": { "modular_headers": true }
-            }
+            "buildReactNativeFromSource": true,
+            "forceStaticLinking": [
+              "@react-native-firebase/app",
+              "@react-native-firebase/auth",
+              "@react-native-firebase/firestore"
+            ]
           },
           "android": {}
         }
