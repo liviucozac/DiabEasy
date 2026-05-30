@@ -11,6 +11,8 @@ workflows:
       xcode: "16.2"
       node: latest
       cocoapods: default
+      vars:
+        RCT_NEW_ARCH_ENABLED: "1"
     scripts:
       - name: Install npm dependencies
         script: |

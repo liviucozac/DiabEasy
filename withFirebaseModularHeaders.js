@@ -13,7 +13,7 @@ module.exports = function withFirebaseModularHeaders(config) {
         podfile = `$RNFirebaseAsStaticFramework = true\n` + podfile;
       }
 
-      // Use prebuilt FirebaseFirestore + add modular_headers for Swift pods
+      // Use prebuilt FirebaseFirestore to avoid gRPC compilation issues
       if (!podfile.includes('firestore-ios-sdk-frameworks')) {
         podfile = podfile.replace(
           /(platform :ios)/,
@@ -31,11 +31,6 @@ module.exports = function withFirebaseModularHeaders(config) {
       config.build_settings['GCC_WARN_ABOUT_RETURN_TYPE'] = 'NO'
       config.build_settings['OTHER_CFLAGS'] = '$(inherited) -Wno-non-modular-include-in-framework-module -Wno-implicit-int -Wno-implicit-function-declaration -Wno-error'
       config.build_settings['OTHER_CPLUSPLUSFLAGS'] = '$(inherited) -Wno-non-modular-include-in-framework-module'
-
-      if target.name == 'RNFBFirestore'
-        config.build_settings['DEFINES_MODULE'] = 'YES'
-        config.build_settings['HEADER_SEARCH_PATHS'] = '$(inherited) "$(PODS_ROOT)/Headers/Public/React-Core"'
-      end
     end
   end`;
 
