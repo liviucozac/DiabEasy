@@ -16,15 +16,30 @@ module.exports = function withFirebaseModularHeaders(config) {
       // Use prebuilt FirebaseFirestore to avoid gRPC/Xcode 16 compilation issues
       if (!podfile.includes('firestore-ios-sdk-frameworks')) {
         podfile = podfile.replace(
-          /^(source 'https:\/\/cdn.cocoapods.org\/'|platform :ios)/m,
+          /(platform :ios)/,
           `pod 'FirebaseFirestore', :git => 'https://github.com/invertase/firestore-ios-sdk-frameworks.git', :tag => '11.11.0'\n\n$1`
         );
       }
 
       const patch = `
+  # Enable modular headers for Firebase dependencies
+  modular_pods = [
+    'GoogleUtilities',
+    'FirebaseCore',
+    'FirebaseCoreExtension',
+    'FirebaseCoreInternal',
+    'FirebaseSharedSwift',
+    'FirebaseAppCheckInterop',
+    'FirebaseAuthInterop',
+    'GoogleDataTransport',
+    'nanopb',
+    'PromisesObjC',
+    'RecaptchaInterop'
+  ]
+
   installer.pods_project.targets.each do |target|
     target.build_configurations.each do |config|
-      config.build_settings['DEFINES_MODULE'] = 'YES'
+      config.build_settings['DEFINES_MODULE'] = 'YES' if modular_pods.include?(target.name)
       config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
       config.build_settings['GCC_TREAT_IMPLICIT_FUNCTION_DECLARATIONS_AS_ERRORS'] = 'NO'
       config.build_settings['CLANG_WARN_IMPLICIT_FUNCTION_DECLARATION'] = 'NO'
