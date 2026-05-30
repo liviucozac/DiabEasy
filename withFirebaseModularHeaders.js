@@ -13,6 +13,14 @@ module.exports = function withFirebaseModularHeaders(config) {
         podfile = `$RNFirebaseAsStaticFramework = true\n` + podfile;
       }
 
+      // Use prebuilt FirebaseFirestore to avoid gRPC/Xcode 16 compilation issues
+      if (!podfile.includes('firestore-ios-sdk-frameworks')) {
+        podfile = podfile.replace(
+          /^(source 'https:\/\/cdn.cocoapods.org\/'|platform :ios)/m,
+          `pod 'FirebaseFirestore', :git => 'https://github.com/invertase/firestore-ios-sdk-frameworks.git', :tag => '11.12.0'\n\n$1`
+        );
+      }
+
       const patch = `
   installer.pods_project.targets.each do |target|
     target.build_configurations.each do |config|
@@ -22,13 +30,7 @@ module.exports = function withFirebaseModularHeaders(config) {
       config.build_settings['CLANG_WARN_IMPLICIT_FUNCTION_DECLARATION'] = 'NO'
       config.build_settings['CLANG_WARN_IMPLICIT_INT'] = 'NO'
       config.build_settings['GCC_WARN_ABOUT_RETURN_TYPE'] = 'NO'
-
-      # Apply nuclear option to Firebase targets specifically
-      if ['RNFBApp', 'RNFBAuth', 'RNFBFirestore'].include?(target.name)
-        config.build_settings['OTHER_CFLAGS'] = '$(inherited) -w'
-      else
-        config.build_settings['OTHER_CFLAGS'] = '$(inherited) -Wno-non-modular-include-in-framework-module -Wno-implicit-int -Wno-implicit-function-declaration -Wno-error'
-      end
+      config.build_settings['OTHER_CFLAGS'] = '$(inherited) -Wno-non-modular-include-in-framework-module -Wno-implicit-int -Wno-implicit-function-declaration -Wno-error'
       config.build_settings['OTHER_CPLUSPLUSFLAGS'] = '$(inherited) -Wno-non-modular-include-in-framework-module'
     end
   end`;
