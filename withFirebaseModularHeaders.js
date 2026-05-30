@@ -21,8 +21,12 @@ module.exports = function withFirebaseModularHeaders(config) {
     target.build_configurations.each do |config|
       config.build_settings['DEFINES_MODULE'] = 'YES'
       config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
-      config.build_settings['OTHER_CFLAGS'] = '$(inherited) -Wno-non-modular-include-in-framework-module'
-      config.build_settings['OTHER_CPLUSPLUSFLAGS'] = '$(inherited) -Wno-non-modular-include-in-framework-module'
+      config.build_settings['OTHER_CFLAGS'] = '$(inherited) -Wno-non-modular-include-in-framework-module -Wno-implicit-int -Wno-implicit-function-declaration -Wno-error=implicit-int -Wno-error=implicit-function-declaration -Wno-error'
+      config.build_settings['OTHER_CPLUSplusflags'] = '$(inherited) -Wno-non-modular-include-in-framework-module'
+      config.build_settings['GCC_TREAT_IMPLICIT_FUNCTION_DECLARATIONS_AS_ERRORS'] = 'NO'
+      config.build_settings['CLANG_WARN_IMPLICIT_FUNCTION_DECLARATION'] = 'NO'
+      config.build_settings['GCC_WARN_ABOUT_RETURN_TYPE'] = 'NO'
+      config.build_settings['CLANG_WARN_IMPLICIT_INT'] = 'NO'
     end
   end`;
 
