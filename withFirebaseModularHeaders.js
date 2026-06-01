@@ -13,7 +13,6 @@ module.exports = function withFirebaseModularHeaders(config) {
         podfile = `$RNFirebaseAsStaticFramework = true\n` + podfile;
       }
 
-      // Use prebuilt FirebaseFirestore to avoid gRPC compilation issues
       if (!podfile.includes('firestore-ios-sdk-frameworks')) {
         podfile = podfile.replace(
           /(platform :ios)/,
@@ -31,6 +30,24 @@ module.exports = function withFirebaseModularHeaders(config) {
       config.build_settings['GCC_WARN_ABOUT_RETURN_TYPE'] = 'NO'
       config.build_settings['OTHER_CFLAGS'] = '$(inherited) -Wno-non-modular-include-in-framework-module -Wno-implicit-int -Wno-implicit-function-declaration -Wno-error'
       config.build_settings['OTHER_CPLUSPLUSFLAGS'] = '$(inherited) -Wno-non-modular-include-in-framework-module'
+    end
+  end
+
+  installer.pods_project.targets.each do |target|
+    if target.name == 'RNFBFirestore'
+      target.build_configurations.each do |config|
+        config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+        config.build_settings['DEFINES_MODULE'] = 'NO'
+        config.build_settings['HEADER_SEARCH_PATHS'] = [
+          '$(inherited)',
+          '$(PODS_ROOT)/Headers/Public',
+          '$(PODS_ROOT)/Headers/Public/React-Core',
+          '$(PODS_ROOT)/Headers/Private/React-Core',
+          '$(PODS_ROOT)/Headers/Public/ReactCommon',
+          '$(PODS_ROOT)/Headers/Public/React-RCTFBReactNativeSpec',
+        ]
+        config.build_settings['OTHER_CFLAGS'] = '$(inherited) -Wno-non-modular-include-in-framework-module -Wno-error -fno-modules'
+      end
     end
   end`;
 
