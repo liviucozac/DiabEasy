@@ -30,7 +30,7 @@ import { useSubscriptionStore } from '../store/subscriptionStore';
 import { router } from 'expo-router';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
-import {Alert } from 'react-native';
+import { Alert } from 'react-native';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -73,14 +73,12 @@ function AuthGateScreen() {
     return `Password must contain: ${errors.join(', ')}.`;
   };
 
-  // ─── Email / Password Auth ────────────────────────────────────────────────
-
   const criteria = [
-  { id: 'len',     label: t.criteriaLength  ?? 'At least 8 characters',          test: (p: string) => p.length >= 8 },
-  { id: 'upper',   label: t.criteriaUpper   ?? 'One uppercase letter',            test: (p: string) => /[A-Z]/.test(p) },
-  { id: 'num',     label: t.criteriaNumber  ?? 'One number',                      test: (p: string) => /[0-9]/.test(p) },
-  { id: 'special', label: t.criteriaSpecial ?? 'One special character (!@#$%...)',test: (p: string) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(p) },
-];
+    { id: 'len',     label: t.criteriaLength  ?? 'At least 8 characters',           test: (p: string) => p.length >= 8 },
+    { id: 'upper',   label: t.criteriaUpper   ?? 'One uppercase letter',             test: (p: string) => /[A-Z]/.test(p) },
+    { id: 'num',     label: t.criteriaNumber  ?? 'One number',                       test: (p: string) => /[0-9]/.test(p) },
+    { id: 'special', label: t.criteriaSpecial ?? 'One special character (!@#$%...)', test: (p: string) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(p) },
+  ];
 
   const handleAuth = async () => {
     if (!email.trim() || !password.trim()) { setError(t.pleaseEnterEmailAndPassword); return; }
@@ -99,17 +97,17 @@ function AuthGateScreen() {
       checkFirebasePremium().then(ok => { if (ok) setPremiumPaid(true); }).catch(() => {});
       setEmail(''); setPassword(''); setConfirmPassword('');
     } catch (e: any) {
-  if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found') {
-    setError(t.wrongEmailOrPassword);
-  } else if (e.code === 'auth/too-many-requests') {
-    setError(t.tooManyAttempts);
-  } else if (e.code === 'auth/invalid-email') {
-    setError(t.invalidEmail);
-  } else if (e.code === 'auth/email-already-in-use') {
-    setError(t.emailAlreadyInUse);
-} else {
-    setError(e.message ?? t.authenticationFailed);
-  }
+      if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found') {
+        setError(t.wrongEmailOrPassword);
+      } else if (e.code === 'auth/too-many-requests') {
+        setError(t.tooManyAttempts);
+      } else if (e.code === 'auth/invalid-email') {
+        setError(t.invalidEmail);
+      } else if (e.code === 'auth/email-already-in-use') {
+        setError(t.emailAlreadyInUse);
+      } else {
+        setError(e.message ?? t.authenticationFailed);
+      }
     } finally {
       setLoading(false);
     }
@@ -138,14 +136,12 @@ function AuthGateScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Logo */}
         <View style={{ alignItems: 'center', marginBottom: 20 }}>
           <Image source={{ uri: 'https://i.imgur.com/XRrP3SM.png' }} style={{ width: 72, height: 72 }} resizeMode="contain" />
           <Text style={{ fontSize: 28, fontWeight: '800', color: colors.red, marginTop: 8 }}>DiabEasy</Text>
           <Text style={{ fontSize: 14, color: colors.textMuted, marginTop: 4 }}>{t.yourDiabetesCompanion}</Text>
         </View>
 
-        {/* Login / Sign up toggle */}
         <View style={{ flexDirection: 'row', borderRadius: 8, borderWidth: 1.5, borderColor: colors.red, overflow: 'hidden', marginBottom: 20 }}>
           {(['login', 'signup'] as const).map((m) => (
             <TouchableOpacity key={m}
@@ -158,7 +154,6 @@ function AuthGateScreen() {
           ))}
         </View>
 
-        {/* Email */}
         <Text style={{ fontSize: 12, fontWeight: '600', color: colors.textMuted, marginBottom: 4 }}>{t.emailField}</Text>
         <TextInput
           style={{ borderWidth: 1.5, borderRadius: 6, borderColor: colors.border, paddingVertical: Platform.OS === 'ios' ? 10 : 8, paddingHorizontal: 12, fontSize: 14, color: colors.text, backgroundColor: colors.inputBg, marginBottom: 10 }}
@@ -166,7 +161,6 @@ function AuthGateScreen() {
           keyboardType="email-address" autoCapitalize="none" returnKeyType="next"
         />
 
-        {/* Password */}
         <Text style={{ fontSize: 12, fontWeight: '600', color: colors.textMuted, marginBottom: 4 }}>{t.passwordField}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderRadius: 6, borderColor: colors.border, backgroundColor: colors.inputBg, marginBottom: 10 }}>
           <TextInput
@@ -179,57 +173,46 @@ function AuthGateScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Confirm Password (signup only) */}
         {mode === 'signup' && (
-  <>
-    {/* Live password criteria */}
-    {password.length > 0 && (
-      <View style={{ backgroundColor: colors.bgCard, borderRadius: 8, padding: 10, marginBottom: 8 }}>
-        {criteria.map(c => {
-          const met = c.test(password);
-          return (
-            <View key={c.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-              <Text style={{ fontSize: 13, color: met ? '#2e7d32' : colors.textMuted }}>
-                {met ? '✓' : '○'}
-              </Text>
-              <Text style={{ fontSize: 12, color: met ? '#2e7d32' : colors.textMuted }}>
-                {c.label}
-              </Text>
+          <>
+            {password.length > 0 && (
+              <View style={{ backgroundColor: colors.bgCard, borderRadius: 8, padding: 10, marginBottom: 8 }}>
+                {criteria.map(c => {
+                  const met = c.test(password);
+                  return (
+                    <View key={c.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                      <Text style={{ fontSize: 13, color: met ? '#2e7d32' : colors.textMuted }}>{met ? '✓' : '○'}</Text>
+                      <Text style={{ fontSize: 12, color: met ? '#2e7d32' : colors.textMuted }}>{c.label}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+            <Text style={{ fontSize: 12, fontWeight: '600', color: colors.textMuted, marginBottom: 4, marginTop: 6 }}>
+              {t.confirmPasswordLabel}
+            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderRadius: 6, borderColor: colors.border, backgroundColor: colors.inputBg, marginBottom: 4 }}>
+              <TextInput
+                style={{ flex: 1, paddingVertical: Platform.OS === 'ios' ? 10 : 8, paddingHorizontal: 12, fontSize: 14, color: colors.text }}
+                value={confirmPassword} onChangeText={setConfirmPassword}
+                placeholder={t.confirmPasswordLabel} placeholderTextColor={colors.placeholder}
+                secureTextEntry={!showConfirmPassword} returnKeyType="done"
+              />
+              <TouchableOpacity onPress={() => setShowConfirmPassword(v => !v)} activeOpacity={0.7} style={{ paddingHorizontal: 12 }}>
+                <Text style={{ fontSize: 16 }}>{showConfirmPassword ? '🙈' : '👁️'}</Text>
+              </TouchableOpacity>
             </View>
-          );
-        })}
-      </View>
-    )}
-
-    {/* Confirm password */}
-    <Text style={{ fontSize: 12, fontWeight: '600', color: colors.textMuted, marginBottom: 4, marginTop: 6 }}>
-      {t.confirmPasswordLabel}
-    </Text>
-    <View style={{ flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderRadius: 6, borderColor: colors.border, backgroundColor: colors.inputBg, marginBottom: 4 }}>
-      <TextInput
-        style={{ flex: 1, paddingVertical: Platform.OS === 'ios' ? 10 : 8, paddingHorizontal: 12, fontSize: 14, color: colors.text }}
-        value={confirmPassword} onChangeText={setConfirmPassword}
-        placeholder={t.confirmPasswordLabel} placeholderTextColor={colors.placeholder}
-        secureTextEntry={!showConfirmPassword} returnKeyType="done"
-      />
-      <TouchableOpacity onPress={() => setShowConfirmPassword(v => !v)} activeOpacity={0.7} style={{ paddingHorizontal: 12 }}>
-        <Text style={{ fontSize: 16 }}>{showConfirmPassword ? '🙈' : '👁️'}</Text>
-      </TouchableOpacity>
-    </View>
-
-    {/* Live match indicator */}
-    {confirmPassword.length > 0 && (
-      <Text style={{ fontSize: 12, color: password === confirmPassword ? '#2e7d32' : '#e53935', marginBottom: 6 }}>
-        {password === confirmPassword ? '✓ Passwords match' : '✗ Passwords do not match'}
-      </Text>
+            {confirmPassword.length > 0 && (
+              <Text style={{ fontSize: 12, color: password === confirmPassword ? '#2e7d32' : '#e53935', marginBottom: 6 }}>
+                {password === confirmPassword ? '✓ Passwords match' : '✗ Passwords do not match'}
+              </Text>
+            )}
+          </>
         )}
-      </>
-      )}
 
         {!!error   && <Text style={{ fontSize: 12, color: '#e53935', marginTop: 8, textAlign: 'center' }}>{error}</Text>}
         {!!success && <Text style={{ fontSize: 12, color: '#2e7d32', marginTop: 8, textAlign: 'center' }}>{success}</Text>}
 
-        {/* Sign in / Create Account button */}
         <TouchableOpacity
           style={{
             borderRadius: 8, paddingVertical: 13, alignItems: 'center',
@@ -244,13 +227,11 @@ function AuthGateScreen() {
           </Text>
         </TouchableOpacity>
 
-        {/* Forgot password */}
         {mode === 'login' && (
           <TouchableOpacity onPress={handleForgotPassword} activeOpacity={0.7} style={{ alignItems: 'center', marginTop: 10 }}>
             <Text style={{ fontSize: 13, color: colors.textMuted, textDecorationLine: 'underline' }}>{t.forgotPassword}</Text>
           </TouchableOpacity>
         )}
-
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -259,21 +240,19 @@ function AuthGateScreen() {
 // ─── Role Selection Screen ────────────────────────────────────────────────────
 
 function RoleSelectionScreen({ onPatient, onCaregiver }: {
-  onPatient: () => void;
+  onPatient: (remember: boolean) => void;
   onCaregiver: (session: { code: string; patientName: string; isPremium: boolean }) => void;
 }) {
   const { colors } = useTheme();
   const t = useTranslation();
-  const [code, setCode]         = useState('');
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState('');
-  const [showCode, setShowCode] = useState(false);
+  const [code, setCode]           = useState('');
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState('');
+  const [showCode, setShowCode]   = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleCaregiverActivate = async () => {
-    if (code.trim().length < 6) {
-      setError(t.invalidCode);
-      return;
-    }
+    if (code.trim().length < 6) { setError(t.invalidCode); return; }
     setLoading(true); setError('');
     try {
       const session = await redeemCaregiverCode(code.trim());
@@ -295,7 +274,6 @@ function RoleSelectionScreen({ onPatient, onCaregiver }: {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Logo */}
         <View style={{ alignItems: 'center', marginBottom: 20 }}>
           <Image source={{ uri: 'https://i.imgur.com/XRrP3SM.png' }} style={{ width: 64, height: 64 }} resizeMode="contain" />
           <Text style={{ fontSize: 24, fontWeight: '800', color: colors.red, marginTop: 8 }}>DiabEasy</Text>
@@ -307,12 +285,12 @@ function RoleSelectionScreen({ onPatient, onCaregiver }: {
         {/* Patient button */}
         <TouchableOpacity
           style={{
-            borderRadius: 12, padding: 14, marginBottom: 12,
+            borderRadius: 12, padding: 14, marginBottom: 8,
             backgroundColor: colors.bgCard, borderWidth: 1.5, borderColor: colors.border,
             shadowColor: '#6070a0', shadowOffset: { width: 0, height: 6 },
             shadowOpacity: 0.1, shadowRadius: 14, elevation: 4,
           }}
-          onPress={onPatient}
+          onPress={() => onPatient(rememberMe)}
           activeOpacity={0.8}
         >
           <Text style={{ fontSize: 22, marginBottom: 6 }}>🩸</Text>
@@ -323,6 +301,26 @@ function RoleSelectionScreen({ onPatient, onCaregiver }: {
             {t.patientModeDesc}
           </Text>
         </TouchableOpacity>
+
+        {/* Remember me checkbox — only shown for patient */}
+        <TouchableOpacity
+          onPress={() => setRememberMe(v => !v)}
+          activeOpacity={0.7}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 4, paddingVertical: 8, marginBottom: 12 }}
+        >
+          <View style={{
+            width: 20, height: 20, borderRadius: 5, borderWidth: 2,
+            borderColor: rememberMe ? colors.red : colors.border,
+            backgroundColor: rememberMe ? colors.red : 'transparent',
+            alignItems: 'center', justifyContent: 'center',
+          }}>
+            {rememberMe && <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800', lineHeight: 16 }}>✓</Text>}
+          </View>
+          <Text style={{ fontSize: 13, color: colors.textMuted }}>{t.rememberMyChoice}</Text>
+        </TouchableOpacity>
+
+        {/* Divider */}
+        <View style={{ height: 1, backgroundColor: colors.border, opacity: 0.5, marginBottom: 12 }} />
 
         {/* Caregiver button */}
         <TouchableOpacity
@@ -344,7 +342,6 @@ function RoleSelectionScreen({ onPatient, onCaregiver }: {
           </Text>
         </TouchableOpacity>
 
-        {/* Code input */}
         {showCode && (
           <View style={{ marginTop: 4 }}>
             <Text style={{ fontSize: 12, fontWeight: '600', color: colors.textMuted, marginBottom: 6 }}>
@@ -383,27 +380,19 @@ function RoleSelectionScreen({ onPatient, onCaregiver }: {
           </View>
         )}
 
-        {/* Sign out option */}
         <TouchableOpacity
           onPress={async () => { await auth().signOut(); }}
           activeOpacity={0.7}
           style={{
-            marginTop: 24,
-            alignSelf: 'center',
-            borderWidth: 1,
-            borderColor: colors.textMuted,
-            borderRadius: 8,
-            paddingVertical: 12,
-            paddingHorizontal: 32,
-            alignItems: 'center',
-            minWidth: 160,
+            marginTop: 24, alignSelf: 'center', borderWidth: 1,
+            borderColor: colors.textMuted, borderRadius: 8,
+            paddingVertical: 12, paddingHorizontal: 32, alignItems: 'center', minWidth: 160,
           }}
         >
           <Text style={{ fontSize: 14, fontWeight: '600', color: colors.textMuted }}>
             {t.signOut}
           </Text>
         </TouchableOpacity>
-
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -525,20 +514,22 @@ function RootContent() {
     hasSeenOnboarding, reminders, settings, setSettings,
     caregiverSession, setCaregiverSession,
     ownPremiumBeforeCaregiver, setOwnPremiumBeforeCaregiver,
+    patientRoleChosen, setPatientRoleChosen,
   } = useGlucoseStore();
 
-useEffect(() => {
-  if (settings.languageDetected) return;
-  const SUPPORTED = ['en', 'ro', 'it', 'de', 'fr', 'nl'];
-  const code = getLocales()[0]?.languageCode ?? 'en';
-  const lang = SUPPORTED.includes(code) ? code : 'en';
-  setSettings({ language: lang, languageDetected: true });
-}, []);
+  useEffect(() => {
+    if (settings.languageDetected) return;
+    const SUPPORTED = ['en', 'ro', 'it', 'de', 'fr', 'nl'];
+    const code = getLocales()[0]?.languageCode ?? 'en';
+    const lang = SUPPORTED.includes(code) ? code : 'en';
+    setSettings({ language: lang, languageDetected: true });
+  }, []);
+
   const permGranted    = useRef(false);
-  const [isLocked,     setIsLocked]     = useState(false);
-  const [user,         setUser]         = useState<any>(null);
-  const [authChecked,  setAuthChecked]  = useState(false);
-  const [roleChosen,   setRoleChosen]   = useState(false);
+  const [isLocked,     setIsLocked]         = useState(false);
+  const [user,         setUser]             = useState<any>(null);
+  const [authChecked,  setAuthChecked]      = useState(false);
+  const [localRoleChosen, setLocalRoleChosen] = useState(false);
   const backgroundedAt = useRef<number | null>(null);
 
   useEffect(() => {
@@ -589,7 +580,8 @@ useEffect(() => {
     const unsub = onAuthStateChanged(async (u: any) => {
       setUser(u);
       setAuthChecked(true);
-      if (u) setRoleChosen(false);
+      // Reset session-only caregiver role on each login, but keep persisted patient preference
+      if (u) setLocalRoleChosen(false);
       if (u && !u.isAnonymous) {
         try {
           const [history, insulinEntries, userData, isPremium] = await Promise.all([
@@ -603,7 +595,7 @@ useEffect(() => {
 
           const userRef = firestore().collection('users').doc(u.uid);
           const userSnap = await userRef.get();
-          if (!userSnap.exists()) {
+          if (!userSnap.exists) {
             await userRef.set({ createdAt: new Date().toISOString() }, { merge: true });
           }
         } catch (e) {
@@ -611,7 +603,7 @@ useEffect(() => {
         }
       } else if (!u) {
         clearLocalData();
-        setRoleChosen(false);
+        setLocalRoleChosen(false);
         setCaregiverSession(null);
         useSubscriptionStore.getState().setPremiumPaid(false);
       }
@@ -622,23 +614,32 @@ useEffect(() => {
   if (!authChecked) return null;
   if (!user)        return <AuthGateScreen />;
   if (isLocked)     return <LockScreen onUnlock={() => setIsLocked(false)} />;
+
+  const roleChosen = patientRoleChosen || localRoleChosen;
+
   if (!roleChosen) {
     return (
       <>
         <RoleSelectionScreen
-          onPatient={() => {
+          onPatient={(remember) => {
             if (caregiverSession) {
               useSubscriptionStore.getState().setPremiumPaid(ownPremiumBeforeCaregiver);
             }
             setCaregiverSession(null);
-            setRoleChosen(true);
+            if (remember) {
+              // Persist patient role so screen is skipped on reopen
+              setPatientRoleChosen(true);
+            } else {
+              // Just set local so it works this session only
+              setLocalRoleChosen(true);
+            }
           }}
           onCaregiver={(session) => {
             const ownPremium = useSubscriptionStore.getState().isPremiumPaid;
             setOwnPremiumBeforeCaregiver(ownPremium);
             useSubscriptionStore.getState().setPremiumPaid(session.isPremium);
             setCaregiverSession(session);
-            setRoleChosen(true);
+            setLocalRoleChosen(true);
             setTimeout(() => router.replace('/history'), 500);
           }}
         />

@@ -65,7 +65,6 @@ export interface EmergencyContact {
   relation: string;
 }
 
-// isPremium reflects the patient's premium status when in caregiver mode
 export interface CaregiverSession {
   code: string;
   patientName: string;
@@ -111,6 +110,10 @@ interface GlucoseStore {
   hasSeenOnboarding: boolean;
   setHasSeenOnboarding: (v: boolean) => void;
 
+  // Persisted patient role preference — NOT cleared on sign out
+  patientRoleChosen: boolean;
+  setPatientRoleChosen: (v: boolean) => void;
+
   glucoseValue: number | null;
   unit: Unit;
   setGlucoseValue: (value: number, unit: Unit) => void;
@@ -138,7 +141,6 @@ interface GlucoseStore {
   caregiverSession: CaregiverSession | null;
   setCaregiverSession: (session: CaregiverSession | null) => void;
 
-  // Snapshot of the caregiver's own premium status before entering caregiver mode
   ownPremiumBeforeCaregiver: boolean;
   setOwnPremiumBeforeCaregiver: (v: boolean) => void;
 
@@ -185,6 +187,10 @@ export const useGlucoseStore = create<GlucoseStore>()(
       hasSeenOnboarding: false,
       setHasSeenOnboarding: (v) => set({ hasSeenOnboarding: v }),
 
+      // UI preference — persisted across sign out/in, never wiped by clearLocalData
+      patientRoleChosen: false,
+      setPatientRoleChosen: (v) => set({ patientRoleChosen: v }),
+
       glucoseValue: null,
       unit: 'mg/dL',
       setGlucoseValue: (value, unit) => set({ glucoseValue: value, unit, totalCarbs: 0 }),
@@ -214,13 +220,13 @@ export const useGlucoseStore = create<GlucoseStore>()(
 
       insulinEntries: [],
       addInsulinEntry: (entry) =>
-      set((state) => {
-        syncInsulinEntry(entry).catch(() => {});
-        if (isSyncEnabled()) {
-          syncEntryToCaregiverData('insulinLog', entry).catch(() => {});
-        }
-        return { insulinEntries: [...state.insulinEntries, entry] };
-      }),
+        set((state) => {
+          syncInsulinEntry(entry).catch(() => {});
+          if (isSyncEnabled()) {
+            syncEntryToCaregiverData('insulinLog', entry).catch(() => {});
+          }
+          return { insulinEntries: [...state.insulinEntries, entry] };
+        }),
       removeInsulinEntry: (id) =>
         set((state) => ({ insulinEntries: state.insulinEntries.filter((e) => e.id !== id) })),
       clearInsulinLog: () => set({ insulinEntries: [] }),
@@ -259,6 +265,8 @@ export const useGlucoseStore = create<GlucoseStore>()(
           ...(savedMeals !== undefined ? { savedMeals } : {}),
         })),
 
+      // NOTE: patientRoleChosen is intentionally NOT reset here
+      // It's a UI preference that should survive sign out/in
       clearLocalData: () =>
         set({ history: [], insulinEntries: [], savedMeals: [], glucoseValue: null, totalCarbs: 0, profile: DEFAULT_PROFILE }),
 
@@ -298,7 +306,6 @@ export const useGlucoseStore = create<GlucoseStore>()(
         insulinEntries: (persistedState.insulinEntries ?? []).map((e: any) => {
           const withId = e.id ? e : { ...e, id: generateId() };
           const withTimestamp = withId.timestamp ? withId : { ...withId, timestamp: new Date(0).toISOString() };
-          // Handle migration from old 'DD/MM/YYYY HH:mm' format to ISO
           if (withTimestamp.timestamp && !withTimestamp.timestamp.includes('T')) {
             const [datePart, timePart = '00:00'] = withTimestamp.timestamp.split(' ');
             const [d, m, y] = datePart.split('/');

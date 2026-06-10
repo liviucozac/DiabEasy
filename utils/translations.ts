@@ -1,6 +1,7 @@
 export type Language = 'en' | 'ro' | 'it' | 'de' | 'fr' | 'nl';
 
 const en = {
+  rememberMyChoice: 'Remember my choice',
   incorrectCurrentPassword: 'Current password is incorrect. Please try again.',
   googleSignInHint: 'If you signed up with Google, use the "Continue with Google" button below.',
   // ── Home ─────────────────────────────────────────────────────────────────────
@@ -593,7 +594,7 @@ const en = {
   gdprRequest: 'Submit a Data Request',
   gdprRequestDesc: 'Access, correct or delete your data (GDPR)',
   exportMyData: 'Export My Data',
-  exportMyDataDesc: 'Download all your data as a JSON file',
+  exportMyDataDesc: 'Download all your data as a .pdf file',
   exportPreparing: 'Preparing export…',
   exportDone: 'Export ready',
   exportDataFailed: 'Export failed. Please try again.',
@@ -1007,6 +1008,7 @@ const en = {
 };
 
 const ro: typeof en = {
+  rememberMyChoice: 'Reține alegerea mea',
   incorrectCurrentPassword: 'Parola curentă este incorectă. Te rugăm să încerci din nou.',
   wrongEmailOrPassword: 'Email și/sau parolă greșite. Te rugăm să încerci din nou.',
   tooManyAttempts: 'Prea multe încercări eșuate. Te rugăm să încerci mai târziu.',
@@ -1587,7 +1589,7 @@ const ro: typeof en = {
   gdprRequest: 'Trimite o cerere de date',
   gdprRequestDesc: 'Accesează, corectează sau șterge datele tale (GDPR)',
   exportMyData: 'Exportă datele mele',
-  exportMyDataDesc: 'Descarcă toate datele tale ca fișier JSON',
+  exportMyDataDesc: 'Descarcă toate datele tale ca fișier .pdf',
   exportPreparing: 'Se pregătește exportul…',
   exportDone: 'Export gata',
   exportDataFailed: 'Exportul a eșuat. Încearcă din nou.',
@@ -2091,6 +2093,7 @@ const ro: typeof en = {
 };
 
 const it: typeof en = {
+  rememberMyChoice: 'Ricorda la mia scelta',
   incorrectCurrentPassword: 'Current password is incorrect. Please try again.',
   wrongEmailOrPassword: 'Email e/o password errati. Riprova.',
   tooManyAttempts: 'Troppi tentativi falliti. Riprova più tardi.',
@@ -2671,7 +2674,7 @@ const it: typeof en = {
   gdprRequest: 'Invia una richiesta dati',
   gdprRequestDesc: 'Accedi, correggi o elimina i tuoi dati (GDPR)',
   exportMyData: 'Esporta i miei dati',
-  exportMyDataDesc: 'Scarica tutti i tuoi dati come file JSON',
+  exportMyDataDesc: 'Scarica tutti i tuoi dati come file .pdf',
   exportPreparing: 'Preparazione esportazione…',
   exportDone: 'Esportazione pronta',
   exportDataFailed: 'Esportazione fallita. Riprova.',
@@ -3075,6 +3078,7 @@ const it: typeof en = {
 };
 
 const de: typeof en = {
+  rememberMyChoice: 'Meine Wahl merken',
   incorrectCurrentPassword: 'Das aktuelle Passwort ist falsch. Bitte erneut versuchen.',
   // ── Home ─────────────────────────────────────────────────────────────────────
   wrongEmailOrPassword: 'Falsche E-Mail und/oder Passwort. Bitte erneut versuchen.',
@@ -3667,7 +3671,7 @@ const de: typeof en = {
   gdprRequest: 'Datenanfrage senden',
   gdprRequestDesc: 'Daten einsehen, korrigieren oder löschen (DSGVO)',
   exportMyData: 'Meine Daten exportieren',
-  exportMyDataDesc: 'Alle deine Daten als JSON-Datei herunterladen',
+  exportMyDataDesc: 'Alle deine Daten als .pdf-Datei herunterladen',
   exportPreparing: 'Export wird vorbereitet…',
   exportDone: 'Export bereit',
   exportDataFailed: 'Export fehlgeschlagen. Bitte erneut versuchen.',
@@ -4076,6 +4080,7 @@ const de: typeof en = {
 };
 
 const fr: typeof en = {
+  rememberMyChoice: 'Mémoriser mon choix',
   incorrectCurrentPassword: 'Le mot de passe actuel est incorrect. Veuillez réessayer.',
   wrongEmailOrPassword: 'Email et/ou mot de passe incorrect(s). Veuillez réessayer.',
   tooManyAttempts: 'Trop de tentatives échouées. Veuillez réessayer plus tard.',
@@ -4657,7 +4662,7 @@ const fr: typeof en = {
   gdprRequest: 'Soumettre une demande de données',
   gdprRequestDesc: 'Accéder, corriger ou supprimer vos données (RGPD)',
   exportMyData: 'Exporter mes données',
-  exportMyDataDesc: 'Télécharger toutes vos données au format JSON',
+  exportMyDataDesc: 'Télécharger toutes vos données au format .pdf',
   exportPreparing: "Préparation de l'export…",
   exportDone: 'Export prêt',
   exportDataFailed: 'Échec de l\'export. Veuillez réessayer.',
@@ -5061,6 +5066,7 @@ const fr: typeof en = {
 };
 
 const nl: typeof en = {
+  rememberMyChoice: 'Mijn keuze onthouden',
   incorrectCurrentPassword: 'Huidig wachtwoord is onjuist. Probeer het opnieuw.',
   wrongEmailOrPassword: 'Verkeerd e-mailadres en/of wachtwoord. Probeer het opnieuw.',
   tooManyAttempts: 'Te veel mislukte pogingen. Probeer het later opnieuw.',
@@ -5642,7 +5648,7 @@ const nl: typeof en = {
   gdprRequest: 'Dataverzoek indienen',
   gdprRequestDesc: 'Uw gegevens inzien, corrigeren of verwijderen (AVG)',
   exportMyData: 'Mijn gegevens exporteren',
-  exportMyDataDesc: 'Download al uw gegevens als JSON-bestand',
+  exportMyDataDesc: 'Download al uw gegevens als .pdf-bestand',
   exportPreparing: 'Export voorbereiden…',
   exportDone: 'Export gereed',
   exportDataFailed: 'Export mislukt. Probeer het opnieuw.',

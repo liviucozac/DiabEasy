@@ -79,7 +79,7 @@ export const fetchUserData = async () => {
   const uid = getUid();
   if (!uid) return null;
   const doc = await firestore().collection('users').doc(uid).get();
-  return doc.exists() ? doc.data() : null;
+  return doc.exists ? doc.data() : null;
 };
 
 export const checkFirebasePremium = async (): Promise<boolean> => {
@@ -87,7 +87,7 @@ export const checkFirebasePremium = async (): Promise<boolean> => {
   if (!uid) return false;
   try {
     const doc = await firestore().collection('users').doc(uid).get();
-    return doc.exists() ? (doc.data()?.isPremium === true) : false;
+    return doc.exists ? (doc.data()?.isPremium === true) : false;
   } catch {
     return false;
   }
@@ -139,7 +139,7 @@ export const generateCaregiverCode = async (
   while (attempts < 5) {
     code = Math.floor(100000 + Math.random() * 900000).toString();
     const snap = await db.collection('inviteCodes').doc(code).get();
-    if (!snap.exists()) break;
+    if (!snap.exists) break;
     attempts++;
   }
   if (!code) throw new Error('Could not generate a unique code. Please try again.');
@@ -150,7 +150,7 @@ export const generateCaregiverCode = async (
 
   // Fetch patient's own premium status to embed in caregiverData
   const userDoc = await db.collection('users').doc(uid).get();
-  const isPremium = userDoc.exists() ? (userDoc.data()?.isPremium === true) : false;
+  const isPremium = userDoc.exists ? (userDoc.data()?.isPremium === true) : false;
 
   // Write inviteCode doc
   const invitePayload: Record<string, any> = {
@@ -241,7 +241,7 @@ export const redeemCaregiverCode = async (
 ): Promise<{ code: string; patientName: string; isPremium: boolean }> => {
   const db = firestore();
   const doc = await db.collection('caregiverData').doc(code.trim()).get();
-  if (!doc.exists()) throw new Error('invalid');
+  if (!doc.exists) throw new Error('invalid');
   const data = doc.data()!;
   if (data.codeType === 'temporary' && data.expiresAt) {
     if (data.expiresAt.toDate() < new Date()) throw new Error('expired');
@@ -269,7 +269,7 @@ export const fetchCaregiverPatientName = async (code: string): Promise<string | 
   try {
     const db = firestore();
     const doc = await db.collection('caregiverData').doc(code.trim()).get();
-    if (!doc.exists()) return null;
+    if (!doc.exists) return null;
     const data = doc.data()!;
     if (data.patientUid) {
       const userDoc = await db.collection('users').doc(data.patientUid).get();

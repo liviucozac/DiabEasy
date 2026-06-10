@@ -28,6 +28,9 @@ import {
   revokeCaregiverCode, fetchActiveCaregiverCodes,
   CaregiverCodeType, ActiveCaregiverCodes,
 } from '../utils/firestoreSync';
+import * as Print from 'expo-print';
+
+
 const RED = '#EC5557';
 const APP_VERSION = Constants.expoConfig?.version ?? '2.0.0';
 
@@ -417,7 +420,7 @@ function CaregiverCodeSection({ patientName, patientAddress }: { patientName: st
         if (codes.temporary) {
           firestore().collection('inviteCodes').doc(codes.temporary).get()
             .then(doc => {
-              if (doc.exists()) setTempExpiresAt(doc.data()?.expiresAt?.toDate() ?? null);
+              if (doc.exists) setTempExpiresAt(doc.data()?.expiresAt?.toDate() ?? null);
             }).catch(() => {});
         }
       })
@@ -919,6 +922,7 @@ function LegalPrivacySection() {
 // ─── Settings Tab ─────────────────────────────────────────────────────────────
 
 function SettingsTab() {
+  const [creditsOpen, setCreditsOpen] = useState(false);
   const { settings, setSettings, clearHistory, clearInsulinLog, caregiverSession, history, insulinEntries, savedMeals, profile: exportProfile } = useGlucoseStore();
   const { colors } = useTheme();
   const t = useTranslation();
@@ -935,21 +939,126 @@ function SettingsTab() {
   const [secSuccess,     setSecSuccess]     = useState('');
   const [exporting,      setExporting]      = useState(false);
 
+ // Replace the entire handleExport function in SettingsTab with this:
+
   const handleExport = async () => {
     setExporting(true);
     try {
-      const payload = {
-        exportedAt: new Date().toISOString(),
-        profile: exportProfile,
-        settings: { ...settings, securityHash: '[redacted]' },
-        glucoseHistory: history,
-        insulinLog: insulinEntries,
-        savedMeals,
+      const genDate = new Date().toLocaleDateString();
+      const genTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      const fmtDate = (iso: string) => {
+        if (!iso) return '—';
+        const d = new Date(iso);
+        return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
       };
-      const json = JSON.stringify(payload, null, 2);
-      const file = new File(Paths.cache, 'diab_easy_export.json');
-      file.write(json);
-      await Sharing.shareAsync(file.uri, { mimeType: 'application/json', dialogTitle: t.exportMyData });
+
+      const fmtDateTime = (iso: string) => {
+        if (!iso) return '—';
+        const d = new Date(iso);
+        return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      };
+
+      const glucoseRows = [...history].reverse().map((e, i) => {
+        const bg = i % 2 === 0 ? '#ffffff' : '#f7f7f7';
+        const col = e.interpretation === 'Low' ? '#e53935' : e.interpretation === 'High' ? '#ef6c00' : '#2e7d32';
+        return `<tr style="background:${bg}">
+          <td>${fmtDateTime(e.timestamp)}</td>
+          <td style="font-weight:700">${e.value} ${e.unit}</td>
+          <td style="color:${col};font-weight:700">${e.interpretation ?? '—'}</td>
+          <td>${e.fasting || '—'}</td>
+          <td>${e.symptoms || '—'}</td>
+        </tr>`;
+      }).join('');
+
+      const insulinRows = insulinEntries.map((e, i) => {
+        const bg = i % 2 === 0 ? '#ffffff' : '#f7f7f7';
+        return `<tr style="background:${bg}">
+          <td>${fmtDateTime(e.timestamp)}</td>
+          <td>${e.time}</td>
+          <td>${e.type}</td>
+          <td style="font-weight:700">${e.units}u</td>
+        </tr>`;
+      }).join('');
+
+      const css = `
+        @page { size: A4 portrait; margin: 22px 26px }
+        body { font-family: Arial, sans-serif; color: #1a1a1a; font-size: 11px; margin: 0 }
+        .hdr { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #ec5557; padding-bottom: 10px; margin-bottom: 14px }
+        .hdr-title { font-size: 22px; font-weight: 900; color: #ec5557 }
+        .hdr-sub { font-size: 10px; color: #777; margin-top: 2px }
+        .hdr-right { font-size: 9px; color: #999; text-align: right; line-height: 1.6 }
+        .sec { font-size: 11px; font-weight: 700; color: #333; border-bottom: 1.5px solid #ec5557; padding-bottom: 3px; margin: 14px 0 7px }
+        .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid #e8e8e8; border-radius: 8px; overflow: hidden; margin-bottom: 14px }
+        .pf { padding: 8px 14px; border-bottom: 1px solid #f5f5f5; border-right: 1px solid #f5f5f5 }
+        .pf-label { font-size: 8px; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px }
+        .pf-value { font-size: 12px; font-weight: 700; color: #1a1a1a }
+        .pf-empty { font-size: 11px; color: #ccc; font-style: italic }
+        table { width: 100%; border-collapse: collapse; font-size: 9px }
+        th { background: #ec5557; color: #fff; padding: 4px 6px; text-align: left; font-size: 8.5px }
+        td { padding: 3px 6px; border-bottom: 1px solid #f0f0f0 }
+        .disclaimer { margin-top: 18px; border: 1.5px solid #e53935; border-radius: 8px; padding: 10px 14px; background: #fff8f8; font-size: 8.5px; color: #555; line-height: 1.5 }
+        .footer { margin-top: 10px; font-size: 7.5px; color: #ccc; text-align: center; border-top: 1px solid #eee; padding-top: 6px }
+        .empty-note { font-size: 11px; color: #aaa; font-style: italic; text-align: center; padding: 10px }
+      `;
+
+      const html = `<html><head><meta charset="utf-8"/><style>${css}</style></head><body>
+        <div class="hdr">
+          <div>
+            <div class="hdr-title">DiabEasy</div>
+            <div class="hdr-sub">Personal Data Export</div>
+          </div>
+          <div class="hdr-right">Generated: ${genDate} at ${genTime}</div>
+        </div>
+
+        <div class="sec">Personal Information</div>
+        <div class="profile-grid">
+          ${[
+            { label: 'Full Name',       value: exportProfile.name },
+            { label: 'Date of Birth',   value: exportProfile.age ? fmtDate(exportProfile.age) : '' },
+            { label: 'Diabetes Type',   value: exportProfile.diabetesType },
+            { label: 'Diagnosis Date',  value: exportProfile.diagnosisDate },
+            { label: 'Doctor',          value: exportProfile.doctorName },
+            { label: 'Clinic',          value: exportProfile.clinicName },
+            { label: 'Address',         value: exportProfile.address },
+            { label: 'Email',           value: exportProfile.email },
+          ].map(f => `<div class="pf">
+            <div class="pf-label">${f.label}</div>
+            ${f.value ? `<div class="pf-value">${f.value}</div>` : `<div class="pf-empty">Not provided</div>`}
+          </div>`).join('')}
+        </div>
+
+        <div class="sec">Glucose History (${history.length} readings)</div>
+        ${history.length === 0
+          ? `<div class="empty-note">No glucose readings recorded.</div>`
+          : `<table>
+              <thead><tr>
+                <th>Date &amp; Time</th><th>Value</th><th>Status</th><th>Context</th><th>Notes</th>
+              </tr></thead>
+              <tbody>${glucoseRows}</tbody>
+            </table>`
+        }
+
+        <div class="sec">Insulin Log (${insulinEntries.length} entries)</div>
+        ${insulinEntries.length === 0
+          ? `<div class="empty-note">No insulin entries recorded.</div>`
+          : `<table>
+              <thead><tr>
+                <th>Date &amp; Time</th><th>Time</th><th>Type</th><th>Units</th>
+              </tr></thead>
+              <tbody>${insulinRows}</tbody>
+            </table>`
+        }
+
+        <div class="disclaimer">
+          ⚠️ This export contains your personal health data. Keep it secure and do not share it with unauthorized parties. DiabEasy is a personal management aid and not a medical device. Always confirm treatment decisions with your healthcare provider.
+        </div>
+        <div class="footer">DiabEasy Personal Data Export · Generated ${genDate} at ${genTime}</div>
+      </body></html>`;
+
+      const { uri } = await Print.printToFileAsync({ html });
+      await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: t.exportMyData });
+
     } catch {
       Alert.alert(t.exportDataFailed);
     } finally {
@@ -1213,9 +1322,6 @@ function SettingsTab() {
             </View>
             <Text style={[s.aboutChevron, { color: colors.border }]}>›</Text>
           </TouchableOpacity>
-          <Text style={[{ fontSize: 11, color: colors.textFaint, marginTop: 4, marginBottom: 8, textAlign: 'center' }]}>
-            {t.pdfExportDisclaimer}
-          </Text>
           <Divider />
           <PressBtn style={[s.dangerBtn]} onPress={handleClearData} activeOpacity={0.75}>
             <Text style={s.dangerBtnText}>{t.clearAllData}</Text>
@@ -1234,6 +1340,31 @@ function SettingsTab() {
           <Text style={[s.aboutLink, { color: colors.text }]}>{t.sendFeedback}</Text>
           <Text style={[s.aboutChevron, { color: colors.border }]}>›</Text>
         </TouchableOpacity>
+        <Divider />
+        <TouchableOpacity
+          style={s.aboutLinkRow}
+          onPress={() => setCreditsOpen(v => !v)}
+          activeOpacity={0.75}
+        >
+          <Text style={[s.aboutLink, { color: colors.text }]}>Credits</Text>
+          <Text style={[s.aboutChevron, { color: colors.border }]}>{creditsOpen ? '▼' : '›'}</Text>
+        </TouchableOpacity>
+        {creditsOpen && (
+  <View style={{ paddingVertical: 8, paddingHorizontal: 4 }}>
+    <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8, marginTop: 4 }}>
+      QA Assessment
+    </Text>
+    <Text style={{ fontSize: 13, color: colors.textMuted, lineHeight: 22 }}>
+      Alice I · Andrei G · Daniel L · Diana P · Enoh T · George P · Georgy R · Indigo · Luca I · Lumi C · Madalin M · Mark M · Radu P · Razvan C · Sorin I · Tim C · Vlad I
+    </Text>
+    <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8, marginTop: 14 }}>
+      Device Handling
+    </Text>
+    <Text style={{ fontSize: 13, color: colors.textMuted, lineHeight: 22 }}>
+      Miriam I · Sebastian D
+    </Text>
+  </View>
+)}
         <Divider />
         <View style={s.disclaimerCard}>
           <Text style={[s.disclaimerText, { color: colors.textMuted }]}>{t.appDisclaimer}</Text>
