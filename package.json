@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
-    "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-native-community/datetimepicker": "8.4.4",
     "@react-native-firebase/app": "^21.0.0",
     "@react-native-firebase/auth": "^21.0.0",
@@ -76,6 +76,9 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@types/estree": "^1.0.9",
+    "@types/json-schema": "^7.0.15",
+    "@types/node": "^25.9.3",
     "@types/react": "~19.1.0",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
