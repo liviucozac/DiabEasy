@@ -142,7 +142,7 @@ export function UpgradeModal({ visible, onClose }: Props) {
                   onPress={() => handleSubscribe(monthlyPackage)}
                   disabled={loading}
                 >
-                  <Text style={s.primaryBtnText}>{t.goPremium} — {monthlyPrice}/mo</Text>
+                  <Text style={s.primaryBtnText}>{t.goPremium}</Text>
                 </PressBtn>
                 <Text style={[s.btnNote, { color: colors.textMuted }]}>{t.cancelAnytime}</Text>
 
@@ -152,7 +152,7 @@ export function UpgradeModal({ visible, onClose }: Props) {
                   disabled={loading}
                   activeOpacity={0.75}
                 >
-                  <Text style={[s.outlineBtnText, { color: colors.red }]}>{yearlyPrice}/yr — Save ~25%</Text>
+                  <Text style={[s.outlineBtnText, { color: colors.red }]}>Go Premium Yearly: {yearlyPrice}/year — Save ~25%</Text>
                 </PressBtn>
                 <Text style={[s.btnNote, { color: colors.textMuted }]}>{t.cancelAnytime}</Text>
 
@@ -164,7 +164,7 @@ export function UpgradeModal({ visible, onClose }: Props) {
                   disabled={loading}
                   activeOpacity={0.75}
                 >
-                  <Text style={[s.outlineBtnText, { color: colors.red }]}>{t.oneTimePdf} — €0.99</Text>
+                  <Text style={[s.outlineBtnText, { color: colors.red }]}>{t.oneTimePdf}</Text>
                 </PressBtn>
                 <Text style={[s.btnNote, { color: colors.textMuted }]}>{t.singleExport}</Text>
               </>

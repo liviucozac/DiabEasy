@@ -19,9 +19,11 @@ import { GuidedFlowModal } from "../components/GuidedFlowModal";
 import { PressBtn } from "../components/PressBtn";
 import { ShadowBtn } from "../components/ShadowBtn";
 import { TrialBanner } from "../components/TrialBanner";
+import { UpgradeModal } from "../components/UpgradeModal";
 import { useTheme } from "../context/AppContext";
 import { useTranslation } from "../hooks/useTranslation";
 import { useGlucoseStore } from "../store/glucoseStore";
+import { useSubscriptionStore } from "../store/subscriptionStore";
 import type { GlucoseReading } from "../utils/bleGlucometerService";
 import { redeemCaregiverCode } from "../utils/firestoreSync";
 
@@ -455,6 +457,8 @@ function HyperPopup({
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function HomeScreen() {
+  const { isPremiumPaid } = useSubscriptionStore();
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const {
     addEntry,
     setGlucoseValue: setGlobalGlucose,
@@ -697,7 +701,13 @@ export default function HomeScreen() {
                 backgroundColor: colors.bgCard,
               },
             ]}
-            onPress={() => setShowBleScanner(true)}
+            onPress={() => {
+              if (!isPremiumPaid) {
+                setShowUpgradeModal(true);
+              } else {
+                setShowBleScanner(true);
+              }
+            }}
             activeOpacity={0.8}
           >
             <Text style={styles.bleBtnIcon}>🔵</Text>
@@ -1002,6 +1012,11 @@ export default function HomeScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
+      <UpgradeModal
+        visible={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+      />
+
       <HypoPopup
         visible={showHypoPopup}
         glucoseValue={glucoseValue!}
@@ -1185,7 +1200,6 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     color: "#aaa",
   },
-
   unitToggleRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -1431,7 +1445,6 @@ const styles = StyleSheet.create({
   },
   compatBtnText: { fontSize: 15, fontWeight: "700", color: "#fff" },
   divider: { height: 1, width: "75%", marginBottom: 14 },
-
   caregiverLink: { marginBottom: 8, marginTop: 4 },
   caregiverLinkText: {
     fontSize: 13,

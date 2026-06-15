@@ -21,6 +21,7 @@ import {
 } from "react-native";
 import { ParamTrainingModal } from "../components/ParamTrainingModal";
 import { PressBtn } from "../components/PressBtn";
+import { UpgradeModal } from '../components/UpgradeModal';
 import { useTheme } from "../context/AppContext";
 import { useTranslation } from "../hooks/useTranslation";
 import {
@@ -896,6 +897,7 @@ function CaregiverCodeSection({
   patientName: string;
   patientAddress: string;
 }) {
+  const [upgradeVisible, setUpgradeVisible] = useState(false); // ← add here
   const { colors } = useTheme();
   const t = useTranslation();
   const { history, insulinEntries, savedMeals, setCaregiverSyncEnabled } =
@@ -1098,16 +1100,13 @@ function CaregiverCodeSection({
           >
             {t.caregiverPremiumDesc}
           </Text>
-          <Text
-            style={{
-              fontSize: 12,
-              color: colors.textFaint,
-              textAlign: "center",
-              marginTop: 4,
-            }}
-          >
-            Premium coming soon.
-          </Text>
+            <UpgradeModal visible={upgradeVisible} onClose={() => setUpgradeVisible(false)} />
+            <PressBtn
+              style={[{ backgroundColor: colors.red, borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginTop: 4 }]}
+              onPress={() => setUpgradeVisible(true)}
+            >
+              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 14 }}>{t.goPremium}</Text>
+            </PressBtn>
         </View>
       ) : (
         <>

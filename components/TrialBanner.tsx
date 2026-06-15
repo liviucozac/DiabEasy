@@ -16,17 +16,16 @@ export function TrialBanner() {
   return (
     <>
       <View style={[s.banner, { backgroundColor: colors.bgCard, borderColor: colors.red }]}>
-        <Text style={[s.text, { color: colors.text }]}>
-          💎 <Text style={{ color: colors.red, fontWeight: '800' }}>{t.diabeasyPremium}</Text>
-          {'  '}
-          <Text style={{ color: colors.textMuted, fontWeight: '400' }}>{t.upgradeForFullExperience}</Text>
+        <Text style={[s.text, { color: colors.textMuted }]} numberOfLines={1}>
+          <Text style={{ color: colors.red, fontWeight: '800' }}>Premium</Text>
+          {' — unlock all features'}
         </Text>
         <TouchableOpacity
           style={[s.btn, { backgroundColor: colors.red }]}
           onPress={() => setModalVisible(true)}
           activeOpacity={0.8}
         >
-          <Text style={s.btnText}>{t.goPremium}</Text>
+          <Text style={s.btnText}>Upgrade</Text>
         </TouchableOpacity>
       </View>
 
@@ -39,14 +38,13 @@ const s = StyleSheet.create({
   banner: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     marginHorizontal: 16,
     marginBottom: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
     borderRadius: 12,
     borderWidth: 1.5,
-    gap: 8,
+    gap: 6,
     shadowColor: '#7a1010',
     shadowOffset: { width: 2, height: 2 },
     shadowOpacity: 0.2,
@@ -56,7 +54,7 @@ const s = StyleSheet.create({
   text: {
     flex: 1,
     fontSize: 12,
-    lineHeight: 17,
+    textAlign: 'center',
   },
   btn: {
     borderRadius: 8,
