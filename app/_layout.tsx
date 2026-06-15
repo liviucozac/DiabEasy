@@ -1,36 +1,48 @@
-import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { AppProvider, useTheme } from '../context/AppContext';
-import {
-  View, Text, Image, StyleSheet, Animated, AppState, AppStateStatus,
-  TextInput, TouchableOpacity, KeyboardAvoidingView, ScrollView, Platform, UIManager,
-} from 'react-native';
-import { useGlucoseStore } from '../store/glucoseStore';
-import { useTranslation } from '../hooks/useTranslation';
-import OnboardingScreen from './onboarding';
-import { useRef, useEffect, useState } from 'react';
-import * as Notifications from 'expo-notifications';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 import { getLocales } from 'expo-localization';
+import * as Notifications from 'expo-notifications';
+import { router, Tabs } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 import {
-  registerForNotifications,
-  rescheduleAllReminders,
-  cancelAllReminderNotifications,
-} from '../utils/notificationUtils';
-import { LockScreen } from '../components/LockScreen';
+  Animated, AppState, AppStateStatus,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput, TouchableOpacity,
+  UIManager,
+  View,
+} from 'react-native';
+import Purchases, { LOG_LEVEL } from 'react-native-purchases';
 import { ConsentModal } from '../components/ConsentModal';
 import { LanguagePromptModal } from '../components/LanguagePromptModal';
+import { LockScreen } from '../components/LockScreen';
+import { AppProvider, useTheme } from '../context/AppContext';
+import { useEntitlements } from '../hooks/useEntitlements';
+import { useTranslation } from '../hooks/useTranslation';
+import { useGlucoseStore } from '../store/glucoseStore';
+import { useSubscriptionStore } from '../store/subscriptionStore';
 import {
-  onAuthStateChanged, signIn, signUp, sendPasswordReset,
+  onAuthStateChanged,
+  sendPasswordReset,
+  signIn, signUp,
 } from '../utils/firebaseAuth';
 import {
+  checkFirebasePremium,
+  fetchCaregiverPatientName,
   fetchGlucoseHistory, fetchInsulinLog, fetchUserData,
-  checkFirebasePremium, redeemCaregiverCode, fetchCaregiverPatientName,
+  redeemCaregiverCode,
 } from '../utils/firestoreSync';
-import { useSubscriptionStore } from '../store/subscriptionStore';
-import { router } from 'expo-router';
-import firestore from '@react-native-firebase/firestore';
-import auth from '@react-native-firebase/auth';
-import { Alert } from 'react-native';
+import {
+  cancelAllReminderNotifications,
+  registerForNotifications,
+  rescheduleAllReminders,
+} from '../utils/notificationUtils';
+import OnboardingScreen from './onboarding';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -302,7 +314,7 @@ function RoleSelectionScreen({ onPatient, onCaregiver }: {
           </Text>
         </TouchableOpacity>
 
-        {/* Remember me checkbox — only shown for patient */}
+        {/* Remember me checkbox */}
         <TouchableOpacity
           onPress={() => setRememberMe(v => !v)}
           activeOpacity={0.7}
@@ -517,6 +529,7 @@ function RootContent() {
     patientRoleChosen, setPatientRoleChosen,
   } = useGlucoseStore();
 
+  // ─── Language detection ───────────────────────────────────────────────────
   useEffect(() => {
     if (settings.languageDetected) return;
     const SUPPORTED = ['en', 'ro', 'it', 'de', 'fr', 'nl'];
@@ -524,6 +537,16 @@ function RootContent() {
     const lang = SUPPORTED.includes(code) ? code : 'en';
     setSettings({ language: lang, languageDetected: true });
   }, []);
+
+  // ─── RevenueCat init ──────────────────────────────────────────────────────
+  useEffect(() => {
+    Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+    Purchases.configure({
+      apiKey: 'goog_FEnUNIWETuGMKDUkeIAEGPMhcTP',
+    });
+  }, []);
+
+  useEntitlements();
 
   const permGranted    = useRef(false);
   const [isLocked,     setIsLocked]         = useState(false);
@@ -580,7 +603,6 @@ function RootContent() {
     const unsub = onAuthStateChanged(async (u: any) => {
       setUser(u);
       setAuthChecked(true);
-      // Reset session-only caregiver role on each login, but keep persisted patient preference
       if (u) setLocalRoleChosen(false);
       if (u && !u.isAnonymous) {
         try {
@@ -627,10 +649,8 @@ function RootContent() {
             }
             setCaregiverSession(null);
             if (remember) {
-              // Persist patient role so screen is skipped on reopen
               setPatientRoleChosen(true);
             } else {
-              // Just set local so it works this session only
               setLocalRoleChosen(true);
             }
           }}
