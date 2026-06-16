@@ -542,7 +542,7 @@ function RootContent() {
   useEffect(() => {
     Purchases.setLogLevel(LOG_LEVEL.DEBUG);
     Purchases.configure({
-      apiKey: 'goog_FEnUNIWETuGMKDUkeIAEGPMhcTP',
+      apiKey: 'goog_BQEzDmrHiQPmTgIPavcUzByJMJi',
     });
   }, []);
 
