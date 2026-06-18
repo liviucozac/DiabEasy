@@ -22,11 +22,11 @@ export function ConsentModal() {
 
   const handleDecline = () => {
     Alert.alert(
-      'Unable to continue',
-      'DiabEasy requires your consent to store and process health data (GDPR Art. 9). Without consent the app cannot function. Please accept to continue, or uninstall the app to remove all local data.',
+      t.unableToContinue,
+      t.consentRequiredBody,
       [
-        { text: 'Go back', style: 'cancel' },
-        { text: 'Close app', style: 'destructive', onPress: () => BackHandler.exitApp() },
+        { text: t.goBack, style: 'cancel' },
+        { text: t.closeApp, style: 'destructive', onPress: () => BackHandler.exitApp() },
       ],
     );
   };

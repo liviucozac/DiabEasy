@@ -55,7 +55,7 @@ export function UpgradeModal({ visible, onClose }: Props) {
       }
     } catch (e: any) {
       if (!e.userCancelled) {
-        Alert.alert('Purchase failed', e.message ?? 'Something went wrong.');
+        Alert.alert(t.purchaseFailed, e.message ?? t.somethingWentWrong);
       }
     } finally {
       setLoading(false);
@@ -68,13 +68,13 @@ export function UpgradeModal({ visible, onClose }: Props) {
       const { customerInfo } = await Purchases.purchaseStoreProduct(
         await Purchases.getProducts(['diabeasy_pdf_export']).then(p => p[0])
       );
-      if (customerInfo.nonSubscriptionTransactions.some(t => t.productIdentifier === 'diabeasy_pdf_export')) {
+      if (customerInfo.nonSubscriptionTransactions.some(tx => tx.productIdentifier === 'diabeasy_pdf_export')) {
         setOneTimePdfPurchased(true);
         onClose();
       }
     } catch (e: any) {
       if (!e.userCancelled) {
-        Alert.alert('Purchase failed', e.message ?? 'Something went wrong.');
+        Alert.alert(t.purchaseFailed, e.message ?? t.somethingWentWrong);
       }
     } finally {
       setLoading(false);
@@ -87,13 +87,13 @@ export function UpgradeModal({ visible, onClose }: Props) {
       const customerInfo = await Purchases.restorePurchases();
       if (customerInfo.entitlements.active['premium']) {
         setPremiumPaid(true);
-        Alert.alert('Restored!', 'Your premium access has been restored.');
+        Alert.alert(t.purchaseRestored, t.premiumRestored);
         onClose();
       } else {
-        Alert.alert('Nothing to restore', 'No active premium subscription found.');
+        Alert.alert(t.nothingToRestore, t.noActivePremiumFound);
       }
     } catch (e: any) {
-      Alert.alert('Restore failed', e.message ?? 'Something went wrong.');
+      Alert.alert(t.restoreFailed, e.message ?? t.somethingWentWrong);
     } finally {
       setLoading(false);
     }
@@ -152,7 +152,7 @@ export function UpgradeModal({ visible, onClose }: Props) {
                   disabled={loading}
                   activeOpacity={0.75}
                 >
-                  <Text style={[s.outlineBtnText, { color: colors.red }]}>Go Premium Yearly: {yearlyPrice}/year — Save ~25%</Text>
+                  <Text style={[s.outlineBtnText, { color: colors.red }]}>{t.goPremiumYearly(yearlyPrice)}</Text>
                 </PressBtn>
                 <Text style={[s.btnNote, { color: colors.textMuted }]}>{t.cancelAnytime}</Text>
 
@@ -172,13 +172,21 @@ export function UpgradeModal({ visible, onClose }: Props) {
 
             {loading && <ActivityIndicator color={colors.red} style={{ marginVertical: 8 }} />}
 
-            <TouchableOpacity onPress={handleRestore} activeOpacity={0.7} style={s.restoreLink}>
-              <Text style={[s.closeLinkText, { color: colors.textMuted }]}>Restore purchases</Text>
-            </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleRestore}
+            activeOpacity={0.7}
+            style={[s.restoreLink, { borderWidth: 1, borderColor: colors.textMuted, borderRadius: 8, paddingVertical: 6, paddingHorizontal: 16, alignSelf: 'center' }]}
+          >
+            <Text style={[s.closeLinkText, { color: colors.textMuted }]}>{t.restorePurchases}</Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity onPress={onClose} activeOpacity={0.7} style={s.closeLink}>
-              <Text style={[s.closeLinkText, { color: colors.textMuted }]}>{t.maybeLater}</Text>
-            </TouchableOpacity>
+          <TouchableOpacity
+            onPress={onClose}
+            activeOpacity={0.7}
+            style={[s.closeLink, { borderWidth: 1, borderColor: colors.textMuted, borderRadius: 8, paddingVertical: 6, paddingHorizontal: 16, alignSelf: 'center', marginBottom: 16 }]}
+          >
+            <Text style={[s.closeLinkText, { color: colors.textMuted }]}>{t.maybeLater}</Text>
+          </TouchableOpacity>
 
           </ScrollView>
         </View>

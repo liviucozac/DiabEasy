@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTheme } from '../context/AppContext';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface Props {
   locked:    boolean;
@@ -9,8 +10,10 @@ interface Props {
   children:  React.ReactNode;
 }
 
-export function PremiumGate({ locked, onUnlock, label = 'Premium Feature', children }: Props) {
+export function PremiumGate({ locked, onUnlock, label, children }: Props) {
   const { colors } = useTheme();
+  const t = useTranslation();
+  const displayLabel = label ?? t.premiumFeatureLabel;
 
   if (!locked) return <>{children}</>;
 
@@ -26,8 +29,8 @@ export function PremiumGate({ locked, onUnlock, label = 'Premium Feature', child
           activeOpacity={0.85}
         >
           <Text style={s.icon}>🔒</Text>
-          <Text style={[s.label, { color: colors.text }]}>{label}</Text>
-          <Text style={[s.cta, { color: colors.red }]}>Tap to upgrade →</Text>
+          <Text style={[s.label, { color: colors.text }]}>{displayLabel}</Text>
+          <Text style={[s.cta, { color: colors.red }]}>{t.tapToUpgrade}</Text>
         </TouchableOpacity>
       </View>
     </View>

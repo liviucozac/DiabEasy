@@ -19,6 +19,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Purchases from 'react-native-purchases';
 import { ParamTrainingModal } from "../components/ParamTrainingModal";
 import { PressBtn } from "../components/PressBtn";
 import { UpgradeModal } from '../components/UpgradeModal';
@@ -178,7 +179,7 @@ function PinSetupSection({
       setVerifyError("");
       setCurrentPin("");
     } else {
-      setVerifyError("Incorrect PIN. Try again.");
+      setVerifyError(t.lockIncorrectPin);
     }
   };
 
@@ -203,7 +204,7 @@ function PinSetupSection({
         activeOpacity={0.75}
       >
         <Text style={{ fontSize: 14, fontWeight: "700", color: colors.red }}>
-          🔢 Change PIN
+          {t.changePinBtn}
         </Text>
       </TouchableOpacity>
     );
@@ -212,7 +213,7 @@ function PinSetupSection({
   if (hasPin && !verified) {
     return (
       <View style={{ gap: 8, marginTop: 10 }}>
-        <FieldLabel text="Current PIN" />
+        <FieldLabel text={t.currentPin} />
         <View
           style={{
             flexDirection: "row",
@@ -258,7 +259,7 @@ function PinSetupSection({
           ]}
           onPress={handleVerify}
         >
-          <Text style={s.authBtnText}>Verify PIN</Text>
+          <Text style={s.authBtnText}>{t.verifyPin}</Text>
         </PressBtn>
         <TouchableOpacity
           onPress={() => {
@@ -536,6 +537,62 @@ function PasswordSetupSection({
   );
 }
 
+// ─── Subscription Section ─────────────────────────────────────────────────────
+
+function SubscriptionSection() {
+  const { colors } = useTheme();
+  const t = useTranslation();
+  const { isPremiumPaid, setPremiumPaid } = useSubscriptionStore();
+  const [restoring, setRestoring] = useState(false);
+
+  const handleRestore = async () => {
+    try {
+      setRestoring(true);
+      const customerInfo = await Purchases.restorePurchases();
+      if (customerInfo.entitlements.active['premium']) {
+        setPremiumPaid(true);
+        Alert.alert(t.purchaseRestored, t.premiumRestored);
+      } else {
+        Alert.alert(t.nothingToRestore, t.noActivePremiumFound);
+      }
+    } catch (e: any) {
+      Alert.alert(t.restoreFailed, e.message ?? t.somethingWentWrong);
+    } finally {
+      setRestoring(false);
+    }
+  };
+
+  return (
+    <View style={{ marginTop: 8 }}>
+      {isPremiumPaid && (
+        <TouchableOpacity
+          style={[s.aboutLinkRow]}
+          onPress={() => Linking.openURL(
+            'https://play.google.com/store/account/subscriptions?sku=diabeasy_premium_monthly&package=com.liviucozac.diabeasy'
+          )}
+          activeOpacity={0.75}
+        >
+          <Text style={{ fontSize: 14, fontWeight: '700', color: colors.red }}>
+            {t.manageSubscription}
+          </Text>
+          <Text style={[s.aboutChevron, { color: colors.border }]}>›</Text>
+        </TouchableOpacity>
+      )}
+      <TouchableOpacity
+        style={[s.aboutLinkRow]}
+        onPress={handleRestore}
+        activeOpacity={0.75}
+        disabled={restoring}
+      >
+        <Text style={{ fontSize: 14, fontWeight: '700', color: colors.red }}>
+          {restoring ? t.restoringPurchases : t.restorePurchases}
+        </Text>
+        <Text style={[s.aboutChevron, { color: colors.border }]}>›</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 // ─── Account Section ──────────────────────────────────────────────────────────
 
 function AccountSection({ user }: { user: any }) {
@@ -685,15 +742,17 @@ function AccountSection({ user }: { user: any }) {
                 🔑 {t.changePassword}
               </Text>
             </TouchableOpacity>
-            <PressBtn
-              style={[s.signOutBtn, { borderColor: colors.red }]}
-              onPress={handleSignOut}
-              activeOpacity={0.75}
-            >
-              <Text style={[s.signOutBtnText, { color: colors.red }]}>
-                {t.signOut}
-              </Text>
-            </PressBtn>
+          <Divider />
+          <SubscriptionSection />
+          <PressBtn
+            style={[s.signOutBtn, { borderColor: colors.red }]}
+            onPress={handleSignOut}
+            activeOpacity={0.75}
+          >
+            <Text style={[s.signOutBtnText, { color: colors.red }]}>
+              {t.signOut}
+            </Text>
+          </PressBtn>
           </>
         ) : (
           <>
@@ -2597,7 +2656,7 @@ function SettingsTab() {
           onPress={() => setCreditsOpen((v) => !v)}
           activeOpacity={0.75}
         >
-          <Text style={[s.aboutLink, { color: colors.text }]}>Credits</Text>
+          <Text style={[s.aboutLink, { color: colors.text }]}>{t.credits}</Text>
           <Text style={[s.aboutChevron, { color: colors.border }]}>
             {creditsOpen ? "▼" : "›"}
           </Text>

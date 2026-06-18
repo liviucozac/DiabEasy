@@ -17,15 +17,15 @@ export function TrialBanner() {
     <>
       <View style={[s.banner, { backgroundColor: colors.bgCard, borderColor: colors.red }]}>
         <Text style={[s.text, { color: colors.textMuted }]} numberOfLines={1}>
-          <Text style={{ color: colors.red, fontWeight: '800' }}>Premium</Text>
-          {' — unlock all features'}
+          <Text style={{ color: colors.red, fontWeight: '800' }}>{t.premiumLabel}</Text>
+          {t.unlockAllFeatures}
         </Text>
         <TouchableOpacity
           style={[s.btn, { backgroundColor: colors.red }]}
           onPress={() => setModalVisible(true)}
           activeOpacity={0.8}
         >
-          <Text style={s.btnText}>Upgrade</Text>
+          <Text style={s.btnText}>{t.upgrade}</Text>
         </TouchableOpacity>
       </View>
 

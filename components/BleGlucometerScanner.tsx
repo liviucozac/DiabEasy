@@ -1,12 +1,17 @@
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  View, Text, TouchableOpacity, StyleSheet,
-  Modal, ActivityIndicator, PermissionsAndroid, Platform,
-} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Modal,
+  PermissionsAndroid, Platform,
+  StyleSheet,
+  Text, TouchableOpacity,
+  View,
+} from 'react-native';
 import { BleManager } from 'react-native-ble-plx';
-import { BleGlucometerService, BleStatus, GlucoseReading } from '../utils/bleGlucometerService';
 import { useTheme } from '../context/AppContext';
+import { useTranslation } from '../hooks/useTranslation';
+import { BleGlucometerService, BleStatus, GlucoseReading } from '../utils/bleGlucometerService';
 
 const BLE_DEVICE_KEY = 'ble_glucometer_device_id';
 
@@ -32,17 +37,18 @@ async function requestPermissions(): Promise<boolean> {
   return r === PermissionsAndroid.RESULTS.GRANTED;
 }
 
-const STATUS_LABELS: Record<BleStatus, string> = {
-  idle:       '',
-  scanning:   'Searching for glucometer…',
-  connecting: 'Connecting…',
-  reading:    'Reading last measurement…',
-  done:       'Reading received!',
-  error:      '',
-};
-
 export function BleGlucometerScanner({ visible, onClose, onReading }: Props) {
   const { colors } = useTheme();
+  const t = useTranslation();
+
+  const STATUS_LABELS: Record<BleStatus, string> = {
+    idle:       '',
+    scanning:   t.bleScanning,
+    connecting: t.bleConnecting,
+    reading:    t.bleReading,
+    done:       t.bleReadingReceived,
+    error:      '',
+  };
 
   const [status,  setStatus]  = useState<BleStatus>('idle');
   const [message, setMessage] = useState('');
@@ -68,7 +74,7 @@ export function BleGlucometerScanner({ visible, onClose, onReading }: Props) {
   const handleConnect = async () => {
     const granted = await requestPermissions();
     if (!granted) {
-      setError('Bluetooth permissions are required.');
+      setError(t.blePermissionsRequired);
       setStatus('error');
       return;
     }
@@ -84,8 +90,6 @@ export function BleGlucometerScanner({ visible, onClose, onReading }: Props) {
         onStatus: (s, msg) => { setStatus(s); if (msg) setMessage(msg); },
         onReading: (r)     => { setReading(r); setStatus('done'); },
         onError:   (msg)   => {
-          // Pairing/passkey errors mean stale bond — clear saved ID so next
-          // attempt does a fresh scan instead of failing on direct connect
           if (msg.toLowerCase().includes('pin') || msg.toLowerCase().includes('passkey') || msg.toLowerCase().includes('pair')) {
             knownDeviceId.current = null;
             AsyncStorage.removeItem(BLE_DEVICE_KEY);
@@ -113,7 +117,7 @@ export function BleGlucometerScanner({ visible, onClose, onReading }: Props) {
     const d = new Date(iso);
     const date = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
     const time = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-    return `${date} at ${time}`;
+    return `${date} ${t.at} ${time}`;
   };
 
   const busy = status === 'scanning' || status === 'connecting' || status === 'reading';
@@ -123,15 +127,15 @@ export function BleGlucometerScanner({ visible, onClose, onReading }: Props) {
       <View style={[s.overlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
         <View style={[s.sheet, { backgroundColor: colors.bg }]}>
 
-          <Text style={[s.title, { color: colors.text }]}>Connect Glucometer</Text>
+          <Text style={[s.title, { color: colors.text }]}>{t.connectGlucometer}</Text>
           <Text style={[s.subtitle, { color: colors.textMuted }]}>
-            Turn on your Accu-Chek Instant and keep it nearby.
+            {t.bleDeviceInstructions}
           </Text>
 
           {/* Idle */}
           {status === 'idle' && !error && (
             <TouchableOpacity style={[s.btn, { backgroundColor: colors.red }]} onPress={handleConnect} activeOpacity={0.8}>
-              <Text style={s.btnText}>Connect &amp; Import</Text>
+              <Text style={s.btnText}>{t.bleConnectImport}</Text>
             </TouchableOpacity>
           )}
 
@@ -149,7 +153,7 @@ export function BleGlucometerScanner({ visible, onClose, onReading }: Props) {
           {status === 'done' && reading && (
             <>
               <View style={[s.readingCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-                <Text style={[s.readingLabel, { color: colors.textMuted }]}>LAST READING</Text>
+                <Text style={[s.readingLabel, { color: colors.textMuted }]}>{t.bleLastReading}</Text>
                 <Text style={[s.readingValue, { color: colors.red }]}>
                   {reading.value} {reading.unit}
                 </Text>
@@ -158,10 +162,10 @@ export function BleGlucometerScanner({ visible, onClose, onReading }: Props) {
                 </Text>
               </View>
               <TouchableOpacity style={[s.btn, { backgroundColor: colors.red }]} onPress={handleConfirm} activeOpacity={0.8}>
-                <Text style={s.btnText}>Confirm &amp; Save</Text>
+                <Text style={s.btnText}>{t.bleConfirmSave}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[s.btnOutline, { borderColor: colors.border }]} onPress={() => { setStatus('idle'); setReading(null); }} activeOpacity={0.7}>
-                <Text style={[s.btnOutlineText, { color: colors.textMuted }]}>Try Again</Text>
+                <Text style={[s.btnOutlineText, { color: colors.textMuted }]}>{t.tryAgain}</Text>
               </TouchableOpacity>
             </>
           )}
@@ -171,13 +175,17 @@ export function BleGlucometerScanner({ visible, onClose, onReading }: Props) {
             <>
               <Text style={[s.errorText, { color: '#e53935' }]}>{error}</Text>
               <TouchableOpacity style={[s.btn, { backgroundColor: colors.red }]} onPress={() => { setStatus('idle'); setError(''); }} activeOpacity={0.8}>
-                <Text style={s.btnText}>Try Again</Text>
+                <Text style={s.btnText}>{t.tryAgain}</Text>
               </TouchableOpacity>
             </>
           )}
 
-          <TouchableOpacity style={s.closeLink} onPress={onClose} activeOpacity={0.7}>
-            <Text style={[s.closeLinkText, { color: colors.textMuted }]}>Cancel</Text>
+          <TouchableOpacity
+            style={[s.btnOutline, { borderColor: colors.red }]}
+            onPress={onClose}
+            activeOpacity={0.8}
+          >
+            <Text style={[s.btnOutlineText, { color: colors.red }]}>{t.cancel}</Text>
           </TouchableOpacity>
 
         </View>
@@ -187,21 +195,20 @@ export function BleGlucometerScanner({ visible, onClose, onReading }: Props) {
 }
 
 const s = StyleSheet.create({
-  overlay:      { flex: 1, justifyContent: 'flex-end' },
-  sheet:        { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 28, paddingBottom: 40 },
-  title:        { fontSize: 18, fontWeight: '800', marginBottom: 6, textAlign: 'center' },
-  subtitle:     { fontSize: 13, lineHeight: 19, textAlign: 'center', marginBottom: 24 },
-  btn:          { borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginBottom: 10 },
-  btnText:      { fontSize: 15, fontWeight: '700', color: '#fff' },
-  btnOutline:   { borderWidth: 1.5, borderRadius: 12, paddingVertical: 13, alignItems: 'center', marginBottom: 10 },
-  btnOutlineText:{ fontSize: 14, fontWeight: '600' },
-  statusRow:    { flexDirection: 'row', alignItems: 'center', gap: 12, justifyContent: 'center', marginBottom: 20 },
-  statusText:   { fontSize: 14, fontWeight: '500' },
-  readingCard:  { borderWidth: 1, borderRadius: 14, padding: 20, alignItems: 'center', marginBottom: 16 },
-  readingLabel: { fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 },
-  readingValue: { fontSize: 40, fontWeight: '900', marginBottom: 4 },
-  readingDate:  { fontSize: 13 },
-  errorText:    { fontSize: 13, textAlign: 'center', lineHeight: 20, marginBottom: 16 },
-  closeLink:    { alignItems: 'center', marginTop: 4 },
-  closeLinkText:{ fontSize: 14 },
+  overlay:       { flex: 1, justifyContent: 'flex-end' },
+  sheet:         { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 28, paddingBottom: 60 },
+  title:         { fontSize: 18, fontWeight: '800', marginBottom: 6, textAlign: 'center' },
+  subtitle:      { fontSize: 13, lineHeight: 19, textAlign: 'center', marginBottom: 24 },
+  btn:           { borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginBottom: 10,
+                   shadowColor: '#7a1010', shadowOffset: { width: 3, height: 3 }, shadowOpacity: 0.45, shadowRadius: 0, elevation: 4 },
+  btnText:       { fontSize: 15, fontWeight: '700', color: '#fff' },
+  btnOutline:    { borderWidth: 1.5, borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginBottom: 10 },
+  btnOutlineText:{ fontSize: 15, fontWeight: '700' },
+  statusRow:     { flexDirection: 'row', alignItems: 'center', gap: 12, justifyContent: 'center', marginBottom: 20 },
+  statusText:    { fontSize: 14, fontWeight: '500' },
+  readingCard:   { borderWidth: 1, borderRadius: 14, padding: 20, alignItems: 'center', marginBottom: 16 },
+  readingLabel:  { fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 },
+  readingValue:  { fontSize: 40, fontWeight: '900', marginBottom: 4 },
+  readingDate:   { fontSize: 13 },
+  errorText:     { fontSize: 13, textAlign: 'center', lineHeight: 20, marginBottom: 16 },
 });

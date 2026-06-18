@@ -3,22 +3,24 @@ import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-na
 import { WebView } from 'react-native-webview';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useTheme } from '../context/AppContext';
+import { useTranslation } from '../hooks/useTranslation';
 
 export default function LegalScreen() {
   const { doc } = useLocalSearchParams<{ doc: string }>();
   const { colors } = useTheme();
+  const t = useTranslation();
 
   const source = doc === 'privacy'
     ? require('../assets/legal/privacy_policy.html')
     : require('../assets/legal/terms_of_use.html');
 
-  const title = doc === 'privacy' ? 'Privacy Policy' : 'Terms of Use';
+  const title = doc === 'privacy' ? t.privacyPolicy : t.termsOfUse;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]}>
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={[styles.backText, { color: colors.red }]}>← Back</Text>
+          <Text style={[styles.backText, { color: colors.red }]}>← {t.backBtn}</Text>
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
         <View style={styles.backBtn} />

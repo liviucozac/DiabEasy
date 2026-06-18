@@ -6,6 +6,7 @@ import {
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import TextRecognition from '@react-native-ml-kit/text-recognition';
 import { useTheme } from '../context/AppContext';
+import { useTranslation } from '../hooks/useTranslation';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
@@ -109,6 +110,7 @@ function parseGlucometerText(blocks: string[]): ScanResult | null {
 
 export function GlucometerScanner({ visible, onClose, onConfirm }: Props) {
   const { colors } = useTheme();
+  const t = useTranslation();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanning,   setScanning]   = useState(false);
   const [result,     setResult]     = useState<ScanResult | null>(null);
@@ -160,7 +162,7 @@ export function GlucometerScanner({ visible, onClose, onConfirm }: Props) {
     setTimeout(() => {
       if (scanInterval.current) { clearInterval(scanInterval.current); scanInterval.current = null; }
       setScanning(false);
-      if (!result) setError('Could not read the display. Try holding the camera closer and steadier.');
+      if (!result) setError(t.scannerErrorText);
     }, 15000);
   };
 
@@ -179,7 +181,7 @@ export function GlucometerScanner({ visible, onClose, onConfirm }: Props) {
     const d = new Date(iso);
     const date = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
     const time = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-    return `${date} at ${time}`;
+    return `${date} ${t.at} ${time}`;
   };
 
   if (!permission) return null;
@@ -191,18 +193,18 @@ export function GlucometerScanner({ visible, onClose, onConfirm }: Props) {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => { stopScanning(); onClose(); }} activeOpacity={0.7}>
-            <Text style={styles.cancelBtn}>✕ Cancel</Text>
+            <Text style={styles.cancelBtn}>✕ {t.cancel}</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Scan Glucometer</Text>
+          <Text style={styles.headerTitle}>{t.scanGlucometer}</Text>
           <View style={{ width: 70 }} />
         </View>
 
         {/* Camera or permission */}
         {!permission.granted ? (
           <View style={styles.permissionBox}>
-            <Text style={styles.permissionText}>Camera access is needed to scan your glucometer.</Text>
+            <Text style={styles.permissionText}>{t.cameraPermissionText}</Text>
             <TouchableOpacity style={[styles.actionBtn, { backgroundColor: colors.red }]} onPress={requestPermission} activeOpacity={0.8}>
-              <Text style={styles.actionBtnText}>Allow Camera</Text>
+              <Text style={styles.actionBtnText}>{t.allowCamera}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -224,7 +226,7 @@ export function GlucometerScanner({ visible, onClose, onConfirm }: Props) {
                 </View>
                 <View style={styles.overlayBottom}>
                   <Text style={styles.hint}>
-                    {scanning ? 'Reading display...' : 'Point at your glucometer display'}
+                    {scanning ? t.scannerHintScanning : t.scannerHintIdle}
                   </Text>
                 </View>
               </View>
@@ -233,7 +235,7 @@ export function GlucometerScanner({ visible, onClose, onConfirm }: Props) {
             {/* Result card */}
             {result && (
               <View style={[styles.resultCard, { backgroundColor: colors.bgCard }]}>
-                <Text style={[styles.resultTitle, { color: colors.textMuted }]}>DETECTED READING</Text>
+                <Text style={[styles.resultTitle, { color: colors.textMuted }]}>{t.detectedReading}</Text>
                 <Text style={[styles.resultValue, { color: colors.red }]}>{result.value} {result.unit}</Text>
                 <Text style={[styles.resultDate, { color: colors.textMuted }]}>{formatTimestamp(result.timestamp)}</Text>
                 <View style={styles.resultBtns}>
@@ -242,14 +244,14 @@ export function GlucometerScanner({ visible, onClose, onConfirm }: Props) {
                     onPress={() => { setResult(null); setError(''); }}
                     activeOpacity={0.75}
                   >
-                    <Text style={[styles.retryBtnText, { color: colors.textMuted }]}>Retry</Text>
+                    <Text style={[styles.retryBtnText, { color: colors.textMuted }]}>{t.retry}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.confirmBtn, { backgroundColor: colors.red }]}
                     onPress={handleConfirm}
                     activeOpacity={0.8}
                   >
-                    <Text style={styles.confirmBtnText}>Confirm & Save</Text>
+                    <Text style={styles.confirmBtnText}>{t.bleConfirmSave}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -264,7 +266,7 @@ export function GlucometerScanner({ visible, onClose, onConfirm }: Props) {
                   onPress={() => { setError(''); startScanning(); }}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.actionBtnText}>Try Again</Text>
+                  <Text style={styles.actionBtnText}>{t.tryAgain}</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -275,9 +277,9 @@ export function GlucometerScanner({ visible, onClose, onConfirm }: Props) {
                 {scanning ? (
                   <View style={styles.scanningRow}>
                     <ActivityIndicator color="#fff" />
-                    <Text style={styles.scanningText}>Scanning...</Text>
+                    <Text style={styles.scanningText}>{t.scannerScanning}</Text>
                     <TouchableOpacity onPress={stopScanning} activeOpacity={0.7}>
-                      <Text style={styles.stopBtn}>Stop</Text>
+                      <Text style={styles.stopBtn}>{t.stop}</Text>
                     </TouchableOpacity>
                   </View>
                 ) : (
@@ -286,7 +288,7 @@ export function GlucometerScanner({ visible, onClose, onConfirm }: Props) {
                     onPress={startScanning}
                     activeOpacity={0.8}
                   >
-                    <Text style={styles.actionBtnText}>📷 Scan Display</Text>
+                    <Text style={styles.actionBtnText}>{t.scanDisplay}</Text>
                   </TouchableOpacity>
                 )}
               </View>

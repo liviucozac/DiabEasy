@@ -216,7 +216,7 @@ function AuthGateScreen() {
             </View>
             {confirmPassword.length > 0 && (
               <Text style={{ fontSize: 12, color: password === confirmPassword ? '#2e7d32' : '#e53935', marginBottom: 6 }}>
-                {password === confirmPassword ? '✓ Passwords match' : '✗ Passwords do not match'}
+                {password === confirmPassword ? `✓ ${t.passwordsMatch}` : `✗ ${t.passwordsDoNotMatch}`}
               </Text>
             )}
           </>

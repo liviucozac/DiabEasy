@@ -83,9 +83,9 @@ export default function EmergencyScreen() {
         }
         // Explain why "While using" is better
         Alert.alert(
-          '📍 Location Access',
-          'For the best experience on the SOS screen, choose "While using the app" so your address stays available without re-asking.',
-          [{ text: 'OK' }]
+          t.locationAccessTitle,
+          t.locationAccessBody,
+          [{ text: t.ok }]
         );
         return;
       }
