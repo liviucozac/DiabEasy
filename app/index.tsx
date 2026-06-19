@@ -1,5 +1,6 @@
 import auth from "@react-native-firebase/auth";
 import * as Haptics from "expo-haptics";
+import { router } from 'expo-router';
 import React, { useRef, useState } from "react";
 import {
   Alert,
@@ -501,6 +502,7 @@ export default function HomeScreen() {
       setCaregiverSession(session);
       setShowCaregiverModal(false);
       setCaregiverCode("");
+      setTimeout(() => router.replace('/history'), 300);
     } catch (e: any) {
       setCaregiverError(e?.message ?? t.invalidCode);
     } finally {
