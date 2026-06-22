@@ -11,7 +11,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.liviucozac.diabeasy",
-      "buildNumber": "1",
+      "buildNumber": "2",
       "entitlements": {
         "aps-environment": "production"
       },
