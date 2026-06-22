@@ -16,7 +16,7 @@ module.exports = function withFirebaseModularHeaders(config) {
       if (!podfile.includes('firestore-ios-sdk-frameworks')) {
         podfile = podfile.replace(
           /(platform :ios)/,
-          `pod 'FirebaseFirestore', :git => 'https://github.com/invertase/firestore-ios-sdk-frameworks.git', :tag => '11.14.0'\npod 'GoogleUtilities', :modular_headers => true\npod 'FirebaseCore', :modular_headers => true\npod 'FirebaseCoreExtension', :modular_headers => true\npod 'FirebaseCoreInternal', :modular_headers => true\npod 'FirebaseSharedSwift', :modular_headers => true\n\n$1`
+          `pod 'FirebaseFirestore', :git => 'https://github.com/invertase/firestore-ios-sdk-frameworks.git', :tag => '11.11.0'\npod 'GoogleUtilities', :modular_headers => true\npod 'FirebaseCore', :modular_headers => true\npod 'FirebaseCoreExtension', :modular_headers => true\npod 'FirebaseCoreInternal', :modular_headers => true\npod 'FirebaseSharedSwift', :modular_headers => true\n\n$1`
         );
       }
 
