@@ -44,6 +44,9 @@ import {
 } from '../utils/notificationUtils';
 import OnboardingScreen from './onboarding';
 
+import { enableScreens } from 'react-native-screens';
+enableScreens(false);
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
