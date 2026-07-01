@@ -1,6 +1,6 @@
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
 import { generateId } from '../utils/idUtils';
 
 export type Unit                  = 'mg/dL' | 'mmol/L';
@@ -11,7 +11,7 @@ export type LongActingInsulinType = 'glargine-u100' | 'glargine-u300' | 'detemir
 export type SecurityMethod        = 'none' | 'pin' | 'password' | 'biometrics';
 export type LockTimeout           = 'immediate' | '1min' | '5min' | 'app-close';
 
-import { syncGlucoseEntry, deleteGlucoseEntry, syncInsulinEntry, syncProfile, syncSavedMeal, deleteSavedMeal, syncEntryToCaregiverData } from '../utils/firestoreSync';
+import { deleteGlucoseEntry, deleteSavedMeal, syncEntryToCaregiverData, syncGlucoseEntry, syncInsulinEntry, syncProfile, syncSavedMeal } from '../utils/firestoreSync';
 import { useSubscriptionStore } from './subscriptionStore';
 
 let _caregiverSyncEnabled = false;
@@ -180,7 +180,6 @@ const DEFAULT_SETTINGS: AppSettings = {
   languageDetected: false,
   languagePromptShown: false,
 };
-
 export const useGlucoseStore = create<GlucoseStore>()(
   persist(
     (set) => ({
@@ -205,8 +204,8 @@ export const useGlucoseStore = create<GlucoseStore>()(
           if (key === _lastEntryKey) return state;
           _lastEntryKey = key;
           const newEntry = { ...entry, id: generateId() };
+          syncGlucoseEntry(newEntry).catch(() => {});
           if (isSyncEnabled()) {
-            syncGlucoseEntry(newEntry).catch(() => {});
             syncEntryToCaregiverData('glucoseHistory', newEntry).catch(() => {});
           }
           return { history: [...state.history, newEntry] };

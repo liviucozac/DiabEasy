@@ -7,7 +7,7 @@
 
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
-import type { Reminder, AppSettings } from '../store/glucoseStore';
+import type { AppSettings, Reminder } from '../store/glucoseStore';
 import { getAnalogByType, getLongActingByType } from './insulinUtils';
 
 const CHANNEL_ID = 'diabeasy-reminders';
