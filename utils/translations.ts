@@ -1,6 +1,9 @@
 export type Language = 'en' | 'ro' | 'it' | 'de' | 'fr' | 'nl';
 
 const en = {
+  perMonth: 'month',
+  perYear: 'year',
+  savePercent: 'Save ~25%',
   rememberMyChoice: 'Remember my choice',
   incorrectCurrentPassword: 'Current password is incorrect. Please try again.',
   googleSignInHint: 'If you signed up with Google, use the "Continue with Google" button below.',
@@ -909,7 +912,8 @@ const en = {
   trialFreeBtn: '🎁 Try Premium for 7 days — Free',
   trialFreeNote: 'No payment required. Explore all premium features.',
   goPremium: 'Go Premium — 3.99 EUR / month',
-  cancelAnytime: 'Cancel anytime · Billed monthly via Google Play',
+  cancelAnytimeMonthly: 'Cancel anytime · Billed monthly via Google Play',
+  cancelAnytimeYearly: 'Cancel anytime · Billed annually via Google Play',
   oneTimePdf: 'One Full PDF Report — 0.99 EUR',
   singleExport: 'Single export · All charts included · One-time purchase',
   pdfExportDisclaimer: 'PDF report export costs 0.99 EUR per export',
@@ -1066,6 +1070,9 @@ const en = {
 };
 
 const ro: typeof en = {
+  perMonth: 'lună',
+  perYear: 'an',
+  savePercent: 'Economisești ~25%',
   rememberMyChoice: 'Reține alegerea mea',
   incorrectCurrentPassword: 'Parola curentă este incorectă. Te rugăm să încerci din nou.',
   wrongEmailOrPassword: 'Email și/sau parolă greșite. Te rugăm să încerci din nou.',
@@ -1957,7 +1964,8 @@ const ro: typeof en = {
   trialFreeBtn: '🎁 Încearcă Premium 7 zile — Gratuit',
   trialFreeNote: 'Fără plată. Descoperă toate funcțiile premium.',
   goPremium: 'Treci la Premium — 19,99 RON / lună',
-  cancelAnytime: 'Anulează oricând · Facturat lunar prin Google Play',
+  cancelAnytimeMonthly: 'Anulează oricând · Facturat lunar prin Google Play',
+  cancelAnytimeYearly: 'Anulează oricând · Facturat anual prin Google Play',
   oneTimePdf: 'Un raport PDF complet — 4,99 RON',
   singleExport: 'Export unic · Toate graficele incluse · Achiziție unică',
   pdfExportDisclaimer: 'Exportul PDF costă 4,99 RON per export',
@@ -2198,6 +2206,9 @@ const ro: typeof en = {
 };
 
 const it: typeof en = {
+  perMonth: 'mese',
+  perYear: 'anno',
+  savePercent: 'Risparmia ~25%',
   rememberMyChoice: 'Ricorda la mia scelta',
   incorrectCurrentPassword: 'La password attuale non è corretta. Riprova.',
   wrongEmailOrPassword: 'Email e/o password errati. Riprova.',
@@ -3089,7 +3100,8 @@ const it: typeof en = {
   trialFreeBtn: '🎁 Prova Premium per 7 giorni — Gratis',
   trialFreeNote: 'Nessun pagamento richiesto. Esplora tutte le funzionalità premium.',
   goPremium: 'Passa a Premium — 3,99 EUR / mese',
-  cancelAnytime: 'Annulla in qualsiasi momento · Fatturato mensilmente tramite Google Play',
+  cancelAnytimeMonthly: 'Annulla in qualsiasi momento · Fatturato mensilmente tramite Google Play',
+  cancelAnytimeYearly: 'Annulla in qualsiasi momento · Fatturato annualmente tramite Google Play',
   oneTimePdf: 'Un report PDF completo — 0,99 EUR',
   singleExport: 'Esportazione singola · Tutti i grafici inclusi · Acquisto unico',
   pdfExportDisclaimer: "L'esportazione PDF costa 0,99 EUR per esportazione",
@@ -3230,6 +3242,9 @@ const it: typeof en = {
 };
 
 const de: typeof en = {
+  perMonth: 'Monat',
+  perYear: 'Jahr',
+  savePercent: 'Spare ~25%',
   rememberMyChoice: 'Meine Wahl merken',
   incorrectCurrentPassword: 'Das aktuelle Passwort ist falsch. Bitte erneut versuchen.',
   // ── Home ─────────────────────────────────────────────────────────────────────
@@ -4138,7 +4153,8 @@ const de: typeof en = {
   trialFreeBtn: '🎁 Premium 7 Tage kostenlos testen',
   trialFreeNote: 'Keine Zahlung erforderlich. Alle Premium-Funktionen entdecken.',
   goPremium: 'Premium werden — 3,99 EUR / Monat',
-  cancelAnytime: 'Jederzeit kündigen · Monatlich über Google Play abgerechnet',
+  cancelAnytimeMonthly: 'Jederzeit kündbar · Monatlich über Google Play abgerechnet',
+  cancelAnytimeYearly: 'Jederzeit kündbar · Jährlich über Google Play abgerechnet',
   oneTimePdf: 'Ein vollständiger PDF-Bericht — 0,99 EUR',
   singleExport: 'Einzelexport · Alle Diagramme enthalten · Einmalig',
   pdfExportDisclaimer: 'PDF-Export kostet 0,99 EUR pro Export',
@@ -4279,6 +4295,9 @@ const de: typeof en = {
 };
 
 const fr: typeof en = {
+  perMonth: 'mois',
+  perYear: 'an',
+  savePercent: 'Économisez ~25%',
   rememberMyChoice: 'Mémoriser mon choix',
   incorrectCurrentPassword: 'Le mot de passe actuel est incorrect. Veuillez réessayer.',
   wrongEmailOrPassword: 'Email et/ou mot de passe incorrect(s). Veuillez réessayer.',
@@ -5171,7 +5190,8 @@ const fr: typeof en = {
   trialFreeBtn: '🎁 Essayez Premium 7 jours — Gratuit',
   trialFreeNote: 'Aucun paiement requis. Découvrez toutes les fonctionnalités premium.',
   goPremium: 'Passer à Premium — 3,99 EUR / mois',
-  cancelAnytime: 'Annulez à tout moment · Facturé mensuellement via Google Play',
+  cancelAnytimeMonthly: 'Annulez à tout moment · Facturé mensuellement via Google Play',
+  cancelAnytimeYearly: 'Annulez à tout moment · Facturé annuellement via Google Play',
   oneTimePdf: 'Un rapport PDF complet — 0,99 EUR',
   singleExport: 'Export unique · Tous les graphiques inclus · Achat unique',
   pdfExportDisclaimer: "L'export PDF coûte 0,99 EUR par export",
@@ -5312,6 +5332,9 @@ const fr: typeof en = {
 };
 
 const nl: typeof en = {
+  perMonth: 'maand',
+  perYear: 'jaar',
+  savePercent: 'Bespaar ~25%',
   rememberMyChoice: 'Mijn keuze onthouden',
   incorrectCurrentPassword: 'Huidig wachtwoord is onjuist. Probeer het opnieuw.',
   wrongEmailOrPassword: 'Verkeerd e-mailadres en/of wachtwoord. Probeer het opnieuw.',
@@ -6204,7 +6227,8 @@ const nl: typeof en = {
   trialFreeBtn: '🎁 Probeer Premium 7 dagen — Gratis',
   trialFreeNote: 'Geen betaling vereist. Ontdek alle premium functies.',
   goPremium: 'Naar Premium — 3,99 EUR / maand',
-  cancelAnytime: 'Altijd opzegbaar · Maandelijks gefactureerd via Google Play',
+  cancelAnytimeMonthly: 'Altijd opzegbaar · Maandelijks gefactureerd via Google Play',
+  cancelAnytimeYearly: 'Altijd opzegbaar · Jaarlijks gefactureerd via Google Play',
   oneTimePdf: 'Één volledig PDF-rapport — 0,99 EUR',
   singleExport: 'Enkele export · Alle grafieken inbegrepen · Eenmalige aankoop',
   pdfExportDisclaimer: 'PDF-export kost 0,99 EUR per export',

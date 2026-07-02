@@ -18,6 +18,7 @@ export function UpgradeModal({ visible, onClose }: Props) {
 
   const [monthlyPackage, setMonthlyPackage] = useState<PurchasesPackage | null>(null);
   const [yearlyPackage, setYearlyPackage] = useState<PurchasesPackage | null>(null);
+  const [pdfPrice, setPdfPrice] = useState<string>('€0.99');
   const [loading, setLoading] = useState(false);
   const [fetchingPackages, setFetchingPackages] = useState(true);
 
@@ -37,6 +38,8 @@ export function UpgradeModal({ visible, onClose }: Props) {
         setMonthlyPackage(monthly);
         setYearlyPackage(yearly);
       }
+      const products = await Purchases.getProducts(['diabeasy_pdf_export']);
+      if (products.length > 0) setPdfPrice(products[0].priceString);
     } catch (e) {
       console.error('RC fetchPackages error:', e);
     } finally {
@@ -142,9 +145,9 @@ export function UpgradeModal({ visible, onClose }: Props) {
                   onPress={() => handleSubscribe(monthlyPackage)}
                   disabled={loading}
                 >
-                  <Text style={s.primaryBtnText}>{t.goPremium}</Text>
+                  <Text style={s.primaryBtnText}>{t.goPremium} — {monthlyPrice} / {t.perMonth}</Text>
                 </PressBtn>
-                <Text style={[s.btnNote, { color: colors.textMuted }]}>{t.cancelAnytime}</Text>
+                <Text style={[s.btnNote, { color: colors.textMuted }]}>{t.cancelAnytimeMonthly}</Text>
 
                 <PressBtn
                   style={[s.outlineBtn, { borderColor: colors.red, backgroundColor: 'transparent' }]}
@@ -152,9 +155,9 @@ export function UpgradeModal({ visible, onClose }: Props) {
                   disabled={loading}
                   activeOpacity={0.75}
                 >
-                  <Text style={[s.outlineBtnText, { color: colors.red }]}>{t.goPremiumYearly(yearlyPrice)}</Text>
+                  <Text style={[s.outlineBtnText, { color: colors.red }]}>{yearlyPrice} / {t.perYear} — {t.savePercent}</Text>
                 </PressBtn>
-                <Text style={[s.btnNote, { color: colors.textMuted }]}>{t.cancelAnytime}</Text>
+                <Text style={[s.btnNote, { color: colors.textMuted }]}>{t.cancelAnytimeYearly}</Text>
 
                 <View style={[s.divider, { backgroundColor: colors.border }]} />
 
@@ -164,7 +167,7 @@ export function UpgradeModal({ visible, onClose }: Props) {
                   disabled={loading}
                   activeOpacity={0.75}
                 >
-                  <Text style={[s.outlineBtnText, { color: colors.red }]}>{t.oneTimePdf}</Text>
+                  <Text style={[s.outlineBtnText, { color: colors.red }]}>{t.oneTimePdf} — {pdfPrice}</Text>
                 </PressBtn>
                 <Text style={[s.btnNote, { color: colors.textMuted }]}>{t.singleExport}</Text>
               </>
@@ -172,21 +175,13 @@ export function UpgradeModal({ visible, onClose }: Props) {
 
             {loading && <ActivityIndicator color={colors.red} style={{ marginVertical: 8 }} />}
 
-          <TouchableOpacity
-            onPress={handleRestore}
-            activeOpacity={0.7}
-            style={[s.restoreLink, { borderWidth: 1, borderColor: colors.textMuted, borderRadius: 8, paddingVertical: 6, paddingHorizontal: 16, alignSelf: 'center' }]}
-          >
-            <Text style={[s.closeLinkText, { color: colors.textMuted }]}>{t.restorePurchases}</Text>
-          </TouchableOpacity>
+            <TouchableOpacity onPress={handleRestore} activeOpacity={0.7} style={[s.restoreLink, { borderWidth: 1, borderColor: colors.textMuted, borderRadius: 8, paddingVertical: 6, paddingHorizontal: 16, alignSelf: 'center' }]}>
+              <Text style={[s.closeLinkText, { color: colors.textMuted }]}>{t.restorePurchases}</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={onClose}
-            activeOpacity={0.7}
-            style={[s.closeLink, { borderWidth: 1, borderColor: colors.textMuted, borderRadius: 8, paddingVertical: 6, paddingHorizontal: 16, alignSelf: 'center', marginBottom: 16 }]}
-          >
-            <Text style={[s.closeLinkText, { color: colors.textMuted }]}>{t.maybeLater}</Text>
-          </TouchableOpacity>
+            <TouchableOpacity onPress={onClose} activeOpacity={0.7} style={[s.closeLink, { borderWidth: 1, borderColor: colors.textMuted, borderRadius: 8, paddingVertical: 6, paddingHorizontal: 16, alignSelf: 'center', marginBottom: 16 }]}>
+              <Text style={[s.closeLinkText, { color: colors.textMuted }]}>{t.maybeLater}</Text>
+            </TouchableOpacity>
 
           </ScrollView>
         </View>
