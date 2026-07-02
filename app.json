@@ -26,6 +26,7 @@
     },
     "android": {
       "package": "com.liviucozac.diabeasy",
+        "versionCode": 18,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
