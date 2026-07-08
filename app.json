@@ -7,7 +7,6 @@
     "icon": "./assets/images/icon.png",
     "scheme": "diabeasy",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.liviucozac.diabeasy",
@@ -26,7 +25,7 @@
     },
     "android": {
       "package": "com.liviucozac.diabeasy",
-        "versionCode": 18,
+      "versionCode": 18,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
@@ -34,7 +33,6 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.READ_CONTACTS",
@@ -47,7 +45,6 @@
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO",
         "com.android.vending.BILLING"
-
       ]
     },
     "web": {
@@ -117,7 +114,10 @@
       ],
       "@react-native-google-signin/google-signin",
       "expo-web-browser",
-      "expo-localization"
+      "expo-localization",
+      "expo-font",
+      "expo-image",
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true,
