@@ -20,6 +20,10 @@ workflows:
       - name: Expo prebuild
         script: |
           npx expo prebuild --platform ios --clean
+      - name: Debug - verify Info.plist
+        script: |
+          echo "=== Bluetooth keys in Info.plist ==="
+          grep -A1 Bluetooth ios/DiabEasy/Info.plist || echo "NOT FOUND"
       - name: Install CocoaPods
         script: |
           cd ios && pod install
@@ -45,6 +49,7 @@ workflows:
             -exportPath build/ios/ipa
     artifacts:
       - build/ios/ipa/*.ipa
+      - build/DiabEasy.xcarchive/dSYMs/*
       - /tmp/xcodebuild_logs/*.log
     publishing:
       app_store_connect:
