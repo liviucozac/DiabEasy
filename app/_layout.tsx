@@ -68,15 +68,15 @@ function AuthGateScreen() {
   const t = useTranslation();
   const { setPremiumPaid } = useSubscriptionStore();
 
-  const [mode, setMode]                               = useState<'login' | 'signup'>('login');
-  const [email, setEmail]                             = useState('');
-  const [password, setPassword]                       = useState('');
-  const [showPassword, setShowPassword]               = useState(false);
+  const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [loading, setLoading]                         = useState(false);
-  const [error, setError]                             = useState('');
-  const [success, setSuccess]                         = useState('');
-  const [confirmPassword, setConfirmPassword]         = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const validatePassword = (pwd: string): string | null => {
     const errors: string[] = [];
@@ -89,9 +89,9 @@ function AuthGateScreen() {
   };
 
   const criteria = [
-    { id: 'len',     label: t.criteriaLength  ?? 'At least 8 characters',           test: (p: string) => p.length >= 8 },
-    { id: 'upper',   label: t.criteriaUpper   ?? 'One uppercase letter',             test: (p: string) => /[A-Z]/.test(p) },
-    { id: 'num',     label: t.criteriaNumber  ?? 'One number',                       test: (p: string) => /[0-9]/.test(p) },
+    { id: 'len', label: t.criteriaLength ?? 'At least 8 characters', test: (p: string) => p.length >= 8 },
+    { id: 'upper', label: t.criteriaUpper ?? 'One uppercase letter', test: (p: string) => /[A-Z]/.test(p) },
+    { id: 'num', label: t.criteriaNumber ?? 'One number', test: (p: string) => /[0-9]/.test(p) },
     { id: 'special', label: t.criteriaSpecial ?? 'One special character (!@#$%...)', test: (p: string) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(p) },
   ];
 
@@ -109,7 +109,7 @@ function AuthGateScreen() {
       } else {
         await signUp(email.trim(), password);
       }
-      checkFirebasePremium().then(ok => { if (ok) setPremiumPaid(true); }).catch(() => {});
+      checkFirebasePremium().then(ok => { if (ok) setPremiumPaid(true); }).catch(() => { });
       setEmail(''); setPassword(''); setConfirmPassword('');
     } catch (e: any) {
       if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found') {
@@ -225,7 +225,7 @@ function AuthGateScreen() {
           </>
         )}
 
-        {!!error   && <Text style={{ fontSize: 12, color: '#e53935', marginTop: 8, textAlign: 'center' }}>{error}</Text>}
+        {!!error && <Text style={{ fontSize: 12, color: '#e53935', marginTop: 8, textAlign: 'center' }}>{error}</Text>}
         {!!success && <Text style={{ fontSize: 12, color: '#2e7d32', marginTop: 8, textAlign: 'center' }}>{success}</Text>}
 
         <TouchableOpacity
@@ -260,10 +260,10 @@ function RoleSelectionScreen({ onPatient, onCaregiver }: {
 }) {
   const { colors } = useTheme();
   const t = useTranslation();
-  const [code, setCode]           = useState('');
-  const [loading, setLoading]     = useState(false);
-  const [error, setError]         = useState('');
-  const [showCode, setShowCode]   = useState(false);
+  const [code, setCode] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [showCode, setShowCode] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
   const handleCaregiverActivate = async () => {
@@ -472,12 +472,12 @@ function TabsLayout() {
   const t = useTranslation();
 
   const ALL_TAB_SCREENS = [
-    { name: 'index',      title: t.tabHome,    icon: 'home' },
-    { name: 'history',    title: t.tabHistory, icon: 'time' },
-    { name: 'foodguide',  title: t.tabFood,    icon: 'nutrition' },
-    { name: 'medication', title: t.tabMeds,    icon: 'medical' },
-    { name: 'emergency',  title: t.tabSos,     icon: 'warning' },
-    { name: 'profile',    title: t.tabProfile, icon: 'person' },
+    { name: 'index', title: t.tabHome, icon: 'home' },
+    { name: 'history', title: t.tabHistory, icon: 'time' },
+    { name: 'foodguide', title: t.tabFood, icon: 'nutrition' },
+    { name: 'medication', title: t.tabMeds, icon: 'medical' },
+    { name: 'emergency', title: t.tabSos, icon: 'warning' },
+    { name: 'profile', title: t.tabProfile, icon: 'person' },
   ];
 
   const CAREGIVER_TABS = ['history', 'foodguide', 'medication', 'profile'];
@@ -486,7 +486,7 @@ function TabsLayout() {
     <Tabs
       initialRouteName={caregiverSession ? 'history' : 'index'}
       screenOptions={{
-        tabBarActiveTintColor:   colors.red,
+        tabBarActiveTintColor: colors.red,
         tabBarInactiveTintColor: colors.tabInactive,
         tabBarStyle: {
           backgroundColor: colors.tabBar,
@@ -498,8 +498,8 @@ function TabsLayout() {
           borderTopWidth: 0,
         },
         tabBarLabelStyle: { fontSize: 10 },
-        headerShown:      true,
-        header:           () => <Header />,
+        headerShown: true,
+        header: () => <Header />,
       }}
     >
       {ALL_TAB_SCREENS.map(({ name, title, icon }) => (
@@ -545,16 +545,18 @@ function RootContent() {
   useEffect(() => {
     Purchases.setLogLevel(LOG_LEVEL.DEBUG);
     Purchases.configure({
-      apiKey: 'goog_BQEzDmrHiQPmTgIPavcUzByJMJi',
+      apiKey: Platform.OS === 'ios'
+        ? 'appl_KsXlWAUKSzdCBVlepCqwYLyeDHY'
+        : 'goog_BQEzDmrHiQPmTgIPavcUzByJMJi',
     });
   }, []);
 
   useEntitlements();
 
-  const permGranted    = useRef(false);
-  const [isLocked,     setIsLocked]         = useState(false);
-  const [user,         setUser]             = useState<any>(null);
-  const [authChecked,  setAuthChecked]      = useState(false);
+  const permGranted = useRef(false);
+  const [isLocked, setIsLocked] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const [localRoleChosen, setLocalRoleChosen] = useState(false);
   const backgroundedAt = useRef<number | null>(null);
 
@@ -637,8 +639,8 @@ function RootContent() {
   }, []);
 
   if (!authChecked) return null;
-  if (!user)        return <AuthGateScreen />;
-  if (isLocked)     return <LockScreen onUnlock={() => setIsLocked(false)} />;
+  if (!user) return <AuthGateScreen />;
+  if (isLocked) return <LockScreen onUnlock={() => setIsLocked(false)} />;
 
   const roleChosen = patientRoleChosen || localRoleChosen;
 
@@ -695,6 +697,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     paddingTop: 55, paddingBottom: 12, gap: 8,
   },
-  logo:     { width: 38, height: 38 },
+  logo: { width: 38, height: 38 },
   logoText: { fontSize: 22, fontWeight: 'bold' },
 });
